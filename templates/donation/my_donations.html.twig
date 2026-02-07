@@ -1,0 +1,33 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mes Dons{% endblock %}
+
+{% block body %}
+    <h1>Mes Dons</h1>
+
+    <div class="mb-4 text-end">
+        <a href="{{ path('app_donation_new') }}" class="btn btn-primary">Faire un nouveau don</a>
+    </div>
+
+    {% if donations is empty %}
+        <div class="alert alert-info">
+            Vous n'avez pas encore fait de don.
+        </div>
+    {% else %}
+        <div class="row">
+            {% for donation in donations %}
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100 border-primary">
+                        <div class="card-header bg-primary text-white">
+                            {{ donation.type.libelle }}
+                        </div>
+                        <div class="card-body">
+                            <h5 class="card-title">Le {{ donation.dateDon|date('d/m/Y') }}</h5>
+                            <p class="card-text">{{ donation.description }}</p>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endblock %}

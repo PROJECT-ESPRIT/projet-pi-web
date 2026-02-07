@@ -1,0 +1,39 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mes Réservations{% endblock %}
+
+{% block body %}
+    <h1>Mes Réservations</h1>
+
+    {% if reservations is empty %}
+        <div class="alert alert-info">
+            Vous n'avez aucune réservation pour le moment. 
+            <a href="{{ path('app_evenement_index') }}">Voir les événements disponibles</a>.
+        </div>
+    {% else %}
+        <div class="row">
+            {% for reservation in reservations %}
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                            <span>{{ reservation.evenement.titre }}</span>
+                            <span class="badge bg-light text-primary">{{ reservation.status }}</span>
+                        </div>
+                        <div class="card-body">
+                            <p class="card-text">
+                                <strong>Date de l'événement:</strong> {{ reservation.evenement.dateDebut|date('d/m/Y H:i') }}<br>
+                                <strong>Lieu:</strong> {{ reservation.evenement.lieu }}<br>
+                                <strong>Réservé le:</strong> {{ reservation.dateReservation|date('d/m/Y') }}
+                            </p>
+                            <a href="{{ path('app_evenement_show', {'id': reservation.evenement.id}) }}" class="btn btn-sm btn-info">Voir l'événement</a>
+                            
+                            <form method="post" action="{{ path('app_reservation_cancel', {'id': reservation.id}) }}" onsubmit="return confirm('Êtes-vous sûr de vouloir annuler cette réservation ?');" class="d-inline-block">
+                                <button class="btn btn-sm btn-danger">Annuler</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endblock %}

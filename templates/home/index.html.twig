@@ -1,0 +1,44 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Accueil - Plateforme de Réservation{% endblock %}
+
+{% block body %}
+<div class="row">
+    <div class="col-12">
+        <div class="jumbotron bg-light p-5 rounded mb-4">
+            <h1 class="display-4">Bienvenue sur la Plateforme de Réservation</h1>
+            <p class="lead">Réservation d'événements artistiques (poterie, chant, peinture...) destinés aux enfants avec besoins spécifiques</p>
+            <hr class="my-4">
+            <p>Cette plateforme permet de valoriser l'immersion des enfants dans la vie sociale à travers l'art.</p>
+        </div>
+    </div>
+</div>
+
+{% if app.user %}
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Mon Profil</h5>
+                    <p class="card-text">
+                        <strong>Nom:</strong> {{ user.nom }} {{ user.prenom }}<br>
+                        <strong>Email:</strong> {{ user.email }}<br>
+                        {% if user.telephone %}
+                            <strong>Téléphone:</strong> {{ user.telephone }}<br>
+                        {% endif %}
+                        <strong>Rôle:</strong> {{ user.roles[0]|replace({'ROLE_': ''})|lower }}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+{% else %}
+    <div class="row">
+        <div class="col-12 text-center">
+            <p class="lead">Veuillez vous connecter ou créer un compte pour accéder aux fonctionnalités.</p>
+            <a href="{{ path('login') }}" class="btn btn-primary btn-lg me-2">Se connecter</a>
+            <a href="{{ path('register') }}" class="btn btn-outline-primary btn-lg">S'inscrire</a>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}

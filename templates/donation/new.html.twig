@@ -1,0 +1,17 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Faire un Don{% endblock %}
+
+{% block body %}
+    <h1>Faire un Don</h1>
+    <p class="lead">Merci de votre générosité !</p>
+
+    {{ form_start(form) }}
+        {{ form_widget(form) }}
+        <button class="btn btn-success mt-3">Confirmer le don</button>
+    {{ form_end(form) }}
+
+    <div class="mt-3">
+        <a href="{{ path('app_donation_my') }}">Voir mes dons</a>
+    </div>
+{% endblock %}

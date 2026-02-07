@@ -1,0 +1,29 @@
+{{ form_start(form) }}
+    <div class="row">
+        <div class="col-md-12 mb-3">
+            {{ form_row(form.titre) }}
+        </div>
+        <div class="col-md-12 mb-3">
+            {{ form_row(form.description) }}
+        </div>
+        <div class="col-md-6 mb-3">
+            {{ form_row(form.dateDebut) }}
+        </div>
+        <div class="col-md-6 mb-3">
+            {{ form_row(form.dateFin) }}
+        </div>
+        <div class="col-md-6 mb-3">
+            {{ form_row(form.lieu) }}
+        </div>
+        <div class="col-md-3 mb-3">
+            {{ form_row(form.nbPlaces) }}
+        </div>
+        <div class="col-md-3 mb-3">
+            {{ form_row(form.prix) }}
+        </div>
+    </div>
+    
+    <div class="d-grid mt-4">
+        <button class="btn btn-primary btn-lg">{{ button_label|default('Enregistrer') }}</button>
+    </div>
+{{ form_end(form) }}

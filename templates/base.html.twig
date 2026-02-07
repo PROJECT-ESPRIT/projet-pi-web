@@ -1,17 +1,256 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
     <head>
         <meta charset="UTF-8">
-        <title>{% block title %}Welcome!{% endblock %}</title>
-        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>⚫️</text><text y=%221.3em%22 x=%220.2em%22 font-size=%2276%22 fill=%22%23fff%22>sf</text></svg>">
-        {% block stylesheets %}
-        {% endblock %}
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{% block title %}Plateforme de Réservation{% endblock %}</title>
+        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>🎨</text></svg>">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+        <!-- Font Awesome for Icons -->
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+        
+        <style>
+            body {
+                min-height: 100vh;
+                display: flex;
+                flex-direction: column;
+            }
+            .wrapper {
+                display: flex;
+                width: 100%;
+                flex: 1;
+            }
+            #sidebar {
+                min-width: 250px;
+                max-width: 250px;
+                background: #343a40;
+                color: #fff;
+                transition: all 0.3s;
+                display: flex;
+                flex-direction: column;
+                height: 100vh; /* Full height */
+                position: sticky; /* Stick to top */
+                top: 0;
+            }
+            #sidebar .sidebar-header {
+                padding: 20px;
+                background: #2b3035;
+            }
+            #sidebar ul.components {
+                padding: 20px 0;
+                border-bottom: 1px solid #47748b;
+                overflow-y: auto;
+                flex-grow: 1; /* Ensure it takes available space */
+            }
+            #sidebar ul p {
+                color: #fff;
+                padding: 10px;
+            }
+            #sidebar ul li a {
+                padding: 15px 20px;
+                font-size: 1.1em;
+                display: block;
+                color: rgba(255, 255, 255, 0.8);
+                text-decoration: none;
+            }
+            #sidebar ul li a:hover {
+                color: #fff;
+                background: #2b3035;
+            }
+            #sidebar ul li.active > a {
+                color: #fff;
+                background: #0d6efd;
+            }
+            .content {
+                width: 100%;
+                padding: 20px;
+                background-color: #f8f9fa;
+            }
+            /* Custom Scrollbar for Sidebar */
+            #sidebar ul.components::-webkit-scrollbar {
+                width: 6px;
+            }
+            #sidebar ul.components::-webkit-scrollbar-track {
+                background: #343a40; 
+            }
+            #sidebar ul.components::-webkit-scrollbar-thumb {
+                background: #6c757d; 
+                border-radius: 3px;
+            }
+            #sidebar ul.components::-webkit-scrollbar-thumb:hover {
+                background: #495057; 
+            }
+
+            /* Toggle for responsive */
+            @media (max-width: 768px) {
+                #sidebar {
+                    margin-left: -250px;
+                }
+                #sidebar.active {
+                    margin-left: 0;
+                }
+            }
+        </style>
+
+        {% block stylesheets %}{% endblock %}
 
         {% block javascripts %}
             {% block importmap %}{{ importmap('app') }}{% endblock %}
         {% endblock %}
     </head>
     <body>
-        {% block body %}{% endblock %}
+        {% if app.user %}
+            {# Back-office / Logged-in Layout #}
+            <div class="wrapper">
+                <!-- Sidebar -->
+                <nav id="sidebar">
+                    <div class="sidebar-header">
+                        <h3>🎨</h3>
+                    </div>
+
+                    <ul class="list-unstyled components flex-grow-1">
+                        <li>
+                            <a href="{{ path('home') }}"><i class="fas fa-home me-2"></i> Accueil</a>
+                        </li>
+                        
+                        {# Admin Only #}
+                        {% if is_granted('ROLE_ADMIN') %}
+                            <li>
+                                <a href="{{ path('app_user_index') }}"><i class="fas fa-users me-2"></i> Utilisateurs</a>
+                            </li>
+                            <li>
+                                <a href="{{ path('app_type_don_index') }}"><i class="fas fa-tags me-2"></i> Types de Don</a>
+                            </li>
+                            <li>
+                                <a href="{{ path('app_donation_index') }}"><i class="fas fa-hand-holding-heart me-2"></i> Liste des Dons</a>
+                            </li>
+                        {% endif %}
+
+                        {# Artists and Admins #}
+                        {% if is_granted('ROLE_ARTISTE') %}
+                            <li>
+                                <a href="{{ path('app_evenement_index') }}"><i class="fas fa-calendar-alt me-2"></i> Gérer Événements</a>
+                            </li>
+                            <li>
+                                <a href="{{ path('app_produit_admin_index') }}"><i class="fas fa-box me-2"></i> Gérer Produits</a>
+                            </li>
+                            <li>
+                                <a href="{{ path('app_commande_index') }}"><i class="fas fa-shopping-cart me-2"></i> Gérer Commandes</a>
+                            </li>
+                        {% endif %}
+
+                        {# Everyone #}
+                        {% if not is_granted('ROLE_ARTISTE') %}
+                            <li>
+                                <a href="{{ path('app_evenement_index') }}"><i class="fas fa-search me-2"></i> Voir les Événements</a>
+                            </li>
+                            <li>
+                                <a href="{{ path('app_produit_index') }}"><i class="fas fa-store me-2"></i> Boutique Solidaire</a>
+                            </li>
+                        {% endif %}
+                        <li>
+                            <a href="{{ path('app_reservation_my') }}"><i class="fas fa-ticket-alt me-2"></i> Mes Réservations</a>
+                        </li>
+                        <li>
+                            <a href="{{ path('app_donation_my') }}"><i class="fas fa-hand-holding-heart me-2"></i> Mes Dons</a>
+                        </li>
+                        <li>
+                            <a href="{{ path('app_commande_my') }}"><i class="fas fa-shopping-bag me-2"></i> Mes Commandes</a>
+                        </li>
+                        <li>
+                            <a href="#"><i class="fas fa-user me-2"></i> Mon Profil</a>
+                        </li>
+                    </ul>
+
+                    <div class="p-3 border-top border-secondary">
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-user-circle fa-2x text-light"></i>
+                            </div>
+                            <div class="flex-grow-1 ms-3 overflow-hidden">
+                                <h6 class="mb-0 text-truncate" title="{{ app.user.prenom }} {{ app.user.nom }}">
+                                    {{ app.user.prenom }} {{ app.user.nom }}
+                                </h6>
+                                <small class="text-uppercase" style="font-size: 0.7rem;">
+                                    {{ app.user.roles[0]|replace({'ROLE_': ''}) }}
+                                </small>
+                            </div>
+                        </div>
+                        <a href="{{ path('logout') }}" class="btn btn-outline-danger btn-sm w-100">
+                            <i class="fas fa-sign-out-alt me-1"></i> Déconnexion
+                        </a>
+                    </div>
+                </nav>
+
+                <!-- Page Content -->
+                <div class="content">
+                    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm rounded mb-4 d-md-none">
+                        <div class="container-fluid">
+                            <button type="button" id="sidebarCollapse" class="btn btn-primary">
+                                <i class="fas fa-bars"></i>
+                            </button>
+                        </div>
+                    </nav>
+
+                    {# Flash Messages #}
+                    {% for message in app.flashes('success') %}
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                    {% for message in app.flashes('error') %}
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+
+                    {% block body %}{% endblock %}
+                </div>
+            </div>
+        {% else %}
+            {# Guest Layout (Login/Register/Public Home) #}
+            <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4 shadow-sm">
+                <div class="container">
+                    <a class="navbar-brand" href="{{ path('home') }}">🎨 Plateforme Artistique</a>
+                    <div class="d-flex">
+                        <a href="{{ path('login') }}" class="btn btn-outline-primary me-2">Connexion</a>
+                        <a href="{{ path('register') }}" class="btn btn-primary">Inscription</a>
+                    </div>
+                </div>
+            </nav>
+            
+            <div class="container">
+                {# Flash Messages for Guests #}
+                {% for message in app.flashes('success') %}
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+                
+                {% block body_guest %}
+                    {% block body_public %}
+                        {# Fallback if child templates use 'body' block #}
+                        {{ block('body') }}
+                    {% endblock %}
+                {% endblock %}
+            </div>
+        {% endif %}
+
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        <script>
+            // Simple sidebar toggle script
+            document.addEventListener('DOMContentLoaded', function() {
+                const sidebarCollapse = document.getElementById('sidebarCollapse');
+                const sidebar = document.getElementById('sidebar');
+                if(sidebarCollapse) {
+                    sidebarCollapse.addEventListener('click', function() {
+                        sidebar.classList.toggle('active');
+                    });
+                }
+            });
+        </script>
     </body>
 </html>

@@ -1,0 +1,37 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Types de Don{% endblock %}
+
+{% block body %}
+    <h1>Types de Don</h1>
+
+    <div class="mb-3 text-end">
+        <a href="{{ path('app_type_don_new') }}" class="btn btn-success">Créer un nouveau type</a>
+    </div>
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Libellé</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for type_don in type_dons %}
+            <tr>
+                <td>{{ type_don.id }}</td>
+                <td>{{ type_don.libelle }}</td>
+                <td>
+                    <a href="{{ path('app_type_don_edit', {'id': type_don.id}) }}" class="btn btn-sm btn-warning">Éditer</a>
+                    {{ include('type_don/_delete_form.html.twig') }}
+                </td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="3">Aucun type trouvé</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
