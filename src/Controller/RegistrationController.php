@@ -35,6 +35,10 @@ class RegistrationController extends AbstractController
             
             // Set the user's role
             $user->setRoles([$selectedRole]);
+
+            if ($selectedRole === 'ROLE_ARTISTE') {
+                $user->setStatus(User::STATUS_PENDING);
+            }
             
             // Encode the plain password
             $user->setPassword(

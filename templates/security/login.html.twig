@@ -8,6 +8,10 @@
         <div class="card shadow">
             <div class="card-body p-4">
                 <h2 class="card-title text-center mb-4">Connexion</h2>
+
+                <div class="alert alert-info">
+                    Les comptes artistes doivent etre valides par l'admin avant la connexion.
+                </div>
                 
                 {% if error %}
                     <div class="alert alert-danger">{{ error.messageKey|trans(error.messageData, 'security') }}</div>

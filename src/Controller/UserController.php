@@ -18,10 +18,26 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 class UserController extends AbstractController
 {
     #[Route('/', name: 'app_user_index', methods: ['GET'])]
-    public function index(UserRepository $userRepository): Response
+    public function index(Request $request, UserRepository $userRepository): Response
     {
+        $query = $request->query->get('q');
+        $sort = (string) $request->query->get('sort', 'nom');
+        $direction = (string) $request->query->get('dir', 'asc');
+        $page = max(1, (int) $request->query->get('page', 1));
+        $perPage = 7;
+
+        $result = $userRepository->searchAndSortPaginated($query, $sort, $direction, $page, $perPage);
+        $users = $result['items'];
+        $totalPages = max(1, (int) ceil($result['total'] / $perPage));
+        $page = min($page, $totalPages);
+
         return $this->render('user/index.html.twig', [
-            'users' => $userRepository->findAll(),
+            'users' => $users,
+            'q' => $query,
+            'sort' => $sort,
+            'dir' => $direction,
+            'page' => $page,
+            'total_pages' => $totalPages,
         ]);
     }
 
@@ -89,6 +105,30 @@ class UserController extends AbstractController
             'user' => $user,
             'form' => $form,
         ]);
+    }
+
+    #[Route('/{id}/approve', name: 'app_user_approve', methods: ['POST'])]
+    public function approve(User $user, Request $request, EntityManagerInterface $entityManager): Response
+    {
+        if ($this->isCsrfTokenValid('approve'.$user->getId(), $request->request->get('_token'))) {
+            $user->setStatus(User::STATUS_APPROVED);
+            $entityManager->flush();
+            $this->addFlash('success', 'Utilisateur approuve.');
+        }
+
+        return $this->redirectToRoute('app_user_index', [], Response::HTTP_SEE_OTHER);
+    }
+
+    #[Route('/{id}/reject', name: 'app_user_reject', methods: ['POST'])]
+    public function reject(User $user, Request $request, EntityManagerInterface $entityManager): Response
+    {
+        if ($this->isCsrfTokenValid('reject'.$user->getId(), $request->request->get('_token'))) {
+            $user->setStatus(User::STATUS_REJECTED);
+            $entityManager->flush();
+            $this->addFlash('success', 'Utilisateur refuse.');
+        }
+
+        return $this->redirectToRoute('app_user_index', [], Response::HTTP_SEE_OTHER);
     }
 
     #[Route('/{id}', name: 'app_user_delete', methods: ['POST'])]

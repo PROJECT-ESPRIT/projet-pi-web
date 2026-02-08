@@ -188,7 +188,7 @@
                                     {{ app.user.prenom }} {{ app.user.nom }}
                                 </h6>
                                 <small class="text-uppercase" style="font-size: 0.7rem;">
-                                    {{ app.user.roles[0]|replace({'ROLE_': ''}) }}
+                                    {{ (app.user.roles|first)|default('ROLE_USER')|replace({'ROLE_': ''}) }}
                                 </small>
                             </div>
                         </div>
