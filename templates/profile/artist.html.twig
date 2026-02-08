@@ -1,0 +1,12 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Artist Profile{% endblock %}
+
+{% block body %}
+<div class="row">
+    <div class="col-12">
+        <h1>Artist Profile</h1>
+        <p>Welcome, {{ app.user ? app.user.prenom : '' }}.</p>
+    </div>
+</div>
+{% endblock %}
