@@ -53,6 +53,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->reservations = new ArrayCollection();
         $this->donations = new ArrayCollection();
         $this->commandes = new ArrayCollection();
+        $this->forumReponses = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -191,6 +192,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private Collection $commandes;
 
     /**
+     * @var Collection<int, ForumReponse>
+     */
+    #[ORM\OneToMany(targetEntity: ForumReponse::class, mappedBy: 'auteur')]
+    private Collection $forumReponses;
+
+    /**
      * @return Collection<int, Evenement>
      */
     public function getEvenements(): Collection
@@ -304,6 +311,36 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
             // set the owning side to null (unless already changed)
             if ($commande->getUser() === $this) {
                 $commande->setUser(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, ForumReponse>
+     */
+    public function getForumReponses(): Collection
+    {
+        return $this->forumReponses;
+    }
+
+    public function addForumReponse(ForumReponse $forumReponse): static
+    {
+        if (!$this->forumReponses->contains($forumReponse)) {
+            $this->forumReponses->add($forumReponse);
+            $forumReponse->setAuteur($this);
+        }
+
+        return $this;
+    }
+
+    public function removeForumReponse(ForumReponse $forumReponse): static
+    {
+        if ($this->forumReponses->removeElement($forumReponse)) {
+            // set the owning side to null (unless already changed)
+            if ($forumReponse->getAuteur() === $this) {
+                $forumReponse->setAuteur(null);
             }
         }
 

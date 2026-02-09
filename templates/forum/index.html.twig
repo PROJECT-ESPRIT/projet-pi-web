@@ -1,0 +1,66 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Forum index{% endblock %}
+
+{% block body %}
+    <h1>Forum index</h1>
+
+    <form method="get" class="row g-2 mb-3">
+        <div class="col-md-6">
+            <input type="text" name="search" class="form-control" placeholder="Rechercher..." value="{{ search }}">
+        </div>
+        <div class="col-md-3">
+            <select name="sort" class="form-select">
+                <option value="dateCreation" {% if sortBy == 'dateCreation' %}selected{% endif %}>Date creation</option>
+                <option value="sujet" {% if sortBy == 'sujet' %}selected{% endif %}>Sujet</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select name="order" class="form-select">
+                <option value="DESC" {% if order == 'DESC' %}selected{% endif %}>DESC</option>
+                <option value="ASC" {% if order == 'ASC' %}selected{% endif %}>ASC</option>
+            </select>
+        </div>
+        <div class="col-md-1">
+            <button type="submit" class="btn btn-primary w-100">OK</button>
+        </div>
+    </form>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Nom</th>
+                <th>Prenom</th>
+                <th>Email</th>
+                <th>Sujet</th>
+                <th>Message</th>
+                <th>DateCreation</th>
+                <th>actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for forum in forums %}
+            <tr>
+                <td>{{ forum.id }}</td>
+                <td>{{ forum.nom }}</td>
+                <td>{{ forum.prenom }}</td>
+                <td>{{ forum.email }}</td>
+                <td>{{ forum.sujet }}</td>
+                <td>{{ forum.message }}</td>
+                <td>{{ forum.dateCreation ? forum.dateCreation|date('Y-m-d H:i:s') : '' }}</td>
+                <td>
+                    <a href="{{ path('app_forum_show', {'id': forum.id}) }}">show</a>
+                    <a href="{{ path('app_forum_edit', {'id': forum.id}) }}">edit</a>
+                </td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="8">no records found</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <a href="{{ path('app_forum_new') }}">Create new</a>
+{% endblock %}

@@ -157,6 +157,17 @@
                         <li>
                             <a href="{{ path('app_commande_my') }}"><i class="fas fa-shopping-bag me-2"></i> Mes Commandes</a>
                         </li>
+                        
+                        {# Forum Section #}
+                        <li>
+                            <a href="{{ path('app_forum_index') }}"><i class="fas fa-comments me-2"></i> Forum / Contact</a>
+                        </li>
+                        {% if is_granted('ROLE_ADMIN') %}
+                            <li>
+                                <a href="{{ path('app_forum_reponse_index') }}"><i class="fas fa-reply me-2"></i> Gérer Réponses</a>
+                            </li>
+                        {% endif %}
+                        
                         <li>
                             <a href="#"><i class="fas fa-user me-2"></i> Mon Profil</a>
                         </li>

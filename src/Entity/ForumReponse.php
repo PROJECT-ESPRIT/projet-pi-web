@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\ForumReponseRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: ForumReponseRepository::class)]
 class ForumReponse
@@ -15,23 +16,24 @@ class ForumReponse
     private ?int $id = null;
 
     #[ORM\Column(type: Types::TEXT)]
+    #[Assert\NotBlank]
+    #[Assert\Length(min: 2)]
     private ?string $contenu = null;
 
     #[ORM\Column]
-    private ?\DateTime $createdAt = null;
+    #[Assert\NotNull]
+    #[Assert\Type(type: \DateTimeImmutable::class)]
+    private ?\DateTimeImmutable $dateReponse = null;
 
     #[ORM\ManyToOne(inversedBy: 'reponses')]
     #[ORM\JoinColumn(nullable: false)]
-    private ?ForumSujet $sujet = null;
+    #[Assert\NotNull]
+    private ?Forum $forum = null;
 
     #[ORM\ManyToOne(inversedBy: 'forumReponses')]
     #[ORM\JoinColumn(nullable: false)]
-    private ?User $user = null;
-
-    public function __construct()
-    {
-        $this->createdAt = new \DateTime();
-    }
+    #[Assert\NotNull]
+    private ?User $auteur = null;
 
     public function getId(): ?int
     {
@@ -46,39 +48,43 @@ class ForumReponse
     public function setContenu(string $contenu): static
     {
         $this->contenu = $contenu;
+
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTime
+    public function getDateReponse(): ?\DateTimeImmutable
     {
-        return $this->createdAt;
+        return $this->dateReponse;
     }
 
-    public function setCreatedAt(\DateTime $createdAt): static
+    public function setDateReponse(\DateTimeImmutable $dateReponse): static
     {
-        $this->createdAt = $createdAt;
+        $this->dateReponse = $dateReponse;
+
         return $this;
     }
 
-    public function getSujet(): ?ForumSujet
+    public function getForum(): ?Forum
     {
-        return $this->sujet;
+        return $this->forum;
     }
 
-    public function setSujet(?ForumSujet $sujet): static
+    public function setForum(?Forum $forum): static
     {
-        $this->sujet = $sujet;
+        $this->forum = $forum;
+
         return $this;
     }
 
-    public function getUser(): ?User
+    public function getAuteur(): ?User
     {
-        return $this->user;
+        return $this->auteur;
     }
 
-    public function setUser(?User $user): static
+    public function setAuteur(?User $auteur): static
     {
-        $this->user = $user;
+        $this->auteur = $auteur;
+
         return $this;
     }
 }
