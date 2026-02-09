@@ -7,6 +7,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: EvenementRepository::class)]
 class Evenement
@@ -17,30 +18,65 @@ class Evenement
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: 'Le titre est obligatoire')]
+    #[Assert\Length(
+        min: 5,
+        max: 255,
+        minMessage: 'Le titre doit faire au moins {{ limit }} caractères',
+        maxMessage: 'Le titre ne peut pas dépasser {{ limit }} caractères'
+    )]
     private ?string $titre = null;
 
     #[ORM\Column(type: Types::TEXT)]
+    #[Assert\NotBlank(message: 'La description est obligatoire')]
+    #[Assert\Length(
+        min: 10,
+        minMessage: 'La description doit faire au moins {{ limit }} caractères'
+    )]
     private ?string $description = null;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
+    #[Assert\NotBlank(message: 'La date de début est obligatoire')]
+    #[Assert\GreaterThanOrEqual(
+        'today',
+        message: 'La date de début doit être ultérieure à aujourd\'hui'
+    )]
     private ?\DateTimeInterface $dateDebut = null;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
+    #[Assert\NotBlank(message: 'La date de fin est obligatoire')]
+    #[Assert\Expression(
+        'this.getDateDebut() === null or this.getDateFin() === null or this.getDateDebut() < this.getDateFin()',
+        message: 'La date de fin doit être postérieure à la date de début'
+    )]
     private ?\DateTimeInterface $dateFin = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: 'Le lieu est obligatoire')]
     private ?string $lieu = null;
 
     #[ORM\Column]
+    #[Assert\NotBlank(message: 'Le nombre de places est obligatoire')]
+    #[Assert\Positive(message: 'Le nombre de places doit être supérieur à 0')]
     private ?int $nbPlaces = null;
 
     #[ORM\Column(nullable: true)]
+    #[Assert\PositiveOrZero(message: 'L\'âge minimum doit être un nombre positif')]
     private ?int $ageMin = null;
 
     #[ORM\Column(nullable: true)]
+    #[Assert\Positive(message: 'L\'âge maximum doit être un nombre positif')]
+    #[Assert\Expression(
+        'this.getAgeMin() === null or this.getAgeMax() === null or this.getAgeMax() > this.getAgeMin()',
+        message: 'L\'âge maximum doit être supérieur à l\'âge minimum'
+    )]
     private ?int $ageMax = null;
 
     #[ORM\Column(nullable: true)]
+    #[Assert\GreaterThanOrEqual(
+        value: 0,
+        message: 'Le prix ne peut pas être négatif'
+    )]
     private ?float $prix = null;
 
     #[ORM\Column(length: 255, nullable: true)]
@@ -96,7 +132,7 @@ class Evenement
         return $this->dateDebut;
     }
 
-    public function setDateDebut(\DateTimeInterface $dateDebut): static
+    public function setDateDebut(?\DateTimeInterface $dateDebut): static
     {
         $this->dateDebut = $dateDebut;
 
@@ -108,7 +144,7 @@ class Evenement
         return $this->dateFin;
     }
 
-    public function setDateFin(\DateTimeInterface $dateFin): static
+    public function setDateFin(?\DateTimeInterface $dateFin): static
     {
         $this->dateFin = $dateFin;
 

@@ -255,15 +255,72 @@
 
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
         <script>
-            // Simple sidebar toggle script
+            // Function to update active state
+            function updateActiveState() {
+                const currentPath = window.location.href;
+                console.log('Current URL:', currentPath);
+                
+                // Remove active class from all links first
+                document.querySelectorAll('#sidebar li').forEach(item => {
+                    item.classList.remove('active');
+                });
+                
+                // Find and activate matching link
+                let activeLinkFound = false;
+                document.querySelectorAll('#sidebar a[href]').forEach(link => {
+                    const linkHref = link.getAttribute('href');
+                    // Check if current URL contains the link's path
+                    if (currentPath.includes(linkHref) && linkHref !== '/') {
+                        console.log('Match found:', linkHref);
+                        link.parentElement.classList.add('active');
+                        activeLinkFound = true;
+                    }
+                });
+                
+                // If no match found, try to match the first segment
+                if (!activeLinkFound) {
+                    const firstSegment = window.location.pathname.split('/')[1];
+                    if (firstSegment) {
+                        document.querySelectorAll('#sidebar a[href]').forEach(link => {
+                            const linkPath = link.getAttribute('href');
+                            if (linkPath.includes(firstSegment)) {
+                                console.log('First segment match:', linkPath);
+                                link.parentElement.classList.add('active');
+                            }
+                        });
+                    }
+                }
+            }
+
+            // Run on page load
             document.addEventListener('DOMContentLoaded', function() {
+                // Toggle sidebar on mobile
                 const sidebarCollapse = document.getElementById('sidebarCollapse');
                 const sidebar = document.getElementById('sidebar');
-                if(sidebarCollapse) {
+                if (sidebarCollapse) {
                     sidebarCollapse.addEventListener('click', function() {
                         sidebar.classList.toggle('active');
                     });
                 }
+                
+                // Initial update
+                updateActiveState();
+                
+                // Listen for navigation events (Turbo/HTMX or traditional)
+                document.addEventListener('turbo:load', updateActiveState); // For Turbo
+                document.addEventListener('htmx:afterSettle', updateActiveState); // For HTMX
+                
+                // For traditional navigation
+                window.addEventListener('popstate', updateActiveState);
+                
+                // Intercept all link clicks to handle client-side navigation
+                document.addEventListener('click', function(e) {
+                    const link = e.target.closest('a');
+                    if (link && link.href && link.getAttribute('target') !== '_blank') {
+                        // Small delay to allow the navigation to complete
+                        setTimeout(updateActiveState, 50);
+                    }
+                });
             });
         </script>
     </body>
