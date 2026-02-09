@@ -28,12 +28,20 @@ class EvenementType extends AbstractType
             ->add('dateDebut', DateTimeType::class, [
                 'label' => 'Date de début',
                 'widget' => 'single_text',
-                'attr' => ['class' => 'form-control']
+                'html5' => true,
+                'attr' => [
+                    'class' => 'form-control',
+                ],
+                'required' => true
             ])
             ->add('dateFin', DateTimeType::class, [
                 'label' => 'Date de fin',
                 'widget' => 'single_text',
-                'attr' => ['class' => 'form-control']
+                'html5' => true,
+                'attr' => [
+                    'class' => 'form-control',
+                ],
+                'required' => true
             ])
             ->add('lieu', TextType::class, [
                 'label' => 'Lieu',

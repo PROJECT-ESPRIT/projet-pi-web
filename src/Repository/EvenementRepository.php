@@ -5,6 +5,7 @@ namespace App\Repository;
 use App\Entity\Evenement;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Doctrine\ORM\Tools\Pagination\Paginator;
 
 /**
  * @extends ServiceEntityRepository<Evenement>
@@ -37,6 +38,75 @@ class EvenementRepository extends ServiceEntityRepository
         if ($flush) {
             $this->getEntityManager()->flush();
         }
+    }
+
+    /**
+     * @return Evenement[]
+     */
+    public function searchAndSort(array $filters, int $page, int $perPage): Paginator
+    {
+        $qb = $this->createQueryBuilder('e')
+            ->leftJoin('e.organisateur', 'o')
+            ->addSelect('o');
+
+        if (!empty($filters['q'])) {
+            $query = '%' . strtolower($filters['q']) . '%';
+            $qb->andWhere(
+                'LOWER(e.titre) LIKE :q OR LOWER(e.description) LIKE :q OR LOWER(e.lieu) LIKE :q OR LOWER(o.nom) LIKE :q OR LOWER(o.prenom) LIKE :q'
+            )
+                ->setParameter('q', $query);
+        }
+
+        if (!empty($filters['lieu'])) {
+            $lieu = '%' . strtolower($filters['lieu']) . '%';
+            $qb->andWhere('LOWER(e.lieu) LIKE :lieu')
+                ->setParameter('lieu', $lieu);
+        }
+
+        if (!empty($filters['date_start'])) {
+            $qb->andWhere('e.dateDebut >= :dateStart')
+                ->setParameter('dateStart', $filters['date_start']);
+        }
+
+        if (!empty($filters['date_end'])) {
+            $qb->andWhere('e.dateDebut <= :dateEnd')
+                ->setParameter('dateEnd', $filters['date_end']);
+        }
+
+        if ($filters['prix_min'] !== null) {
+            $qb->andWhere('COALESCE(e.prix, 0) >= :prixMin')
+                ->setParameter('prixMin', $filters['prix_min']);
+        }
+
+        if ($filters['prix_max'] !== null) {
+            $qb->andWhere('COALESCE(e.prix, 0) <= :prixMax')
+                ->setParameter('prixMax', $filters['prix_max']);
+        }
+
+        $sortMap = [
+            'date_asc' => ['e.dateDebut', 'ASC'],
+            'date_desc' => ['e.dateDebut', 'DESC'],
+            'prix_asc' => ['COALESCE(e.prix, 0)', 'ASC'],
+            'prix_desc' => ['COALESCE(e.prix, 0)', 'DESC'],
+            'titre_asc' => ['e.titre', 'ASC'],
+            'titre_desc' => ['e.titre', 'DESC'],
+            'created_desc' => ['e.createdAt', 'DESC'],
+        ];
+
+        $sortKey = $filters['sort'] ?? 'date_asc';
+        if (!isset($sortMap[$sortKey])) {
+            $sortKey = 'date_asc';
+        }
+
+        [$sortField, $sortDir] = $sortMap[$sortKey];
+        $qb->addOrderBy($sortField, $sortDir)
+            ->addOrderBy('e.id', 'DESC');
+
+        $query = $qb->getQuery()
+            ->setFirstResult(($page - 1) * $perPage)
+            ->setMaxResults($perPage);
+
+        return new Paginator($query);
     }
 
 //    /**

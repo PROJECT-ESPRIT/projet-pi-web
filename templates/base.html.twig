@@ -21,8 +21,7 @@
                 flex: 1;
             }
             #sidebar {
-                min-width: 250px;
-                max-width: 250px;
+                min-width: fit-content;
                 background: #343a40;
                 color: #fff;
                 transition: all 0.3s;
@@ -33,8 +32,21 @@
                 top: 0;
             }
             #sidebar .sidebar-header {
-                padding: 20px;
+                padding: 15px 20px;
                 background: #2b3035;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+            #sidebar .sidebar-header h3 {
+                margin: 0;
+                color: #fff;
+            }
+            #sidebar .sidebar-header img {
+                max-width: 100%;
+                height: 35px;
+                width: 35px;
+                border-radius: 50%;
             }
             #sidebar ul.components {
                 padding: 20px 0;
@@ -105,7 +117,8 @@
                 <!-- Sidebar -->
                 <nav id="sidebar">
                     <div class="sidebar-header">
-                        <h3>🎨</h3>
+                        <img src="{{ asset('images/logo.png') }}" alt="Logo" class="img-fluid">
+                        <h3>ART CONNECT</h3>
                     </div>
 
                     <ul class="list-unstyled components flex-grow-1">
@@ -149,7 +162,10 @@
                             </li>
                         {% endif %}
                         <li>
-                            <a href="{{ path('app_reservation_my') }}"><i class="fas fa-ticket-alt me-2"></i> Mes Réservations</a>
+                            <a href="{{ path('app_reservation_my') }}">
+                                <i class="fas fa-ticket-alt me-2"></i>
+                                {{ is_granted('ROLE_ADMIN') ? 'Gestion des Réservations' : 'Mes Réservations' }}
+                            </a>
                         </li>
                         <li>
                             <a href="{{ path('app_donation_my') }}"><i class="fas fa-hand-holding-heart me-2"></i> Mes Dons</a>
@@ -213,7 +229,7 @@
             {# Guest Layout (Login/Register/Public Home) #}
             <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4 shadow-sm">
                 <div class="container">
-                    <a class="navbar-brand" href="{{ path('home') }}">🎨 Plateforme Artistique</a>
+                    <a class="navbar-brand" href="{{ path('home') }}">🎨 Art connect</a>
                     <div class="d-flex">
                         <a href="{{ path('login') }}" class="btn btn-outline-primary me-2">Connexion</a>
                         <a href="{{ path('register') }}" class="btn btn-primary">Inscription</a>
@@ -241,15 +257,72 @@
 
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
         <script>
-            // Simple sidebar toggle script
+            // Function to update active state
+            function updateActiveState() {
+                const currentPath = window.location.href;
+                console.log('Current URL:', currentPath);
+                
+                // Remove active class from all links first
+                document.querySelectorAll('#sidebar li').forEach(item => {
+                    item.classList.remove('active');
+                });
+                
+                // Find and activate matching link
+                let activeLinkFound = false;
+                document.querySelectorAll('#sidebar a[href]').forEach(link => {
+                    const linkHref = link.getAttribute('href');
+                    // Check if current URL contains the link's path
+                    if (currentPath.includes(linkHref) && linkHref !== '/') {
+                        console.log('Match found:', linkHref);
+                        link.parentElement.classList.add('active');
+                        activeLinkFound = true;
+                    }
+                });
+                
+                // If no match found, try to match the first segment
+                if (!activeLinkFound) {
+                    const firstSegment = window.location.pathname.split('/')[1];
+                    if (firstSegment) {
+                        document.querySelectorAll('#sidebar a[href]').forEach(link => {
+                            const linkPath = link.getAttribute('href');
+                            if (linkPath.includes(firstSegment)) {
+                                console.log('First segment match:', linkPath);
+                                link.parentElement.classList.add('active');
+                            }
+                        });
+                    }
+                }
+            }
+
+            // Run on page load
             document.addEventListener('DOMContentLoaded', function() {
+                // Toggle sidebar on mobile
                 const sidebarCollapse = document.getElementById('sidebarCollapse');
                 const sidebar = document.getElementById('sidebar');
-                if(sidebarCollapse) {
+                if (sidebarCollapse) {
                     sidebarCollapse.addEventListener('click', function() {
                         sidebar.classList.toggle('active');
                     });
                 }
+                
+                // Initial update
+                updateActiveState();
+                
+                // Listen for navigation events (Turbo/HTMX or traditional)
+                document.addEventListener('turbo:load', updateActiveState); // For Turbo
+                document.addEventListener('htmx:afterSettle', updateActiveState); // For HTMX
+                
+                // For traditional navigation
+                window.addEventListener('popstate', updateActiveState);
+                
+                // Intercept all link clicks to handle client-side navigation
+                document.addEventListener('click', function(e) {
+                    const link = e.target.closest('a');
+                    if (link && link.href && link.getAttribute('target') !== '_blank') {
+                        // Small delay to allow the navigation to complete
+                        setTimeout(updateActiveState, 50);
+                    }
+                });
             });
         </script>
     </body>

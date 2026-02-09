@@ -17,10 +17,44 @@ class ReservationController extends AbstractController
 {
     #[Route('/my-reservations', name: 'app_reservation_my', methods: ['GET'])]
     #[IsGranted('ROLE_USER')]
-    public function myReservations(ReservationRepository $reservationRepository): Response
+    public function myReservations(Request $request, ReservationRepository $reservationRepository): Response
     {
+        $isAdmin = $this->isGranted('ROLE_ADMIN');
+
+        $filterInput = [
+            'q' => trim((string) $request->query->get('q', '')),
+            'status' => trim((string) $request->query->get('status', '')),
+            'date_start' => (string) $request->query->get('date_start', ''),
+            'date_end' => (string) $request->query->get('date_end', ''),
+            'sort' => (string) $request->query->get('sort', 'date_desc'),
+        ];
+
+        $filters = [
+            'q' => $filterInput['q'],
+            'status' => $filterInput['status'],
+            'date_start' => $this->parseDate($filterInput['date_start']),
+            'date_end' => $this->parseDate($filterInput['date_end'], true),
+            'sort' => $filterInput['sort'],
+        ];
+
+        $page = max(1, (int) $request->query->get('page', 1));
+        $perPage = 10;
+        $paginator = $reservationRepository->searchAndSort($filters, $page, $perPage, $this->getUser(), $isAdmin);
+        $total = count($paginator);
+        $totalPages = max(1, (int) ceil($total / $perPage));
+        if ($page > $totalPages) {
+            $page = $totalPages;
+            $paginator = $reservationRepository->searchAndSort($filters, $page, $perPage, $this->getUser(), $isAdmin);
+        }
+
         return $this->render('reservation/my_reservations.html.twig', [
-            'reservations' => $reservationRepository->findBy(['participant' => $this->getUser()], ['dateReservation' => 'DESC']),
+            'reservations' => iterator_to_array($paginator, false),
+            'isAdmin' => $isAdmin,
+            'pageTitle' => $isAdmin ? 'Gestion des Réservations' : 'Mes Réservations',
+            'filter_input' => $filterInput,
+            'page' => $page,
+            'total_pages' => $totalPages,
+            'total' => $total,
         ]);
     }
 
@@ -41,7 +75,14 @@ class ReservationController extends AbstractController
             return $this->redirectToRoute('app_evenement_show', ['id' => $evenement->getId()]);
         }
 
-        // Check availability
+        // Vérifier si l'événement est déjà passé
+        $now = new \DateTime();
+        if ($evenement->getDateDebut() < $now) {
+            $this->addFlash('danger', 'Impossible de réserver un événement déjà passé.');
+            return $this->redirectToRoute('app_evenement_show', ['id' => $evenement->getId()]);
+        }
+
+        // Vérifier la disponibilité des places
         if ($evenement->getReservations()->count() >= $evenement->getNbPlaces()) {
             $this->addFlash('danger', 'Désolé, cet événement est complet.');
             return $this->redirectToRoute('app_evenement_show', ['id' => $evenement->getId()]);
@@ -50,7 +91,7 @@ class ReservationController extends AbstractController
         $reservation = new Reservation();
         $reservation->setEvenement($evenement);
         $reservation->setParticipant($user);
-        
+
         $entityManager->persist($reservation);
         $entityManager->flush();
 
@@ -74,5 +115,23 @@ class ReservationController extends AbstractController
         $this->addFlash('success', 'Réservation annulée.');
 
         return $this->redirectToRoute('app_reservation_my');
+    }
+
+    private function parseDate(?string $value, bool $endOfDay = false): ?\DateTimeImmutable
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        $date = \DateTimeImmutable::createFromFormat('Y-m-d', $value);
+        if ($date === false) {
+            return null;
+        }
+
+        if ($endOfDay) {
+            return $date->setTime(23, 59, 59);
+        }
+
+        return $date->setTime(0, 0, 0);
     }
 }

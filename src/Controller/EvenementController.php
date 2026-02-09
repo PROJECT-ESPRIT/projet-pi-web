@@ -17,10 +17,45 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 class EvenementController extends AbstractController
 {
     #[Route('/', name: 'app_evenement_index', methods: ['GET'])]
-    public function index(EvenementRepository $evenementRepository): Response
+    public function index(Request $request, EvenementRepository $evenementRepository): Response
     {
+        $filterInput = [
+            'q' => trim((string) $request->query->get('q', '')),
+            'lieu' => trim((string) $request->query->get('lieu', '')),
+            'date_start' => (string) $request->query->get('date_start', ''),
+            'date_end' => (string) $request->query->get('date_end', ''),
+            'prix_min' => (string) $request->query->get('prix_min', ''),
+            'prix_max' => (string) $request->query->get('prix_max', ''),
+            'sort' => (string) $request->query->get('sort', 'date_asc'),
+        ];
+
+        $filters = [
+            'q' => $filterInput['q'],
+            'lieu' => $filterInput['lieu'],
+            'date_start' => $this->parseDate($filterInput['date_start']),
+            'date_end' => $this->parseDate($filterInput['date_end'], true),
+            'prix_min' => $this->parseFloat($filterInput['prix_min']),
+            'prix_max' => $this->parseFloat($filterInput['prix_max']),
+            'sort' => $filterInput['sort'],
+        ];
+
+        $page = max(1, (int) $request->query->get('page', 1));
+        $perPage = 9;
+        $paginator = $evenementRepository->searchAndSort($filters, $page, $perPage);
+        $total = count($paginator);
+        $totalPages = max(1, (int) ceil($total / $perPage));
+        if ($page > $totalPages) {
+            $page = $totalPages;
+            $paginator = $evenementRepository->searchAndSort($filters, $page, $perPage);
+        }
+
         return $this->render('evenement/index.html.twig', [
-            'evenements' => $evenementRepository->findAll(),
+            'evenements' => iterator_to_array($paginator, false),
+            'filters' => $filters,
+            'filter_input' => $filterInput,
+            'page' => $page,
+            'total_pages' => $totalPages,
+            'total' => $total,
         ]);
     }
 
@@ -107,5 +142,36 @@ class EvenementController extends AbstractController
         }
 
         return $this->redirectToRoute('app_evenement_index', [], Response::HTTP_SEE_OTHER);
+    }
+
+    private function parseDate(?string $value, bool $endOfDay = false): ?\DateTimeImmutable
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        $date = \DateTimeImmutable::createFromFormat('Y-m-d', $value);
+        if ($date === false) {
+            return null;
+        }
+
+        if ($endOfDay) {
+            return $date->setTime(23, 59, 59);
+        }
+
+        return $date->setTime(0, 0, 0);
+    }
+
+    private function parseFloat(?string $value): ?float
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        if (!is_numeric($value)) {
+            return null;
+        }
+
+        return (float) $value;
     }
 }
