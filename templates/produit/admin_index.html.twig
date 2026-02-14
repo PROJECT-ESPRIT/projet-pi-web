@@ -1,41 +1,96 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Gestion des Produits{% endblock %}
+{% block title %}Gestion Produits{% endblock %}
 
 {% block body %}
-    <h1>Gestion des Produits</h1>
+<div class="container mt-5">
 
-    <div class="mb-3 text-end">
-        <a href="{{ path('app_produit_new') }}" class="btn btn-success">Ajouter un produit</a>
+<h2>Gestion des Produits</h2>
+
+<a href="{{ path('app_produit_new') }}"
+   class="btn btn-primary mb-3">
+   Ajouter Produit
+</a>
+
+<form method="get" class="row g-2 mb-4">
+
+    <div class="col">
+        <input type="text" name="nom"
+               class="form-control"
+               placeholder="Nom"
+               value="{{ app.request.get('nom') }}">
     </div>
 
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Id</th>
-                <th>Nom</th>
-                <th>Prix</th>
-                <th>Stock</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-        {% for produit in produits %}
-            <tr>
-                <td>{{ produit.id }}</td>
-                <td>{{ produit.nom }}</td>
-                <td>{{ produit.prix }} TND</td>
-                <td>{{ produit.stock }}</td>
-                <td>
-                    <a href="{{ path('app_produit_edit', {'id': produit.id}) }}" class="btn btn-sm btn-warning">Éditer</a>
-                    {{ include('produit/_delete_form.html.twig') }}
-                </td>
-            </tr>
-        {% else %}
-            <tr>
-                <td colspan="5">Aucun produit trouvé</td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+    <div class="col">
+        <input type="number" name="prixMin"
+               step="0.01"
+               class="form-control"
+               placeholder="Prix Min"
+               value="{{ app.request.get('prixMin') }}">
+    </div>
+
+    <div class="col">
+        <input type="number" name="prixMax"
+               step="0.01"
+               class="form-control"
+               placeholder="Prix Max"
+               value="{{ app.request.get('prixMax') }}">
+    </div>
+
+    <div class="col">
+        <button class="btn btn-success">Filtrer</button>
+    </div>
+
+</form>
+
+<table class="table table-bordered table-hover">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Image</th>
+            <th>Nom</th>
+            <th>Prix</th>
+            <th>Stock</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+
+    <tbody>
+    {% for produit in produits %}
+        <tr>
+            <td>{{ produit.id }}</td>
+
+            <td>
+                {% if produit.image %}
+                    <img src="{{ asset('uploads/images/' ~ produit.image) }}"
+                         width="60">
+                {% else %}
+                    -
+                {% endif %}
+            </td>
+
+            <td>{{ produit.nom }}</td>
+            <td>{{ produit.prix }} TND</td>
+            <td>{{ produit.stock }}</td>
+
+            <td>
+                <a href="{{ path('app_produit_edit', {'id': produit.id}) }}"
+                   class="btn btn-warning btn-sm">Edit</a>
+
+                {{ include('produit/_delete_form.html.twig') }}
+            </td>
+        </tr>
+    {% else %}
+        <tr>
+            <td colspan="6">Aucun produit trouvé</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+<div class="d-flex justify-content-center">
+    {{ knp_pagination_render(produits) }}
+</div>
+
+</div>
 {% endblock %}
