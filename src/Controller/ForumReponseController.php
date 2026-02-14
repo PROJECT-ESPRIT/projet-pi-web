@@ -106,13 +106,18 @@ final class ForumReponseController extends AbstractController
     #[Route('/{id}/edit', name: 'app_forum_reponse_edit', methods: ['GET', 'POST'])]
     public function edit(Request $request, ForumReponse $forumReponse, EntityManagerInterface $entityManager): Response
     {
+        // Vérifier que c'est l'auteur qui peut éditer
+        if ($forumReponse->getAuteur() !== $this->getUser()) {
+            throw $this->createAccessDeniedException('Vous ne pouvez éditer que vos propres réponses.');
+        }
+
         $form = $this->createForm(ForumReponseType::class, $forumReponse);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
             $entityManager->flush();
 
-            return $this->redirectToRoute('app_forum_reponse_index', [], Response::HTTP_SEE_OTHER);
+            return $this->redirectToRoute('app_forum_show', ['id' => $forumReponse->getForum()->getId()], Response::HTTP_SEE_OTHER);
         }
 
         return $this->render('forum_reponse/edit.html.twig', [
@@ -121,14 +126,21 @@ final class ForumReponseController extends AbstractController
         ]);
     }
 
-    #[Route('/{id}', name: 'app_forum_reponse_delete', methods: ['POST'])]
+    #[Route('/{id}/delete', name: 'app_forum_reponse_delete', methods: ['POST'])]
     public function delete(Request $request, ForumReponse $forumReponse, EntityManagerInterface $entityManager): Response
     {
+        // Vérifier que c'est l'auteur qui peut supprimer
+        if ($forumReponse->getAuteur() !== $this->getUser()) {
+            throw $this->createAccessDeniedException('Vous ne pouvez supprimer que vos propres réponses.');
+        }
+
+        $forumId = $forumReponse->getForum()->getId();
+        
         if ($this->isCsrfTokenValid('delete'.$forumReponse->getId(), $request->getPayload()->getString('_token'))) {
             $entityManager->remove($forumReponse);
             $entityManager->flush();
         }
 
-        return $this->redirectToRoute('app_forum_reponse_index', [], Response::HTTP_SEE_OTHER);
+        return $this->redirectToRoute('app_forum_show', ['id' => $forumId], Response::HTTP_SEE_OTHER);
     }
 }

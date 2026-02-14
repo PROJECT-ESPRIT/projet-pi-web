@@ -1,46 +1,108 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Forum{% endblock %}
+{% block title %}Forum - {{ forum.sujet }}{% endblock %}
 
 {% block body %}
-    <h1>Forum</h1>
+    <div class="container mt-5">
+        <div class="mb-4">
+            <a href="{{ path('app_forum_index') }}" class="btn btn-secondary">Retour</a>
+        </div>
 
-    <table class="table">
-        <tbody>
-            <tr>
-                <th>Id</th>
-                <td>{{ forum.id }}</td>
-            </tr>
-            <tr>
-                <th>Nom</th>
-                <td>{{ forum.nom }}</td>
-            </tr>
-            <tr>
-                <th>Prenom</th>
-                <td>{{ forum.prenom }}</td>
-            </tr>
-            <tr>
-                <th>Email</th>
-                <td>{{ forum.email }}</td>
-            </tr>
-            <tr>
-                <th>Sujet</th>
-                <td>{{ forum.sujet }}</td>
-            </tr>
-            <tr>
-                <th>Message</th>
-                <td>{{ forum.message }}</td>
-            </tr>
-            <tr>
-                <th>DateCreation</th>
-                <td>{{ forum.dateCreation ? forum.dateCreation|date('Y-m-d H:i:s') : '' }}</td>
-            </tr>
-        </tbody>
-    </table>
+        <!-- Message original -->
+        <div class="card mb-5">
+            <div class="card-header">
+                <h2>{{ forum.sujet }}</h2>
+            </div>
+            <div class="card-body">
+                <p><strong>De:</strong> {{ forum.prenom }} {{ forum.nom }} ({{ forum.email }})</p>
+                <p><strong>Date:</strong> {{ forum.dateCreation ? forum.dateCreation|date('d/m/Y H:i') : '' }}</p>
+                <hr>
+                <p>{{ forum.message }}</p>
+            </div>
+        </div>
 
-    <a href="{{ path('app_forum_index') }}">back to list</a>
+        <!-- Réponses -->
+        <div class="mb-5">
+            <h4>Réponses ({{ forum.reponses|length }})</h4>
+            
+            {% if forum.reponses|length > 0 %}
+                {% for reponse in forum.reponses %}
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <strong>{{ reponse.auteur.prenom }} {{ reponse.auteur.nom }}</strong>
+                            {% if reponse.auteur.roles and 'ROLE_ADMIN' in reponse.auteur.roles %}
+                                <span class="badge badge-danger">Admin</span>
+                            {% endif %}
+                            <small class="float-end text-muted">{{ reponse.dateReponse ? reponse.dateReponse|date('d/m/Y H:i') : '' }}</small>
+                        </div>
+                        <div class="card-body">
+                            {{ reponse.contenu }}
+                        </div>
+                        {% if app.user and reponse.auteur == app.user %}
+                            <div class="card-footer">
+                                <a href="{{ path('app_forum_reponse_edit', {'id': reponse.id}) }}" class="btn btn-sm btn-warning">Modifier</a>
+                                <form method="post" action="{{ path('app_forum_reponse_delete', {'id': reponse.id}) }}" style="display: inline;" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette réponse ?');">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ reponse.id) }}">
+                                    <button class="btn btn-sm btn-danger">Supprimer</button>
+                                </form>
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-muted">Aucune réponse pour le moment.</p>
+            {% endif %}
+        </div>
 
-    <a href="{{ path('app_forum_edit', {'id': forum.id}) }}">edit</a>
+        <!-- Formulaire de réponse admin -->
+        {% if is_granted('ROLE_USER') %}
+            <div class="card">
+                <div class="card-header">
+                    <h4>Ajouter une réponse</h4>
+                </div>
+                <div class="card-body">
+                    {{ form_start(form) }}
+                        <div class="form-group mb-3">
+                            {{ form_label(form.contenu) }}
+                            {{ form_widget(form.contenu, {'attr': {'class': 'form-control', 'rows': 5}}) }}
+                            {{ form_errors(form.contenu) }}
+                        </div>
 
-    {{ include('forum/_delete_form.html.twig') }}
+                        <div class="form-group mb-3">
+                            <label>Signé par</label>
+                            <input type="text" class="form-control" value="{{ app.user.prenom }} {{ app.user.nom }}" disabled>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            {{ form_label(form.dateReponse) }}
+                            {{ form_widget(form.dateReponse, {'attr': {'class': 'form-control'}}) }}
+                            {{ form_errors(form.dateReponse) }}
+                        </div>
+
+                        <div class="form-group mb-3">
+                            {{ form_label(form.forum) }}
+                            {{ form_widget(form.forum, {'attr': {'class': 'form-control'}}) }}
+                            {{ form_errors(form.forum) }}
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Envoyer</button>
+                        <a href="{{ path('app_forum_index') }}" class="btn btn-secondary">Annuler</a>
+                    {{ form_end(form) }}
+                </div>
+            </div>
+
+            <hr class="my-5">
+            
+            {% if is_granted('ROLE_ADMIN') %}
+                <div>
+                    <a href="{{ path('app_forum_edit', {'id': forum.id}) }}" class="btn btn-warning">Modifier</a>
+                    {{ include('forum/_delete_form.html.twig') }}
+                </div>
+            {% endif %}
+        {% else %}
+            <div class="alert alert-warning">
+                Vous devez être connecté pour répondre à ce message. <a href="{{ path('app_login') }}">Se connecter</a>
+            </div>
+        {% endif %}
+    </div>
 {% endblock %}

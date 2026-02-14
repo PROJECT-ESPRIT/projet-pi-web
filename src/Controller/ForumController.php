@@ -3,13 +3,16 @@
 namespace App\Controller;
 
 use App\Entity\Forum;
+use App\Entity\ForumReponse;
 use App\Form\ForumType;
+use App\Form\ForumReponseType;
 use App\Repository\ForumRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[Route('/forum')]
 final class ForumController extends AbstractController
@@ -51,11 +54,28 @@ final class ForumController extends AbstractController
         ]);
     }
 
-    #[Route('/{id<\\d+>}', name: 'app_forum_show', methods: ['GET'])]
-    public function show(Forum $forum): Response
+    #[Route('/{id<\\d+>}', name: 'app_forum_show', methods: ['GET', 'POST'])]
+    public function show(Forum $forum, Request $request, EntityManagerInterface $entityManager): Response
     {
+        $forumReponse = new ForumReponse();
+        $forumReponse->setForum($forum);
+        $forumReponse->setDateReponse(new \DateTimeImmutable());
+        $forumReponse->setAuteur($this->getUser());
+        
+        $form = $this->createForm(ForumReponseType::class, $forumReponse);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $entityManager->persist($forumReponse);
+            $entityManager->flush();
+
+            $this->addFlash('success', 'Réponse ajoutée avec succès.');
+            return $this->redirectToRoute('app_forum_show', ['id' => $forum->getId()], Response::HTTP_SEE_OTHER);
+        }
+
         return $this->render('forum/show.html.twig', [
             'forum' => $forum,
+            'form' => $form,
         ]);
     }
 
@@ -77,7 +97,7 @@ final class ForumController extends AbstractController
         ]);
     }
 
-    #[Route('/{id<\\d+>}', name: 'app_forum_delete', methods: ['POST'])]
+    #[Route('/{id<\\d+>}/delete', name: 'app_forum_delete', methods: ['POST'])]
     public function delete(Request $request, Forum $forum, EntityManagerInterface $entityManager): Response
     {
         if ($this->isCsrfTokenValid('delete'.$forum->getId(), $request->getPayload()->getString('_token'))) {
