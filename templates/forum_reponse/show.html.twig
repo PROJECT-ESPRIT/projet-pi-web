@@ -1,0 +1,30 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}ForumReponse{% endblock %}
+
+{% block body %}
+    <h1>ForumReponse</h1>
+
+    <table class="table">
+        <tbody>
+            <tr>
+                <th>Id</th>
+                <td>{{ forum_reponse.id }}</td>
+            </tr>
+            <tr>
+                <th>Contenu</th>
+                <td>{{ forum_reponse.contenu }}</td>
+            </tr>
+            <tr>
+                <th>DateReponse</th>
+                <td>{{ forum_reponse.dateReponse ? forum_reponse.dateReponse|date('Y-m-d H:i:s') : '' }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <a href="{{ path('app_forum_reponse_index') }}">back to list</a>
+
+    <a href="{{ path('app_forum_reponse_edit', {'id': forum_reponse.id}) }}">edit</a>
+
+    {{ include('forum_reponse/_delete_form.html.twig') }}
+{% endblock %}

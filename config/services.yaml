@@ -1,0 +1,25 @@
+# This file is the entry point to configure your own services.
+# https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
+
+parameters:
+    mailer_from_default: 'no-reply@artconnect.local'
+    mailer_from: '%env(default:mailer_from_default:MAILER_FROM)%'
+
+services:
+    # Configuration par défaut
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    # Enregistre toutes les classes de src/ comme services
+    App\:
+        resource: '../src/'
+        exclude:
+            - '../src/DependencyInjection/'
+            - '../src/Entity/'
+            - '../src/Kernel.php'
+
+    # Configuration explicite du service d'envoi d'email
+    App\Service\ResetPasswordMailer:
+        arguments:
+            $fromEmail: '%mailer_from%'

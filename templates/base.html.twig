@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="fr">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{% block title %}Plateforme de Réservation{% endblock %}</title>
+        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>🎨</text></svg>">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700&display=swap" rel="stylesheet">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+        <!-- Font Awesome for Icons -->
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+        
+        <style>
+            body {
+                min-height: 100vh;
+                display: flex;
+                flex-direction: column;
+            }
+            .wrapper {
+                display: flex;
+                width: 100%;
+                flex: 1;
+            }
+            #sidebar {
+                min-width: fit-content;
+                background: linear-gradient(180deg, #1E0F75 0%, #1C1DAB 100%);
+                color: #fff;
+                transition: all 0.3s;
+                display: flex;
+                flex-direction: column;
+                height: 100vh; /* Full height */
+                position: sticky; /* Stick to top */
+                top: 0;
+            }
+            #sidebar .sidebar-header {
+                padding: 15px 20px;
+                background: rgba(30, 15, 117, 0.75);
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+            #sidebar .sidebar-header h3 {
+                margin: 0;
+                color: #fff;
+            }
+            #sidebar .sidebar-header img {
+                max-width: 100%;
+                height: 35px;
+                width: 35px;
+                border-radius: 50%;
+            }
+            #sidebar ul.components {
+                padding: 20px 0;
+                border-bottom: 1px solid rgba(203, 216, 232, 0.55);
+                overflow-y: auto;
+                flex-grow: 1; /* Ensure it takes available space */
+            }
+            #sidebar ul p {
+                color: #fff;
+                padding: 10px;
+            }
+            #sidebar ul li a {
+                padding: 15px 20px;
+                font-size: 1.1em;
+                display: block;
+                color: rgba(255, 255, 255, 0.8);
+                text-decoration: none;
+            }
+            #sidebar ul li a:hover {
+                color: #fff;
+                background: rgba(173, 198, 229, 0.26);
+            }
+            #sidebar ul li.active > a {
+                color: #fff;
+                background: rgba(191, 140, 225, 0.35);
+            }
+            .content {
+                width: 100%;
+                padding: 20px;
+                background: linear-gradient(180deg, #CBD8E8 0%, #ffffff 100%);
+            }
+            /* Custom Scrollbar for Sidebar */
+            #sidebar ul.components::-webkit-scrollbar {
+                width: 6px;
+            }
+            #sidebar ul.components::-webkit-scrollbar-track {
+                background: #1C1DAB; 
+            }
+            #sidebar ul.components::-webkit-scrollbar-thumb {
+                background: #ADC6E5; 
+                border-radius: 3px;
+            }
+            #sidebar ul.components::-webkit-scrollbar-thumb:hover {
+                background: #BF8CE1; 
+            }
+
+            /* Toggle for responsive */
+            @media (max-width: 768px) {
+                #sidebar {
+                    margin-left: -250px;
+                }
+                #sidebar.active {
+                    margin-left: 0;
+                }
+            }
+        </style>
+
+        {% block stylesheets %}{% endblock %}
+
+        {% block javascripts %}
+            {% block importmap %}{{ importmap('app') }}{% endblock %}
+        {% endblock %}
+    </head>
+    <body class="{{ app.user ? 'back-mode' : 'front-mode' }}">
+        {% if app.user %}
+            {# Back-office / Logged-in Layout #}
+            <div class="wrapper">
+                <!-- Sidebar -->
+                <nav id="sidebar">
+                    <div class="sidebar-header">
+                        <img src="{{ asset('images/logo.png') }}" alt="Logo" class="img-fluid">
+                        <h3>ART CONNECT</h3>
+                    </div>
+
+                    <ul class="list-unstyled components flex-grow-1">
+                        <li>
+                            <a href="{{ path('home') }}"><i class="fas fa-home me-2"></i> Accueil</a>
+                        </li>
+                        
+                        {# Admin Only #}
+                        {% if is_granted('ROLE_ADMIN') %}
+                            <li>
+                                <a href="{{ path('app_user_index') }}"><i class="fas fa-users me-2"></i> Utilisateurs</a>
+                            </li>
+                            <li>
+                                <a href="{{ path('app_type_don_index') }}"><i class="fas fa-tags me-2"></i> Types de Don</a>
+                            </li>
+                            <li>
+                                <a href="{{ path('app_donation_index') }}"><i class="fas fa-hand-holding-heart me-2"></i> Liste des Dons</a>
+                            </li>
+                        {% endif %}
+
+                        {# Artists and Admins #}
+                        {% if is_granted('ROLE_ARTISTE') %}
+                            <li>
+                                <a href="{{ path('app_evenement_index') }}"><i class="fas fa-calendar-alt me-2"></i> Gérer Événements</a>
+                            </li>
+                            <li>
+                                <a href="{{ path('app_produit_admin_index') }}"><i class="fas fa-box me-2"></i> Gérer Produits</a>
+                            </li>
+                            <li>
+                                <a href="{{ path('app_commande_index') }}"><i class="fas fa-shopping-cart me-2"></i> Gérer Commandes</a>
+                            </li>
+                        {% endif %}
+
+                        {# Everyone #}
+                        {% if not is_granted('ROLE_ARTISTE') %}
+                            <li>
+                                <a href="{{ path('app_evenement_index') }}"><i class="fas fa-search me-2"></i> Voir les Événements</a>
+                            </li>
+                            <li>
+                                <a href="{{ path('app_produit_index') }}"><i class="fas fa-store me-2"></i> Boutique Solidaire</a>
+                            </li>
+                        {% endif %}
+                        <li>
+                            <a href="{{ path('app_reservation_my') }}">
+                                <i class="fas fa-ticket-alt me-2"></i>
+                                {{ is_granted('ROLE_ADMIN') ? 'Gestion des Réservations' : 'Mes Réservations' }}
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ path('app_donation_my') }}"><i class="fas fa-hand-holding-heart me-2"></i> Mes Dons</a>
+                        </li>
+                        <li>
+                            <a href="{{ path('app_commande_my') }}"><i class="fas fa-shopping-bag me-2"></i> Mes Commandes</a>
+                        </li>
+                        
+                        {# Forum Section #}
+                        <li>
+                            <a href="{{ path('app_forum_index') }}"><i class="fas fa-comments me-2"></i> Forum / Contact</a>
+                        </li>
+                        {% if is_granted('ROLE_ADMIN') %}
+                            <li>
+                                <a href="{{ path('app_forum_reponse_index') }}"><i class="fas fa-reply me-2"></i> Gérer Réponses</a>
+                            </li>
+                        {% endif %}
+                        
+                        <li>
+                            <a href="#"><i class="fas fa-user me-2"></i> Mon Profil</a>
+                        </li>
+                    </ul>
+
+                    <div class="p-3 border-top border-secondary">
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-user-circle fa-2x text-light"></i>
+                            </div>
+                            <div class="flex-grow-1 ms-3 overflow-hidden">
+                                <h6 class="mb-0 text-truncate" title="{{ app.user.prenom }} {{ app.user.nom }}">
+                                    {{ app.user.prenom }} {{ app.user.nom }}
+                                </h6>
+                                <small class="text-uppercase" style="font-size: 0.7rem;">
+                                    {{ (app.user.roles|first)|default('ROLE_USER')|replace({'ROLE_': ''}) }}
+                                </small>
+                            </div>
+                        </div>
+                        <a href="{{ path('logout') }}" class="btn btn-outline-danger btn-sm w-100">
+                            <i class="fas fa-sign-out-alt me-1"></i> Déconnexion
+                        </a>
+                    </div>
+                </nav>
+
+                <!-- Page Content -->
+                <div class="content">
+                    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm rounded mb-4 d-md-none">
+                        <div class="container-fluid">
+                            <button type="button" id="sidebarCollapse" class="btn btn-primary">
+                                <i class="fas fa-bars"></i>
+                            </button>
+                        </div>
+                    </nav>
+
+                    {# Flash Messages #}
+                    {% for message in app.flashes('success') %}
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                    {% for message in app.flashes('error') %}
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+
+                    {% block body %}{% endblock %}
+                </div>
+            </div>
+        {% else %}
+            {# Guest Layout (Login/Register/Public Home) #}
+            <nav class="navbar navbar-expand-lg navbar-light guest-nav mb-4 shadow-sm">
+                <div class="container public-shell">
+                    <a class="navbar-brand guest-brand" href="{{ path('home') }}">ART CONNECT</a>
+                    <div class="d-flex">
+                        <a href="{{ path('login') }}" class="btn btn-outline-primary me-2">Connexion</a>
+                        <a href="{{ path('register') }}" class="btn btn-primary">Inscription</a>
+                    </div>
+                </div>
+            </nav>
+            
+            <div class="container public-shell">
+                {# Flash Messages for Guests #}
+                {% for message in app.flashes('success') %}
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+                {% for message in app.flashes('error') %}
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+                {% for message in app.flashes('info') %}
+                    <div class="alert alert-info alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+                
+                {% block body_guest %}
+                    {% block body_public %}
+                        {# Fallback if child templates use 'body' block #}
+                        {{ block('body') }}
+                    {% endblock %}
+                {% endblock %}
+            </div>
+        {% endif %}
+
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        <script>
+            // Function to update active state
+            function updateActiveState() {
+                const currentPath = window.location.href;
+                console.log('Current URL:', currentPath);
+                
+                // Remove active class from all links first
+                document.querySelectorAll('#sidebar li').forEach(item => {
+                    item.classList.remove('active');
+                });
+                
+                // Find and activate matching link
+                let activeLinkFound = false;
+                document.querySelectorAll('#sidebar a[href]').forEach(link => {
+                    const linkHref = link.getAttribute('href');
+                    // Check if current URL contains the link's path
+                    if (currentPath.includes(linkHref) && linkHref !== '/') {
+                        console.log('Match found:', linkHref);
+                        link.parentElement.classList.add('active');
+                        activeLinkFound = true;
+                    }
+                });
+                
+                // If no match found, try to match the first segment
+                if (!activeLinkFound) {
+                    const firstSegment = window.location.pathname.split('/')[1];
+                    if (firstSegment) {
+                        document.querySelectorAll('#sidebar a[href]').forEach(link => {
+                            const linkPath = link.getAttribute('href');
+                            if (linkPath.includes(firstSegment)) {
+                                console.log('First segment match:', linkPath);
+                                link.parentElement.classList.add('active');
+                            }
+                        });
+                    }
+                }
+            }
+
+            // Run on page load
+            document.addEventListener('DOMContentLoaded', function() {
+                // Toggle sidebar on mobile
+                const sidebarCollapse = document.getElementById('sidebarCollapse');
+                const sidebar = document.getElementById('sidebar');
+                if (sidebarCollapse) {
+                    sidebarCollapse.addEventListener('click', function() {
+                        sidebar.classList.toggle('active');
+                    });
+                }
+                
+                // Initial update
+                updateActiveState();
+                
+                // Listen for navigation events (Turbo/HTMX or traditional)
+                document.addEventListener('turbo:load', updateActiveState); // For Turbo
+                document.addEventListener('htmx:afterSettle', updateActiveState); // For HTMX
+                
+                // For traditional navigation
+                window.addEventListener('popstate', updateActiveState);
+                
+                // Intercept all link clicks to handle client-side navigation
+                document.addEventListener('click', function(e) {
+                    const link = e.target.closest('a');
+                    if (link && link.href && link.getAttribute('target') !== '_blank') {
+                        // Small delay to allow the navigation to complete
+                        setTimeout(updateActiveState, 50);
+                    }
+                });
+            });
+        </script>
+    </body>
+</html>

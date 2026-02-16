@@ -1,0 +1,53 @@
+{{ form_start(form, {'attr': {'novalidate': 'novalidate'}}) }}
+    <div class="row">
+        <div class="col-md-12 mb-3">
+            {{ form_label(form.titre) }}
+            {{ form_widget(form.titre, {'attr': {'class': 'form-control' ~ (form.titre.vars.valid ? '' : ' is-invalid')}}) }}
+            {{ form_errors(form.titre) }}
+        </div>
+        <div class="col-md-12 mb-3">
+            {{ form_label(form.description) }}
+            {{ form_widget(form.description, {'attr': {'class': 'form-control' ~ (form.description.vars.valid ? '' : ' is-invalid')}}) }}
+            {{ form_errors(form.description) }}
+        </div>
+        <div class="col-md-6 mb-3">
+            {{ form_label(form.dateDebut) }}
+            {{ form_widget(form.dateDebut, {'attr': {'class': 'form-control' ~ (form.dateDebut.vars.valid ? '' : ' is-invalid')}}) }}
+            {{ form_errors(form.dateDebut) }}
+        </div>
+        <div class="col-md-6 mb-3">
+            {{ form_label(form.dateFin) }}
+            {{ form_widget(form.dateFin, {'attr': {'class': 'form-control' ~ (form.dateFin.vars.valid ? '' : ' is-invalid')}}) }}
+            {{ form_errors(form.dateFin) }}
+        </div>
+        <div class="col-md-6 mb-3">
+            {{ form_label(form.lieu) }}
+            {{ form_widget(form.lieu, {'attr': {'class': 'form-control' ~ (form.lieu.vars.valid ? '' : ' is-invalid')}}) }}
+            {{ form_errors(form.lieu) }}
+        </div>
+        <div class="col-md-3 mb-3">
+            {{ form_label(form.nbPlaces) }}
+            {{ form_widget(form.nbPlaces, {'attr': {'class': 'form-control' ~ (form.nbPlaces.vars.valid ? '' : ' is-invalid')}}) }}
+            {{ form_errors(form.nbPlaces) }}
+        </div>
+        <div class="col-md-3 mb-3">
+            {{ form_label(form.prix) }}
+            {{ form_widget(form.prix, {'attr': {'class': 'form-control' ~ (form.prix.vars.valid ? '' : ' is-invalid')}}) }}
+            {{ form_errors(form.prix) }}
+        </div>
+        <div class="col-md-3 mb-3">
+            {{ form_label(form.ageMin) }}
+            {{ form_widget(form.ageMin, {'attr': {'class': 'form-control' ~ (form.ageMin.vars.valid ? '' : ' is-invalid')}}) }}
+            {{ form_errors(form.ageMin) }}
+        </div>
+        <div class="col-md-3 mb-3">
+            {{ form_label(form.ageMax) }}
+            {{ form_widget(form.ageMax, {'attr': {'class': 'form-control' ~ (form.ageMax.vars.valid ? '' : ' is-invalid')}}) }}
+            {{ form_errors(form.ageMax) }}
+        </div>
+    </div>
+    
+    <div class="d-grid mt-4">
+        <button type="submit" class="btn btn-primary btn-lg">{{ button_label|default('Enregistrer') }}</button>
+    </div>
+{{ form_end(form) }}

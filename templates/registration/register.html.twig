@@ -1,0 +1,67 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Inscription - Plateforme de Réservation{% endblock %}
+
+{% block body %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+        <div class="card shadow">
+            <div class="card-body p-4">
+                <h2 class="card-title text-center mb-4">Inscription</h2>
+                
+                {{ form_start(registrationForm, {'attr': {'novalidate': 'novalidate'}}) }}
+                    <div class="mb-3">
+                        {{ form_label(registrationForm.email) }}
+                        {{ form_widget(registrationForm.email) }}
+                        {{ form_errors(registrationForm.email) }}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form_label(registrationForm.nom) }}
+                        {{ form_widget(registrationForm.nom) }}
+                        {{ form_errors(registrationForm.nom) }}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form_label(registrationForm.prenom) }}
+                        {{ form_widget(registrationForm.prenom) }}
+                        {{ form_errors(registrationForm.prenom) }}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form_label(registrationForm.telephone) }}
+                        {{ form_widget(registrationForm.telephone) }}
+                        {{ form_errors(registrationForm.telephone) }}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form_label(registrationForm.role) }}
+                        {{ form_widget(registrationForm.role) }}
+                        {{ form_errors(registrationForm.role) }}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form_label(registrationForm.plainPassword.first) }}
+                        {{ form_widget(registrationForm.plainPassword.first) }}
+                        {{ form_errors(registrationForm.plainPassword.first) }}
+                    </div>
+
+                    <div class="mb-4">
+                        {{ form_label(registrationForm.plainPassword.second) }}
+                        {{ form_widget(registrationForm.plainPassword.second) }}
+                        {{ form_errors(registrationForm.plainPassword.second) }}
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg">S'inscrire</button>
+                    </div>
+                {{ form_end(registrationForm) }}
+
+                <div class="text-center mt-3">
+                    <p class="mb-0">Déjà un compte ? <a href="{{ path('login') }}">Connectez-vous</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

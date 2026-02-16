@@ -1,0 +1,308 @@
+﻿{% extends 'base.html.twig' %}
+
+{% block title %}Accueil - Art Connect{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .landing-wrap {
+            max-width: 1180px;
+            margin: 0 auto;
+        }
+
+        .home-action-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-start;
+            gap: 0.7rem;
+        }
+
+        .home-action-buttons .btn {
+            border: 0;
+            border-radius: 999px;
+            font-weight: 700;
+            min-width: 130px;
+            color: #fff;
+            box-shadow: 0 8px 18px rgba(30, 15, 117, 0.18);
+        }
+
+        .btn-product { background: linear-gradient(135deg, #3785D8, #1C1DAB); }
+        .btn-event { background: linear-gradient(135deg, #1C1DAB, #1E0F75); }
+        .btn-forum { background: linear-gradient(135deg, #1E0F75, #BF8CE1); }
+        .btn-charity { background: linear-gradient(135deg, #ADC6E5, #3785D8); color: #1d1746; }
+        .btn-about { background: linear-gradient(135deg, #EBB2C3, #E893C5); color: #1E0F75; }
+
+        .home-hero {
+            background: linear-gradient(120deg, rgba(30, 15, 117, 0.92), rgba(55, 133, 216, 0.8)) !important;
+            color: #fff !important;
+            border-radius: 24px;
+            padding: 2.6rem 2rem !important;
+            box-shadow: 0 18px 34px rgba(30, 15, 117, 0.22);
+        }
+
+        .home-hero .lead {
+            max-width: 760px;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .home-hero .btn {
+            min-width: 160px;
+        }
+
+        .feature-card {
+            border-radius: 18px !important;
+            box-shadow: 0 10px 24px rgba(30, 15, 117, 0.14);
+            padding: 1.15rem !important;
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .feature-card .btn {
+            margin-top: auto;
+            align-self: flex-start;
+            border-radius: 10px;
+            padding: 0.45rem 0.95rem;
+        }
+
+        .feature-card--event { background: linear-gradient(160deg, #1C1DAB 0%, #1E0F75 100%) !important; color: #fff; }
+        .feature-card--product { background: linear-gradient(160deg, #3785D8 0%, #1C1DAB 100%) !important; color: #fff; }
+        .feature-card--forum { background: linear-gradient(160deg, #1E0F75 0%, #BF8CE1 100%) !important; color: #fff; }
+        .feature-card--charity { background: linear-gradient(160deg, #ADC6E5 0%, #3785D8 100%) !important; color: #1d1746; }
+
+        .feature-card--event p,
+        .feature-card--product p,
+        .feature-card--forum p {
+            color: rgba(255, 255, 255, 0.92) !important;
+        }
+
+        .feature-card--charity p {
+            color: rgba(29, 23, 70, 0.95) !important;
+        }
+
+        .cta-strip {
+            border-radius: 20px !important;
+            padding: 1.2rem 1.4rem !important;
+            box-shadow: 0 10px 20px rgba(30, 15, 117, 0.08);
+        }
+
+        .about-front {
+            margin-top: 1rem;
+        }
+
+        .about-front h2 {
+            color: #1E0F75;
+            font-weight: 700;
+        }
+
+        .about-front .about-item {
+            background: #fff;
+            border: 1px solid rgba(30, 15, 117, 0.14);
+            border-radius: 16px;
+            padding: 1rem 1.1rem;
+            box-shadow: 0 8px 18px rgba(30, 15, 117, 0.08);
+        }
+
+        .about-front ul {
+            margin-bottom: 0;
+        }
+
+        .photo-gallery {
+            margin: 1.2rem 0 1.4rem;
+        }
+
+        .gallery-card {
+            border-radius: 18px;
+            overflow: hidden;
+            box-shadow: 0 10px 24px rgba(30, 15, 117, 0.12);
+            border: 1px solid rgba(30, 15, 117, 0.14);
+            background: #fff;
+            height: 100%;
+        }
+
+        .gallery-card img {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .home-action-buttons {
+                justify-content: center;
+            }
+
+            .home-action-buttons .btn {
+                min-width: 118px;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+{% if app.user %}
+    <section class="home-panel mb-4">
+        <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 align-items-lg-center">
+            <div>
+                <h1 class="h3 mb-2">Bonjour {{ user.prenom ?: 'Membre' }}</h1>
+                <p class="text-muted mb-2">Bienvenue dans votre espace Art Connect.</p>
+                {% set primary_role = user.roles|first %}
+                <span class="badge-role">{{ primary_role ? primary_role|replace({'ROLE_': ''})|upper : 'USER' }}</span>
+            </div>
+            <div class="home-action-buttons">
+                <a href="{{ path('app_evenement_index') }}" class="btn btn-event">Evenement</a>
+                <a href="{{ path('app_produit_index') }}" class="btn btn-product">Produit</a>
+                <a href="{{ path('app_forum_index') }}" class="btn btn-forum">Forum</a>
+                <a href="{{ path('app_donation_new') }}" class="btn btn-charity">Charite</a>
+            </div>
+        </div>
+    </section>
+
+    <section class="row g-3">
+        <div class="col-md-6 col-xl-3">
+            <div class="feature-card feature-card--event h-100">
+                <h2 class="h6 mb-2">Mes reservations</h2>
+                <p class="small mb-3">Consultez vos places reservees.</p>
+                <a href="{{ path('app_reservation_my') }}" class="btn btn-sm btn-light">Acceder</a>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <div class="feature-card feature-card--product h-100">
+                <h2 class="h6 mb-2">Mes commandes</h2>
+                <p class="small mb-3">Suivez vos achats boutique.</p>
+                <a href="{{ path('app_commande_my') }}" class="btn btn-sm btn-light">Acceder</a>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <div class="feature-card feature-card--forum h-100">
+                <h2 class="h6 mb-2">Forum</h2>
+                <p class="small mb-3">Discutez avec la communaute.</p>
+                <a href="{{ path('app_forum_index') }}" class="btn btn-sm btn-light">Acceder</a>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <div class="feature-card feature-card--charity h-100">
+                <h2 class="h6 mb-2">Mes dons</h2>
+                <p class="small mb-3">Retrouvez vos dons realises.</p>
+                <a href="{{ path('app_donation_my') }}" class="btn btn-sm btn-light">Acceder</a>
+            </div>
+        </div>
+    </section>
+{% else %}
+    <div class="landing-wrap">
+        <div class="home-action-buttons mb-4">
+            <a href="{{ path('app_produit_index') }}" class="btn btn-product">Produit</a>
+            <a href="{{ path('app_evenement_index') }}" class="btn btn-event">Evenement</a>
+            <a href="{{ path('app_forum_index') }}" class="btn btn-forum">Forum</a>
+            <a href="{{ path('app_donation_new') }}" class="btn btn-charity">Charite</a>
+        </div>
+
+        <section class="home-hero mb-4">
+            <span class="hero-tag"><i class="fas fa-palette"></i> Art Connect</span>
+            <h1 class="home-title mb-3">Une plateforme plus simple, plus claire, plus inclusive.</h1>
+            <p class="lead mb-4">Decouvrez les evenements artistiques, la boutique solidaire, le forum et la charite en quelques clics.</p>
+            <a href="{{ path('register') }}" class="btn btn-light btn-lg me-2 mb-2">Inscription</a>
+            <a href="{{ path('login') }}" class="btn btn-outline-light btn-lg mb-2">Connexion</a>
+        </section>
+
+        <section class="photo-gallery">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="gallery-card">
+                        <img src="{{ asset('images/art-kids-1.png') }}" alt="Enfants en atelier artistique">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="gallery-card">
+                        <img src="{{ asset('images/art-kids-2.png') }}" alt="Enfant peignant avec les mains">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="row g-3 mb-4">
+            <div class="col-md-6 col-xl-3">
+                <article class="feature-card feature-card--event h-100">
+                    <h2 class="h6 mb-2">Evenement</h2>
+                    <p class="small mb-3">Recherchez des ateliers adaptes.</p>
+                    <a href="{{ path('app_evenement_index') }}" class="btn btn-sm btn-light">Ouvrir</a>
+                </article>
+            </div>
+            <div class="col-md-6 col-xl-3">
+                <article class="feature-card feature-card--product h-100">
+                    <h2 class="h6 mb-2">Produit</h2>
+                    <p class="small mb-3">Explorez la boutique solidaire.</p>
+                    <a href="{{ path('app_produit_index') }}" class="btn btn-sm btn-light">Ouvrir</a>
+                </article>
+            </div>
+            <div class="col-md-6 col-xl-3">
+                <article class="feature-card feature-card--forum h-100">
+                    <h2 class="h6 mb-2">Forum</h2>
+                    <p class="small mb-3">Echangez avec la communaute.</p>
+                    <a href="{{ path('app_forum_index') }}" class="btn btn-sm btn-light">Ouvrir</a>
+                </article>
+            </div>
+            <div class="col-md-6 col-xl-3">
+                <article class="feature-card feature-card--charity h-100">
+                    <h2 class="h6 mb-2">Charite</h2>
+                    <p class="small mb-3">Soutenez les projets inclusifs.</p>
+                    <a href="{{ path('app_donation_new') }}" class="btn btn-sm btn-light">Ouvrir</a>
+                </article>
+            </div>
+        </section>
+
+        <section class="cta-strip d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+            <div>
+                <h2 class="h5 mb-1">Pret a commencer ?</h2>
+                <p class="mb-0 text-muted">Creez votre compte et accedez a toutes les pages.</p>
+            </div>
+            <a href="{{ path('register') }}" class="btn btn-about">Creer un compte</a>
+        </section>
+
+        <section class="about-front mt-4">
+            <h2 class="h3 mb-3">À propos de nous</h2>
+            <div class="row g-3">
+                <div class="col-12">
+                    <article class="about-item">
+                        <h3 class="h5 mb-2">🎨 Qui sommes-nous ?</h3>
+                        <p class="mb-0">ArtConnect est une plateforme numérique dédiée à la promotion de l’art inclusif pour les enfants, en particulier ceux ayant des besoins spécifiques.</p>
+                    </article>
+                </div>
+                <div class="col-12">
+                    <article class="about-item">
+                        <h3 class="h5 mb-2">🌱 Notre mission</h3>
+                        <p class="mb-0">Offrir un accès facile à des cours artistiques inclusifs (dessin, musique, peinture…) encadrés par des professionnels, dans un environnement sûr, bienveillant et adapté.</p>
+                    </article>
+                </div>
+                <div class="col-md-6">
+                    <article class="about-item h-100">
+                        <h3 class="h5 mb-2">👧👦 Pour qui ?</h3>
+                        <ul>
+                            <li>Enfants de différents âges</li>
+                            <li>Enfants avec ou sans besoins spécifiques</li>
+                            <li>Parents à la recherche d’activités créatives adaptées</li>
+                        </ul>
+                    </article>
+                </div>
+                <div class="col-md-6">
+                    <article class="about-item h-100">
+                        <h3 class="h5 mb-2">🤝 Nos valeurs</h3>
+                        <ul>
+                            <li>Inclusion</li>
+                            <li>Créativité</li>
+                            <li>Égalité des chances</li>
+                            <li>Impact social</li>
+                        </ul>
+                    </article>
+                </div>
+                <div class="col-12">
+                    <article class="about-item">
+                        <h3 class="h5 mb-2">📱 Pourquoi ArtConnect ?</h3>
+                        <p class="mb-0">Parce que chaque enfant mérite de s’exprimer librement à travers l’art.</p>
+                    </article>
+                </div>
+            </div>
+        </section>
+    </div>
+{% endif %}
+{% endblock %}

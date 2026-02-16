@@ -1,0 +1,91 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Gérer les Réponses{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="mb-3"><i class="fas fa-reply me-2"></i> Gérer les Réponses</h1>
+            <p class="text-muted">Répondez aux questions des utilisateurs.</p>
+        </div>
+    </div>
+
+    <!-- Barre de recherche et tri -->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                        <input type="text" name="search" class="form-control" placeholder="Rechercher par contenu, sujet..." value="{{ search }}">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select name="sort" class="form-select">
+                        <option value="dateReponse" {% if sortBy == 'dateReponse' %}selected{% endif %}>Trier par Date</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select name="order" class="form-select">
+                        <option value="DESC" {% if order == 'DESC' %}selected{% endif %}>Décroissant</option>
+                        <option value="ASC" {% if order == 'ASC' %}selected{% endif %}>Croissant</option>
+                    </select>
+                </div>
+                <div class="col-md-1">
+                    <button type="submit" class="btn btn-primary w-100"><i class="fas fa-filter"></i></button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Bouton Nouvelle Réponse -->
+    <div class="mb-3">
+        <a href="{{ path('app_forum_reponse_new') }}" class="btn btn-success">
+            <i class="fas fa-plus me-2"></i> Ajouter une Réponse
+        </a>
+    </div>
+
+    <!-- Liste des réponses -->
+    <div class="row">
+        {% for forum_reponse in forum_reponses %}
+        <div class="col-md-12 mb-3">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="mb-0">
+                            <i class="fas fa-comment-dots text-success me-2"></i>
+                            Réponse à : {{ forum_reponse.forum.sujet }}
+                        </h5>
+                        <small class="text-muted">
+                            Par {{ forum_reponse.auteur.prenom }} {{ forum_reponse.auteur.nom }} | {{ forum_reponse.dateReponse|date('d/m/Y à H:i') }}
+                        </small>
+                    </div>
+                    
+                </div>
+                <div class="card-body">
+                    <p class="card-text">{{ forum_reponse.contenu|length > 200 ? forum_reponse.contenu|slice(0, 200) ~ '...' : forum_reponse.contenu }}</p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted"></small>
+                        <div>
+                            <a href="{{ path('app_forum_reponse_show', {'id': forum_reponse.id}) }}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-eye me-1"></i> Voir
+                            </a>
+                            <a href="{{ path('app_forum_reponse_edit', {'id': forum_reponse.id}) }}" class="btn btn-sm btn-outline-warning">
+                                <i class="fas fa-edit me-1"></i> Modifier
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-12">
+            <div class="alert alert-info text-center">
+                <i class="fas fa-info-circle me-2"></i> Aucune réponse trouvée.
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

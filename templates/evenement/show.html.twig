@@ -1,0 +1,159 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ evenement.titre }}{% endblock %}
+
+{% block body %}
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow mb-4">
+                <div class="card-body">
+                    <h1 class="card-title display-5 mb-4">{{ evenement.titre }}</h1>
+                    
+                    <div class="mb-4 text-muted">
+                        <i class="far fa-calendar-alt me-2"></i>
+                        <strong>Du</strong> {{ evenement.dateDebut|date('d/m/Y H:i') }} 
+                        <strong>au</strong> {{ evenement.dateFin|date('d/m/Y H:i') }}
+                    </div>
+
+                    <div class="mb-4">
+                        <h5>Description</h5>
+                        <p class="lead">{{ evenement.description }}</p>
+                    </div>
+
+                    <hr>
+
+                    <div class="row mt-4">
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-light p-3 rounded me-3">
+                                    📍
+                                </div>
+                                <div>
+                                    <small class="text-muted">Lieu</small>
+                                    <h5 class="mb-0">{{ evenement.lieu }}</h5>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-light p-3 rounded me-3">
+                                    👶
+                                </div>
+                                <div>
+                                    <small class="text-muted">Âge</small>
+                                    <h5 class="mb-0">
+                                        {% if evenement.ageMin and evenement.ageMax %}
+                                            {{ evenement.ageMin }} - {{ evenement.ageMax }} ans
+                                        {% elseif evenement.ageMin %}
+                                            Dès {{ evenement.ageMin }} ans
+                                        {% elseif evenement.ageMax %}
+                                            Jusqu'à {{ evenement.ageMax }} ans
+                                        {% else %}
+                                            Pour tous
+                                        {% endif %}
+                                    </h5>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-light p-3 rounded me-3">
+                                    👥
+                                </div>
+                                <div>
+                                    <small class="text-muted">Places disponibles</small>
+                                    <h5 class="mb-0">
+                                        {{ evenement.nbPlaces - evenement.reservations|length }} / {{ evenement.nbPlaces }}
+                                    </h5>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-light p-3 rounded me-3">
+                                    💰
+                                </div>
+                                <div>
+                                    <small class="text-muted">Tarif</small>
+                                    <h5 class="mb-0">{{ evenement.prix ? evenement.prix ~ ' TND' : 'Gratuit' }}</h5>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-light p-3 rounded me-3">
+                                    👤
+                                </div>
+                                <div>
+                                    <small class="text-muted">Organisé par</small>
+                                    <h5 class="mb-0">{{ evenement.organisateur.prenom }} {{ evenement.organisateur.nom }}</h5>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow">
+                <div class="card-body">
+                    <h4 class="card-title mb-3">Réserver</h4>
+                    
+                    {% if is_granted('ROLE_ADMIN') %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i> Les administrateurs ne peuvent pas effectuer de réservations.
+                        </div>
+                    {% elseif is_granted('ROLE_PARTICIPANT') %}
+                        {% set isEventPassed = "now"|date('Y-m-d H:i:s') > evenement.dateDebut|date('Y-m-d H:i:s') %}
+                        
+                        {% if hasReserved %}
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle me-2"></i> Vous avez déjà réservé une place.
+                            </div>
+                        {% elseif isEventPassed %}
+                            <div class="alert alert-warning">
+                                <i class="fas fa-calendar-times me-2"></i> Les réservations sont closes pour cet événement.
+                            </div>
+                        {% elseif evenement.nbPlaces - evenement.reservations|length > 0 %}
+                            <p>Réservez votre place dès maintenant !</p>
+                            <form action="{{ path('app_reservation_book', {'id': evenement.id}) }}" method="post">
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-success btn-lg">Réserver ma place</button>
+                                </div>
+                            </form>
+                        {% else %}
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle me-2"></i> Cet événement est complet.
+                            </div>
+                        {% endif %}
+                    {% elseif is_granted('ROLE_ARTISTE') %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i> Connectez-vous en tant que Participant pour réserver.
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            <a href="{{ path('login') }}">Connectez-vous</a> pour réserver.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if app.user and (app.user == evenement.organisateur or is_granted('ROLE_ADMIN')) %}
+                <div class="card shadow mt-4">
+                    <div class="card-body">
+                        <h5 class="card-title">Administration</h5>
+                        <div class="d-grid gap-2">
+                            <a href="{{ path('app_evenement_edit', {'id': evenement.id}) }}" class="btn btn-warning">Modifier</a>
+                            {{ include('evenement/_delete_form.html.twig') }}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+            
+            <div class="mt-3 text-center">
+                <a href="{{ path('app_evenement_index') }}" class="text-decoration-none">← Retour à la liste</a>
+            </div>
+        </div>
+    </div>
+{% endblock %}

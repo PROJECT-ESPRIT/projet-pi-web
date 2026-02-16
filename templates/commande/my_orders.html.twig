@@ -1,0 +1,42 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mes Commandes{% endblock %}
+
+{% block body %}
+    <h1>Mes Commandes</h1>
+
+    {% if commandes is empty %}
+        <div class="alert alert-info">
+            Vous n'avez passé aucune commande. <a href="{{ path('app_produit_index') }}">Visitez la boutique</a>.
+        </div>
+    {% else %}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Numéro</th>
+                    <th>Date</th>
+                    <th>Statut</th>
+                    <th>Total</th>
+                    <th>Détails</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for commande in commandes %}
+                <tr>
+                    <td>#{{ commande.id }}</td>
+                    <td>{{ commande.dateCommande|date('d/m/Y H:i') }}</td>
+                    <td><span class="badge bg-secondary">{{ commande.statut }}</span></td>
+                    <td>{{ commande.total }} TND</td>
+                    <td>
+                        <ul>
+                            {% for ligne in commande.ligneCommandes %}
+                                <li>{{ ligne.produit.nom }} (x{{ ligne.quantite }})</li>
+                            {% endfor %}
+                        </ul>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,177 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Événements{% endblock %}
+
+{% block body %}
+    <div class="row mb-4 align-items-center">
+        <div class="col">
+            <h1>Événements à venir</h1>
+        </div>
+        {% if is_granted('ROLE_ARTISTE') %}
+            <div class="col-auto">
+                <a href="{{ path('app_evenement_new') }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Créer un événement
+                </a>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" action="{{ path('app_evenement_index') }}" class="row g-3 align-items-end">
+                <div class="col-12 col-md-4">
+                    <label class="form-label">Recherche</label>
+                    <input
+                        type="text"
+                        name="q"
+                        class="form-control"
+                        value="{{ filter_input.q|default('') }}"
+                        placeholder="Titre, description, lieu, organisateur"
+                    >
+                </div>
+                <div class="col-12 col-md-3">
+                    <label class="form-label">Lieu</label>
+                    <input
+                        type="text"
+                        name="lieu"
+                        class="form-control"
+                        value="{{ filter_input.lieu|default('') }}"
+                        placeholder="Ville ou lieu"
+                    >
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label">Date debut</label>
+                    <input
+                        type="date"
+                        name="date_start"
+                        class="form-control"
+                        value="{{ filter_input.date_start|default('') }}"
+                    >
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label">Date fin</label>
+                    <input
+                        type="date"
+                        name="date_end"
+                        class="form-control"
+                        value="{{ filter_input.date_end|default('') }}"
+                    >
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label">Prix min</label>
+                    <input
+                        type="number"
+                        step="0.01"
+                        name="prix_min"
+                        class="form-control"
+                        value="{{ filter_input.prix_min|default('') }}"
+                    >
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label">Prix max</label>
+                    <input
+                        type="number"
+                        step="0.01"
+                        name="prix_max"
+                        class="form-control"
+                        value="{{ filter_input.prix_max|default('') }}"
+                    >
+                </div>
+                <div class="col-12 col-md-3">
+                    <label class="form-label">Tri</label>
+                    <select name="sort" class="form-select">
+                        <option value="date_asc" {{ filter_input.sort == 'date_asc' ? 'selected' : '' }}>
+                            Date (ancien -> recent)
+                        </option>
+                        <option value="date_desc" {{ filter_input.sort == 'date_desc' ? 'selected' : '' }}>
+                            Date (recent -> ancien)
+                        </option>
+                        <option value="prix_asc" {{ filter_input.sort == 'prix_asc' ? 'selected' : '' }}>
+                            Prix (bas -> haut)
+                        </option>
+                        <option value="prix_desc" {{ filter_input.sort == 'prix_desc' ? 'selected' : '' }}>
+                            Prix (haut -> bas)
+                        </option>
+                        <option value="titre_asc" {{ filter_input.sort == 'titre_asc' ? 'selected' : '' }}>
+                            Titre (A -> Z)
+                        </option>
+                        <option value="titre_desc" {{ filter_input.sort == 'titre_desc' ? 'selected' : '' }}>
+                            Titre (Z -> A)
+                        </option>
+                        <option value="created_desc" {{ filter_input.sort|default('date_asc') == 'created_desc' ? 'selected' : '' }}>
+                            Ajout recemment
+                        </option>
+                    </select>
+                </div>
+                <div class="col-12 col-md-3 d-flex gap-2">
+                    <button class="btn btn-primary">Filtrer</button>
+                    <a class="btn btn-outline-secondary" href="{{ path('app_evenement_index') }}">Reinitialiser</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="row row-cols-1 row-cols-md-3 g-4">
+        {% for evenement in evenements %}
+            <div class="col">
+                <div class="card h-100 shadow-sm">
+                    {# Placeholder image if none provided #}
+                    <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                        <span class="fs-1">🎨</span>
+                    </div>
+                    
+                    <div class="card-body">
+                        <h5 class="card-title">{{ evenement.titre }}</h5>
+                        <h6 class="card-subtitle mb-2 text-muted">
+                            {{ evenement.dateDebut ? evenement.dateDebut|date('d/m/Y H:i') : '' }}
+                        </h6>
+                        <p class="card-text text-truncate">{{ evenement.description }}</p>
+                        
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <span class="badge bg-info text-dark">{{ evenement.lieu }}</span>
+                            <span class="badge bg-{{ evenement.prix ? 'warning' : 'success' }}">
+                                {{ evenement.prix ? evenement.prix ~ ' TND' : 'Gratuit' }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-white border-top-0">
+                        <div class="d-grid gap-2">
+                            <a href="{{ path('app_evenement_show', {'id': evenement.id}) }}" class="btn btn-outline-primary btn-sm">Voir détails</a>
+                            
+                            {% if app.user and (app.user == evenement.organisateur or is_granted('ROLE_ADMIN')) %}
+                                <div class="btn-group" role="group">
+                                    <a href="{{ path('app_evenement_edit', {'id': evenement.id}) }}" class="btn btn-outline-secondary btn-sm">Modifier</a>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="col-12">
+                <div class="alert alert-info">
+                    Aucun événement n'est prévu pour le moment.
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    {% if total_pages > 1 %}
+        {% set query = filter_input|default({}) %}
+        <nav class="mt-4" aria-label="Pagination">
+            <ul class="pagination justify-content-center flex-wrap">
+                <li class="page-item {{ page == 1 ? 'disabled' : '' }}">
+                    <a class="page-link" href="{{ path('app_evenement_index', query|merge({page: page == 1 ? 1 : page - 1})) }}">Precedent</a>
+                </li>
+                {% for i in 1..total_pages %}
+                    <li class="page-item {{ page == i ? 'active' : '' }}">
+                        <a class="page-link" href="{{ path('app_evenement_index', query|merge({page: i})) }}">{{ i }}</a>
+                    </li>
+                {% endfor %}
+                <li class="page-item {{ page == total_pages ? 'disabled' : '' }}">
+                    <a class="page-link" href="{{ path('app_evenement_index', query|merge({page: page == total_pages ? total_pages : page + 1})) }}">Suivant</a>
+                </li>
+            </ul>
+        </nav>
+    {% endif %}
+{% endblock %}

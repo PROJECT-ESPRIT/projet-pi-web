@@ -1,0 +1,13 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nouveau Type de Don{% endblock %}
+
+{% block body %}
+    <h1>Créer un nouveau Type de Don</h1>
+
+    {{ include('type_don/_form.html.twig') }}
+
+    <div class="mt-3">
+        <a href="{{ path('app_type_don_index') }}">Retour à la liste</a>
+    </div>
+{% endblock %}
