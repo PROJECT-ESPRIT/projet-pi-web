@@ -1,0 +1,147 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Statistiques Utilisateurs{% endblock %}
+
+{% block body %}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0">Statistiques Utilisateurs</h1>
+        <a href="{{ path('app_user_index') }}" class="btn btn-outline-secondary">Retour a la liste</a>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-6 col-xl-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <p class="text-muted mb-1">Total utilisateurs</p>
+                    <h3 class="mb-0">{{ total_users }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <p class="text-muted mb-1">Nouveaux (7 jours)</p>
+                    <h3 class="mb-0">{{ new_users_7d }}</h3>
+                    <small class="{{ growth_7d >= 0 ? 'text-success' : 'text-danger' }}">
+                        {{ growth_7d >= 0 ? '+' : '' }}{{ growth_7d|number_format(1, '.', ' ') }}% vs periode precedente
+                    </small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <p class="text-muted mb-1">Nouveaux (30 jours)</p>
+                    <h3 class="mb-0">{{ new_users_30d }}</h3>
+                    <small class="{{ growth_30d >= 0 ? 'text-success' : 'text-danger' }}">
+                        {{ growth_30d >= 0 ? '+' : '' }}{{ growth_30d|number_format(1, '.', ' ') }}% vs periode precedente
+                    </small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <p class="text-muted mb-1">Total artistes</p>
+                    <h3 class="mb-0">{{ total_artists }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-header fw-semibold">Roles</div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2"><span>Admins</span><strong>{{ total_admins }}</strong></div>
+                    <div class="d-flex justify-content-between mb-2"><span>Artistes</span><strong>{{ total_artists }}</strong></div>
+                    <div class="d-flex justify-content-between"><span>Participants</span><strong>{{ total_participants }}</strong></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8">
+            <div class="card h-100">
+                <div class="card-header fw-semibold">Statuts artistes</div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-sm-4">
+                            <div class="border rounded p-3 text-center">
+                                <p class="text-muted mb-1">Pending</p>
+                                <h4 class="mb-0">{{ artists_pending }}</h4>
+                            </div>
+                        </div>
+                        <div class="col-sm-4">
+                            <div class="border rounded p-3 text-center">
+                                <p class="text-muted mb-1">Approved</p>
+                                <h4 class="mb-0 text-success">{{ artists_approved }}</h4>
+                            </div>
+                        </div>
+                        <div class="col-sm-4">
+                            <div class="border rounded p-3 text-center">
+                                <p class="text-muted mb-1">Rejected</p>
+                                <h4 class="mb-0 text-danger">{{ artists_rejected }}</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header fw-semibold">Top utilisateurs actifs</div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-sm mb-0">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Utilisateur</th>
+                            <th>Email</th>
+                            <th>Actions</th>
+                            <th>Derniere activite</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for u in top_active_users %}
+                            <tr>
+                                <td>{{ loop.index }}</td>
+                                <td>{{ u.prenom }} {{ u.nom }}</td>
+                                <td>{{ u.email }}</td>
+                                <td><span class="badge bg-primary">{{ u.activity_count }}</span></td>
+                                <td>{{ u.last_activity ? u.last_activity|date('d/m/Y H:i') : '-' }}</td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="5" class="text-center py-3">Aucune donnee</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header fw-semibold">Inscriptions sur les 6 dernieres semaines</div>
+        <div class="card-body">
+            {% if weekly_registrations is empty %}
+                <p class="text-muted mb-0">Aucune donnee.</p>
+            {% else %}
+                {% for item in weekly_registrations %}
+                    {% set ratio = weekly_peak > 0 ? ((item.total / weekly_peak) * 100)|round(0, 'floor') : 0 %}
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between small mb-1">
+                            <span>{{ item.label }}</span>
+                            <strong>{{ item.total }}</strong>
+                        </div>
+                        <div class="progress" style="height: 12px;">
+                            <div class="progress-bar bg-primary" role="progressbar" style="width: {{ ratio }}%;" aria-valuenow="{{ item.total }}" aria-valuemin="0" aria-valuemax="{{ weekly_peak }}"></div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}
