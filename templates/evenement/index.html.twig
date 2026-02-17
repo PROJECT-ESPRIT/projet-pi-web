@@ -80,16 +80,22 @@
                 <div class="col-12 col-md-3">
                     <label class="form-label">Tri</label>
                     <select name="sort" class="form-select">
+                        <option value="date_asc" {{ filter_input.sort == 'date_asc' ? 'selected' : '' }}>
                             Date (ancien -> recent)
                         </option>
+                        <option value="date_desc" {{ filter_input.sort == 'date_desc' ? 'selected' : '' }}>
                             Date (recent -> ancien)
                         </option>
+                        <option value="prix_asc" {{ filter_input.sort == 'prix_asc' ? 'selected' : '' }}>
                             Prix (bas -> haut)
                         </option>
+                        <option value="prix_desc" {{ filter_input.sort == 'prix_desc' ? 'selected' : '' }}>
                             Prix (haut -> bas)
                         </option>
+                        <option value="titre_asc" {{ filter_input.sort == 'titre_asc' ? 'selected' : '' }}>
                             Titre (A -> Z)
                         </option>
+                        <option value="titre_desc" {{ filter_input.sort == 'titre_desc' ? 'selected' : '' }}>
                             Titre (Z -> A)
                         </option>
                         <option value="created_desc" {{ filter_input.sort|default('date_asc') == 'created_desc' ? 'selected' : '' }}>

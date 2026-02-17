@@ -104,11 +104,31 @@ class ReservationController extends AbstractController
     #[IsGranted('ROLE_USER')]
     public function cancel(Reservation $reservation, EntityManagerInterface $entityManager): Response
     {
+        $isAdmin = $this->isGranted('ROLE_ADMIN');
+        $currentUser = $this->getUser();
+        
+        // Allow admin to cancel any reservation, but regular users can only cancel their own
+        if (!$isAdmin && $reservation->getParticipant() !== $currentUser) {
+            throw $this->createAccessDeniedException('Vous n\'avez pas les droits nécessaires pour effectuer cette action.');
+        }
+
+        // Store event title for flash message
+        $eventTitle = $reservation->getEvenement()->getTitre();
+        
+        // If the event is in the past, don't allow cancellation
+        if ($reservation->getEvenement()->getDateDebut() < new \DateTime() && !$isAdmin) {
+            $this->addFlash('error', 'Impossible d\'annuler une réservation pour un événement déjà passé.');
+            return $this->redirectToRoute('app_reservation_my');
         }
 
         $entityManager->remove($reservation);
         $entityManager->flush();
 
+        if ($isAdmin && $reservation->getParticipant() !== $currentUser) {
+            $this->addFlash('success', sprintf('La réservation pour l\'événement "%s" a été supprimée avec succès.', $eventTitle));
+        } else {
+            $this->addFlash('success', 'Votre réservation a été annulée avec succès.');
+        }
 
         return $this->redirectToRoute('app_reservation_my');
     }

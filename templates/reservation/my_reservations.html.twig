@@ -110,6 +110,7 @@
                                         <form method="post" 
                                               action="{{ path('app_reservation_cancel', {'id': reservation.id}) }}" 
                                               onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette réservation ?');" 
+                                              class="d-inline p-0">
                                             <button type="submit" class="btn btn-sm btn-danger" title="Supprimer">
                                                 <i class="fas fa-trash"></i>
                                             </button>

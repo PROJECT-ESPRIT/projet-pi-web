@@ -17,10 +17,20 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 class TypeDonController extends AbstractController
 {
     #[Route('/', name: 'app_type_don_index', methods: ['GET'])]
-    public function index(TypeDonRepository $typeDonRepository): Response
+    public function index(Request $request, TypeDonRepository $typeDonRepository): Response
     {
+        [$search, $sort, $direction] = $this->validateFilters(
+            $request,
+            ['id', 'libelle'],
+            'id',
+            'asc'
+        );
+
         return $this->render('type_don/index.html.twig', [
-            'type_dons' => $typeDonRepository->findAll(),
+            'type_dons' => $typeDonRepository->findBySearchAndSort($search, $sort, $direction),
+            'search' => $search,
+            'sort' => $sort,
+            'direction' => $direction,
         ]);
     }
 
@@ -71,5 +81,36 @@ class TypeDonController extends AbstractController
         }
 
         return $this->redirectToRoute('app_type_don_index', [], Response::HTTP_SEE_OTHER);
+    }
+
+    /**
+     * @return array{0:string,1:string,2:string}
+     */
+    private function validateFilters(
+        Request $request,
+        array $allowedSorts,
+        string $defaultSort,
+        string $defaultDirection
+    ): array {
+        $search = trim((string) $request->query->get('q', ''));
+        $sort = (string) $request->query->get('sort', $defaultSort);
+        $direction = strtolower((string) $request->query->get('direction', $defaultDirection));
+
+        if ($search !== '' && (mb_strlen($search) > 100 || !preg_match('/^[\p{L}\p{N}\s._\-\'@]+$/u', $search))) {
+            $this->addFlash('error', 'Recherche invalide. Utilisez uniquement lettres, chiffres, espaces et . _ - @ \'.');
+            $search = '';
+        }
+
+        if (!in_array($sort, $allowedSorts, true)) {
+            $this->addFlash('error', 'Champ de tri invalide.');
+            $sort = $defaultSort;
+        }
+
+        if (!in_array($direction, ['asc', 'desc'], true)) {
+            $this->addFlash('error', 'Direction de tri invalide.');
+            $direction = $defaultDirection;
+        }
+
+        return [$search, $sort, $direction];
     }
 }

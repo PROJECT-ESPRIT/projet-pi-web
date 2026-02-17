@@ -1,9 +1,42 @@
-{% extends 'base.html.twig' %}
+﻿{% extends 'base.html.twig' %}
 
 {% block title %}Gestion des Dons{% endblock %}
 
 {% block body %}
     <h1>Tous les Dons</h1>
+
+    <form method="get" class="row g-3 mb-3">
+        <div class="col-md-6">
+            <label for="donation-search" class="form-label">Recherche</label>
+            <input
+                type="text"
+                id="donation-search"
+                name="q"
+                class="form-control"
+                placeholder="Nom, email, type, description..."
+                value="{{ search }}"
+            >
+        </div>
+        <div class="col-md-3">
+            <label for="donation-sort" class="form-label">Trier par</label>
+            <select id="donation-sort" name="sort" class="form-select">
+                <option value="dateDon" {{ sort == 'dateDon' ? 'selected' : '' }}>Date</option>
+                <option value="donateur" {{ sort == 'donateur' ? 'selected' : '' }}>Donateur</option>
+                <option value="type" {{ sort == 'type' ? 'selected' : '' }}>Type</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label for="donation-direction" class="form-label">Ordre</label>
+            <select id="donation-direction" name="direction" class="form-select">
+                <option value="DESC" {{ direction == 'DESC' ? 'selected' : '' }}>DÃ©croissant</option>
+                <option value="ASC" {{ direction == 'ASC' ? 'selected' : '' }}>Croissant</option>
+            </select>
+        </div>
+        <div class="col-12">
+            <button type="submit" class="btn btn-primary">Appliquer</button>
+            <a href="{{ path('app_donation_index') }}" class="btn btn-outline-secondary">RÃ©initialiser</a>
+        </div>
+    </form>
 
     <table class="table table-striped">
         <thead>

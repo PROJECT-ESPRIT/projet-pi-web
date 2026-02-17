@@ -17,7 +17,7 @@ class Reservation
     private ?\DateTimeImmutable $dateReservation = null;
 
     #[ORM\Column(length: 50)]
-    private ?string $status = null; // 'CONFIRMED', 'CANCELLED', etc.
+    private ?string $status = null;
 
     #[ORM\ManyToOne(inversedBy: 'reservations')]
     #[ORM\JoinColumn(nullable: false)]
@@ -26,6 +26,18 @@ class Reservation
     #[ORM\ManyToOne(inversedBy: 'reservations')]
     #[ORM\JoinColumn(nullable: false)]
     private ?Evenement $evenement = null;
+
+    #[ORM\Column]
+    private int $quantite = 1;
+
+    #[ORM\Column]
+    private float $prixUnitaire = 0.0;
+
+    #[ORM\Column]
+    private float $remiseRate = 0.0;
+
+    #[ORM\Column]
+    private float $montantTotal = 0.0;
 
     public function __construct()
     {
@@ -82,6 +94,54 @@ class Reservation
     public function setEvenement(?Evenement $evenement): static
     {
         $this->evenement = $evenement;
+
+        return $this;
+    }
+
+    public function getQuantite(): int
+    {
+        return $this->quantite;
+    }
+
+    public function setQuantite(int $quantite): static
+    {
+        $this->quantite = max(1, $quantite);
+
+        return $this;
+    }
+
+    public function getPrixUnitaire(): float
+    {
+        return $this->prixUnitaire;
+    }
+
+    public function setPrixUnitaire(float $prixUnitaire): static
+    {
+        $this->prixUnitaire = max(0.0, $prixUnitaire);
+
+        return $this;
+    }
+
+    public function getRemiseRate(): float
+    {
+        return $this->remiseRate;
+    }
+
+    public function setRemiseRate(float $remiseRate): static
+    {
+        $this->remiseRate = max(0.0, min(1.0, $remiseRate));
+
+        return $this;
+    }
+
+    public function getMontantTotal(): float
+    {
+        return $this->montantTotal;
+    }
+
+    public function setMontantTotal(float $montantTotal): static
+    {
+        $this->montantTotal = max(0.0, $montantTotal);
 
         return $this;
     }

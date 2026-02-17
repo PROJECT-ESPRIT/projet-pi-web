@@ -2,8 +2,11 @@
 
 namespace App\Controller;
 
+use App\Entity\Forum;
 use App\Entity\ForumReponse;
+use App\Entity\User;
 use App\Form\ForumReponseType;
+use App\Repository\ForumRepository;
 use App\Repository\ForumReponseRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -57,13 +60,41 @@ final class ForumReponseController extends AbstractController
     }
 
     #[Route('/new', name: 'app_forum_reponse_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $entityManager, MailerInterface $mailer): Response
+    public function new(
+        Request $request,
+        EntityManagerInterface $entityManager,
+        MailerInterface $mailer,
+        ForumRepository $forumRepository
+    ): Response
     {
         $forumReponse = new ForumReponse();
+        $forumReponse->setDateReponse(new \DateTimeImmutable());
+
+        $currentUser = $this->getUser();
+        if ($currentUser instanceof User) {
+            $forumReponse->setAuteur($currentUser);
+        }
+
+        $forumId = $request->query->getInt('forum', 0);
+        if ($forumId > 0) {
+            $forum = $forumRepository->find($forumId);
+            if ($forum instanceof Forum) {
+                $forumReponse->setForum($forum);
+            }
+        }
+
         $form = $this->createForm(ForumReponseType::class, $forumReponse);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            $user = $this->getUser();
+            if (!$user instanceof User) {
+                $this->addFlash('error', 'Vous devez etre connecte pour repondre.');
+                return $this->redirectToRoute('login');
+            }
+
+            $forumReponse->setAuteur($user);
+
             $entityManager->persist($forumReponse);
             $entityManager->flush();
 
@@ -82,7 +113,7 @@ final class ForumReponseController extends AbstractController
                     $mailer->send($email);
                     $this->addFlash('success', 'Email envoyé à l\'utilisateur.');
                 } catch (TransportExceptionInterface $e) {
-                    $this->addFlash('error', 'La réponse a été enregistrée, mais l\'envoi de l\'email a échoué.');
+                    // Reponse enregistree: on ignore silencieusement les erreurs d'email.
                 }
             }
 

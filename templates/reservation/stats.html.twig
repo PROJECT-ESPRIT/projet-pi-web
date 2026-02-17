@@ -1,0 +1,118 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Statistiques Reservations{% endblock %}
+
+{% block body %}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0">Statistiques Reservations</h1>
+        <a href="{{ path('app_reservation_my') }}" class="btn btn-outline-secondary">Retour</a>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-6 col-xl-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <p class="text-muted mb-1">Reservations</p>
+                    <h3 class="mb-0">{{ global.total_reservations }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <p class="text-muted mb-1">Places reservees</p>
+                    <h3 class="mb-0">{{ global.total_places }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <p class="text-muted mb-1">CA estime</p>
+                    <h3 class="mb-0">{{ global.revenue|number_format(2, '.', ' ') }} TND</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <p class="text-muted mb-1">Panier moyen (places)</p>
+                    <h3 class="mb-0">{{ global.avg_places|number_format(2, '.', ' ') }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header fw-semibold">Promotion famille</div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Reservations avec remise</span>
+                        <strong>{{ global.family_reservations }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span>Montant remises accordees</span>
+                        <strong>{{ global.total_discount|number_format(2, '.', ' ') }} TND</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header fw-semibold">Reservations (6 dernieres semaines)</div>
+                <div class="card-body">
+                    {% for item in weekly %}
+                        {% set ratio = weekly_peak > 0 ? ((item.total / weekly_peak) * 100)|round(0, 'floor') : 0 %}
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between small mb-1">
+                                <span>{{ item.label }}</span>
+                                <strong>{{ item.total }}</strong>
+                            </div>
+                            <div class="progress" style="height: 10px;">
+                                <div class="progress-bar bg-primary" role="progressbar" style="width: {{ ratio }}%;"></div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <p class="text-muted mb-0">Aucune donnee.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header fw-semibold">Top evenements par taux de remplissage</div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Evenement</th>
+                            <th>Places reservees</th>
+                            <th>Capacite</th>
+                            <th>Taux</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for e in top_events %}
+                            <tr>
+                                <td>{{ e.title }}</td>
+                                <td>{{ e.reserved_places }}</td>
+                                <td>{{ e.nb_places }}</td>
+                                <td>
+                                    <span class="badge {{ e.fill_rate >= 80 ? 'bg-success' : (e.fill_rate >= 50 ? 'bg-warning text-dark' : 'bg-secondary') }}">
+                                        {{ e.fill_rate|number_format(1, '.', ' ') }}%
+                                    </span>
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr><td colspan="4" class="text-center py-3">Aucune donnee</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}

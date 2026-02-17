@@ -38,6 +38,7 @@
             </form>
         </div>
         <div class="col-md-5 text-end mt-2 mt-md-0">
+            <a href="{{ path('app_user_stats') }}" class="btn btn-outline-primary me-2">Statistiques</a>
             <a href="{{ path('app_user_new') }}" class="btn btn-success">Creer un nouvel utilisateur</a>
         </div>
     </div>
@@ -63,6 +64,7 @@
                     </a>
                 </th>
                 <th>Roles</th>
+                <th>Niveau participant</th>
                 <th>Statut</th>
                 <th>Actions</th>
             </tr>
@@ -76,24 +78,59 @@
                 <td>{{ user.prenom }}</td>
                 <td>
                     {% for role in user.roles %}
-                        <span class="badge bg-secondary">{{ role|replace({'ROLE_': ''}) }}</span>
+                        {% set roleLabel = role|replace({'ROLE_': ''}) %}
+                        {% set roleClass = role == 'ROLE_ADMIN'
+                            ? 'bg-danger'
+                            : (role == 'ROLE_ARTISTE'
+                                ? 'bg-info text-dark'
+                                : (role == 'ROLE_PARTICIPANT'
+                                    ? 'bg-primary'
+                                    : 'bg-secondary')) %}
+                        <span class="badge {{ roleClass }}">{{ roleLabel }}</span>
                     {% endfor %}
                 </td>
-                <td>{{ user.status }}</td>
                 <td>
-                    <a href="{{ path('app_user_show', {'id': user.id}) }}" class="btn btn-sm btn-info">Voir</a>
-                    <a href="{{ path('app_user_edit', {'id': user.id}) }}" class="btn btn-sm btn-warning">Editer</a>
+                    {% if 'ROLE_PARTICIPANT' in user.roles %}
+                        {% set level = user.loyaltyLevel|default('BRONZE') %}
+                        {% set levelClass = level == 'GOLD' ? 'bg-warning text-dark' : (level == 'SILVER' ? 'bg-secondary' : 'bg-dark') %}
+                        <span class="badge {{ levelClass }}">{{ level }}</span>
+                        <span class="badge bg-light text-dark">{{ user.points|default(0) }} pts</span>
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+                <td>
+                    {% if user.status == 'APPROVED' %}
+                        <span class="badge bg-success">APPROVED</span>
+                    {% elseif user.status == 'REJECTED' %}
+                        <span class="badge bg-danger">REJECTED</span>
+                    {% else %}
+                        <span class="badge bg-warning text-dark">PENDING</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="{{ path('app_user_show', {'id': user.id}) }}" class="btn btn-sm btn-outline-secondary">Voir</a>
+                    <a href="{{ path('app_user_edit', {'id': user.id}) }}" class="btn btn-sm btn-outline-primary">Editer</a>
+                    {% if app.user and app.user.id != user.id %}
+                        <form method="post" action="{{ path('app_user_delete', {'id': user.id}) }}" class="d-inline" onsubmit="return confirm('Supprimer cet utilisateur ?');">
+                            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ user.id) }}">
+                            <button type="submit" class="btn btn-sm btn-danger">Supprimer</button>
+                        </form>
+                    {% endif %}
                     {% if 'ROLE_ARTISTE' in user.roles %}
-                        {% if user.status != 'APPROVED' %}
+                        {% if user.status == 'PENDING' %}
                             <form method="post" action="{{ path('app_user_approve', {'id': user.id}) }}" class="d-inline">
                                 <input type="hidden" name="_token" value="{{ csrf_token('approve' ~ user.id) }}">
-                                <button class="btn btn-sm btn-success">Valider</button>
+                                <button type="submit" class="btn btn-sm btn-success">Valider</button>
                             </form>
-                        {% endif %}
-                        {% if user.status != 'REJECTED' %}
                             <form method="post" action="{{ path('app_user_reject', {'id': user.id}) }}" class="d-inline">
                                 <input type="hidden" name="_token" value="{{ csrf_token('reject' ~ user.id) }}">
-                                <button class="btn btn-sm btn-danger">Refuser</button>
+                                <button type="submit" class="btn btn-sm btn-danger">Refuser</button>
+                            </form>
+                        {% elseif user.status == 'APPROVED' %}
+                            <form method="post" action="{{ path('app_user_reject', {'id': user.id}) }}" class="d-inline">
+                                <input type="hidden" name="_token" value="{{ csrf_token('reject' ~ user.id) }}">
+                                <button type="submit" class="btn btn-sm btn-danger">Refuser</button>
                             </form>
                         {% endif %}
                     {% endif %}
@@ -101,7 +138,7 @@
             </tr>
         {% else %}
             <tr>
-                <td colspan="7">Aucun utilisateur trouve</td>
+                <td colspan="8">Aucun utilisateur trouve</td>
             </tr>
         {% endfor %}
         </tbody>
@@ -125,3 +162,4 @@
         </nav>
     {% endif %}
 {% endblock %}
+

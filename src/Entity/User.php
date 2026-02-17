@@ -8,15 +8,20 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: '`user`')]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
+#[UniqueEntity(fields: ['email'], message: 'Cet email est deja utilise.')]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     public const STATUS_PENDING = 'PENDING';
     public const STATUS_APPROVED = 'APPROVED';
     public const STATUS_REJECTED = 'REJECTED';
+    public const LEVEL_BRONZE = 'BRONZE';
+    public const LEVEL_SILVER = 'SILVER';
+    public const LEVEL_GOLD = 'GOLD';
 
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -52,6 +57,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(length: 20, options: ['default' => self::STATUS_APPROVED])]
     private string $status = self::STATUS_APPROVED;
+
+    #[ORM\Column(options: ['default' => 0])]
+    private int $points = 0;
+
+    #[ORM\Column(length: 20, options: ['default' => self::LEVEL_BRONZE])]
+    private string $loyaltyLevel = self::LEVEL_BRONZE;
 
     public function __construct()
     {
@@ -137,6 +148,24 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         // $this->plainPassword = null;
     }
 
+    public function __serialize(): array
+    {
+        return [
+            'id' => $this->id,
+            'email' => $this->email,
+            'password' => $this->password,
+            'roles' => $this->roles,
+        ];
+    }
+
+    public function __unserialize(array $data): void
+    {
+        $this->id = $data['id'] ?? null;
+        $this->email = $data['email'] ?? null;
+        $this->password = $data['password'] ?? null;
+        $this->roles = $data['roles'] ?? [];
+    }
+
     public function getNom(): ?string
     {
         return $this->nom;
@@ -193,6 +222,30 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setStatus(string $status): static
     {
         $this->status = $status;
+
+        return $this;
+    }
+
+    public function getPoints(): int
+    {
+        return $this->points;
+    }
+
+    public function setPoints(int $points): static
+    {
+        $this->points = max(0, $points);
+
+        return $this;
+    }
+
+    public function getLoyaltyLevel(): string
+    {
+        return $this->loyaltyLevel;
+    }
+
+    public function setLoyaltyLevel(string $loyaltyLevel): static
+    {
+        $this->loyaltyLevel = $loyaltyLevel;
 
         return $this;
     }
