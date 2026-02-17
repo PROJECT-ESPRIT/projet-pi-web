@@ -23,3 +23,7 @@
 /public/assets/
 /assets/vendor/
 ###< symfony/asset-mapper ###
+
+/.idea/commandlinetools/Symfony_17_02_2026_5_59PM.xml
+/.idea/copilot.data.migration.ask2agent.xml
+/.idea/workspace.xml
