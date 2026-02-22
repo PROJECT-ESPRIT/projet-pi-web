@@ -469,12 +469,8 @@
                         <span class="filter-count">{{ total_all|default(total) }}</span>
                     </a>
                 {% else %}
-                    <a href="{{ path('app_evenement_index', qp|merge({ scope: 'registered', page: 1, prix_min: '', prix_max: '' })) }}" class="filter-tab {{ scope|default('all') == 'registered' ? 'active' : '' }}">
-                        <i class="fas fa-ticket-alt me-1"></i>Événements où je suis inscrit
-                        <span class="filter-count">{{ total_registered|default(0) }}</span>
-                    </a>
                     <a href="{{ path('app_evenement_index', qp|merge({ scope: 'others', page: 1, prix_min: '', prix_max: '' })) }}" class="filter-tab {{ scope|default('all') == 'others' ? 'active' : '' }}">
-                        <i class="fas fa-search me-1"></i>Autres
+                        <i class="fas fa-compass me-1"></i>À découvrir
                         <span class="filter-count">{{ total_others|default(0) }}</span>
                     </a>
                     <a href="{{ path('app_evenement_index', qp|merge({ scope: 'all', page: 1, prix_min: '', prix_max: '' })) }}" class="filter-tab {{ scope|default('all') == 'all' ? 'active' : '' }}">

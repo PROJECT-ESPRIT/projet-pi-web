@@ -61,11 +61,10 @@ class EvenementController extends AbstractController
                 $totalAll = $evenementRepository->countByFilters(array_merge($filters, ['owner_id' => null, 'exclude_owner_id' => null]));
             } else {
                 $registeredEventIds = $reservationRepository->getEventIdsWithReservationFor($user);
-                $scope = \in_array($filterInput['scope'], ['registered', 'others', 'all'], true) ? $filterInput['scope'] : 'all';
+                $scope = \in_array($filterInput['scope'], ['others', 'all'], true) ? $filterInput['scope'] : 'all';
                 $filterInput['scope'] = $scope;
-                $filters['event_ids'] = ($scope === 'registered') ? ($registeredEventIds ?: [-1]) : null;
+                $filters['event_ids'] = null;
                 $filters['exclude_event_ids'] = ($scope === 'others' && $registeredEventIds) ? $registeredEventIds : null;
-                $totalRegistered = $evenementRepository->countByFilters(array_merge($filters, ['event_ids' => $registeredEventIds ?: [-1], 'exclude_event_ids' => null]));
                 $totalOthers = $evenementRepository->countByFilters(array_merge($filters, ['event_ids' => null, 'exclude_event_ids' => $registeredEventIds]));
                 $totalAll = $evenementRepository->countByFilters(array_merge($filters, ['event_ids' => null, 'exclude_event_ids' => null]));
             }
