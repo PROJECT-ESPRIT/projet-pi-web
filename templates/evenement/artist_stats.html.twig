@@ -1,86 +1,396 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Mes stats événements{% endblock %}
+{% block title %}Mes statistiques — Art Connect{% endblock %}
 
 {% block body %}
 <style>
-    .a-stats-head { display:flex; justify-content:space-between; align-items:center; gap:.75rem; flex-wrap:wrap; margin-bottom:1rem; }
-    .a-stats-head h1 { margin:0; font-family:'Sora',sans-serif; font-size:1.35rem; font-weight:700; color:var(--ac-deep); }
-    .a-stats-grid { display:grid; gap:.75rem; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); margin-bottom:1rem; }
-    .a-kpi { background:#fff; border:1px solid #e9ecef; border-radius:12px; padding:.9rem 1rem; box-shadow:0 2px 10px rgba(0,0,0,.04); }
-    .a-kpi .val { font-family:'Sora',sans-serif; font-weight:800; font-size:1.45rem; line-height:1; color:var(--ac-deep); }
-    .a-kpi .lbl { font-size:.74rem; color:#6b7280; text-transform:uppercase; font-weight:700; letter-spacing:.04em; margin-top:.3rem; }
-    .a-kpi .sub { font-size:.74rem; color:#9ca3af; margin-top:.2rem; }
-    .a-card { background:#fff; border:1px solid #e9ecef; border-radius:12px; box-shadow:0 2px 10px rgba(0,0,0,.04); padding:1rem; }
-    .a-card h5 { margin:0 0 .7rem; font-family:'Sora',sans-serif; font-size:.9rem; font-weight:700; color:var(--ac-deep); }
-    .a-mini-table { width:100%; font-size:.84rem; }
-    .a-mini-table th { color:#6b7280; font-size:.74rem; text-transform:uppercase; font-weight:700; padding:.45rem .35rem; border-bottom:2px solid #eef2f7; }
-    .a-mini-table td { padding:.5rem .35rem; border-bottom:1px solid #f3f4f6; color:#374151; }
-    .a-mini-table tr:last-child td { border-bottom:none; }
+    .as-shell { display:flex; flex-direction:column; gap:1rem; }
+    .as-header { display:flex; justify-content:space-between; align-items:center; padding-bottom:.6rem; border-bottom:2px solid rgba(30,15,117,.06); }
+    .as-header h1 { margin:0; font-family:'Sora',sans-serif; font-size:1.5rem; font-weight:700; color:var(--ac-deep); display:flex; align-items:center; gap:.55rem; }
+    .as-header p { margin:.15rem 0 0; font-size:.85rem; color:#6b7280; }
+
+    .as-kpi-grid { display:grid; gap:.6rem; grid-template-columns:repeat(auto-fit,minmax(155px,1fr)); }
+    .as-kpi { background:#fff; border:1px solid rgba(55,133,216,.1); border-radius:16px; padding:.75rem .9rem; position:relative; overflow:hidden; transition:transform .2s,box-shadow .2s; }
+    .as-kpi:hover { transform:translateY(-3px); box-shadow:0 10px 24px rgba(30,15,117,.1); }
+    .as-kpi::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; }
+    .as-kpi:nth-child(1)::before { background:linear-gradient(90deg,#1E0F75,#3785D8); }
+    .as-kpi:nth-child(2)::before { background:linear-gradient(90deg,#3785D8,#22c55e); }
+    .as-kpi:nth-child(3)::before { background:linear-gradient(90deg,#BF8CE1,#1E0F75); }
+    .as-kpi:nth-child(4)::before { background:linear-gradient(90deg,#f59e0b,#ef4444); }
+    .as-kpi:nth-child(5)::before { background:linear-gradient(90deg,#22c55e,#059669); }
+    .as-kpi:nth-child(6)::before { background:linear-gradient(90deg,#059669,#3785D8); }
+    .as-kpi:nth-child(7)::before { background:linear-gradient(90deg,#e74c3c,#f39c12); }
+    .as-kpi:nth-child(8)::before { background:linear-gradient(90deg,#8b5cf6,#ec4899); }
+    .as-kpi .kpi-icon { width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:.85rem; margin-bottom:.4rem; }
+    .as-kpi .kpi-val { font-family:'Sora',sans-serif; font-size:1.4rem; font-weight:800; color:var(--ac-deep); line-height:1; }
+    .as-kpi .kpi-label { font-size:.68rem; color:#6b7280; text-transform:uppercase; font-weight:700; letter-spacing:.04em; margin-top:.2rem; }
+    .as-kpi .kpi-sub { font-size:.68rem; color:#9ca3af; margin-top:.12rem; }
+    .as-kpi .kpi-trend { display:inline-flex; align-items:center; gap:.2rem; font-size:.68rem; font-weight:700; margin-top:.15rem; padding:.1rem .4rem; border-radius:6px; }
+    .as-kpi .kpi-trend.up { background:rgba(34,197,94,.1); color:#15803d; }
+    .as-kpi .kpi-trend.down { background:rgba(239,68,68,.1); color:#dc2626; }
+    .as-kpi .kpi-trend.flat { background:rgba(107,114,128,.08); color:#6b7280; }
+
+    .as-panel { background:#fff; border:1px solid rgba(55,133,216,.1); border-radius:16px; padding:1rem 1.1rem; box-shadow:0 4px 16px rgba(30,15,117,.05); }
+    .as-panel h5 { margin:0 0 .7rem; font-family:'Sora',sans-serif; font-size:.88rem; font-weight:800; color:var(--ac-deep); display:flex; align-items:center; gap:.4rem; }
+
+    .as-grid-2 { display:grid; gap:.7rem; grid-template-columns:1fr; }
+    .as-grid-3 { display:grid; gap:.7rem; grid-template-columns:1fr; }
+    @media(min-width:992px) {
+        .as-grid-2 { grid-template-columns:1.4fr .6fr; }
+        .as-grid-3 { grid-template-columns:1fr 1fr 1fr; }
+    }
+    @media(min-width:768px) and (max-width:991px) {
+        .as-grid-3 { grid-template-columns:1fr 1fr; }
+    }
+
+    .as-bars { display:flex; align-items:end; gap:.3rem; min-height:100px; padding-top:.5rem; }
+    .as-bar { flex:1; min-width:22px; text-align:center; }
+    .as-bar .fill { width:100%; border-radius:7px 7px 3px 3px; min-height:5px; transition:height .4s ease; }
+    .as-bar .fill.blue { background:linear-gradient(180deg,var(--ac-blue),var(--ac-mid)); }
+    .as-bar .fill.purple { background:linear-gradient(180deg,#BF8CE1,#8b5cf6); }
+    .as-bar .fill.green { background:linear-gradient(180deg,#22c55e,#059669); }
+    .as-bar .fill.orange { background:linear-gradient(180deg,#f59e0b,#f97316); }
+    .as-bar .val { font-size:.62rem; font-weight:800; color:var(--ac-deep); margin-bottom:.1rem; }
+    .as-bar .lbl { margin-top:.18rem; font-size:.64rem; color:#6b7280; font-weight:700; }
+
+    .as-status-list { display:grid; gap:.35rem; }
+    .as-status-item { display:flex; justify-content:space-between; align-items:center; font-size:.82rem; padding:.45rem .6rem; border-radius:10px; background:#fafbfc; border:1px solid #eef2f7; transition:all .2s; }
+    .as-status-item:hover { background:#f0f4fa; transform:translateX(3px); }
+    .as-status-item .tag { font-weight:700; display:flex; align-items:center; gap:.35rem; }
+    .as-status-item .cnt { font-weight:800; color:var(--ac-deep); background:rgba(30,15,117,.06); border-radius:8px; padding:.1rem .5rem; font-size:.78rem; }
+    .as-st-confirmed .tag { color:#15803d; }
+    .as-st-pending .tag { color:#b45309; }
+    .as-st-cancelled .tag { color:#b91c1c; }
+
+    .as-fill-ring { width:76px; height:76px; border-radius:50%; background:conic-gradient(var(--ac-mid) calc(var(--pct)*1%),#eef2f7 0); display:flex; align-items:center; justify-content:center; margin:0 auto .4rem; }
+    .as-fill-ring-inner { width:56px; height:56px; border-radius:50%; background:#fff; display:flex; align-items:center; justify-content:center; font-family:'Sora',sans-serif; font-weight:800; font-size:.9rem; color:var(--ac-deep); }
+
+    .as-top-row { display:grid; grid-template-columns:auto 1fr auto; gap:.55rem; align-items:center; padding:.5rem .6rem; border-radius:12px; border:1px solid #edf2f7; background:#fff; transition:all .2s; }
+    .as-top-row:hover { background:#f8faff; border-color:rgba(55,133,216,.2); transform:translateX(3px); }
+    .as-top-row+.as-top-row { margin-top:.35rem; }
+    .as-top-rank { width:26px; height:26px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:.7rem; font-weight:800; color:#fff; flex-shrink:0; }
+    .as-top-rank.r1 { background:linear-gradient(135deg,#f59e0b,#f97316); }
+    .as-top-rank.r2 { background:linear-gradient(135deg,#9ca3af,#6b7280); }
+    .as-top-rank.r3 { background:linear-gradient(135deg,#c68a5c,#a0724e); }
+    .as-top-rank.rn { background:rgba(30,15,117,.08); color:var(--ac-deep); }
+    .as-top-info .name { font-size:.82rem; font-weight:700; color:#1f2937; }
+    .as-top-info .meta { font-size:.68rem; color:#6b7280; }
+
+    .as-fill-bar-row { display:flex; align-items:center; gap:.5rem; padding:.4rem 0; }
+    .as-fill-bar-row+.as-fill-bar-row { border-top:1px solid #f3f4f6; }
+    .as-fill-bar-name { flex:0 0 130px; font-size:.76rem; font-weight:700; color:#1f2937; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .as-fill-bar-track { flex:1; height:8px; background:#eef2f7; border-radius:6px; overflow:hidden; }
+    .as-fill-bar-fill { height:100%; border-radius:6px; transition:width .5s ease; }
+    .as-fill-bar-fill.low { background:linear-gradient(90deg,#22c55e,#4ade80); }
+    .as-fill-bar-fill.mid { background:linear-gradient(90deg,#f59e0b,#fbbf24); }
+    .as-fill-bar-fill.high { background:linear-gradient(90deg,#ef4444,#f87171); }
+    .as-fill-bar-pct { flex:0 0 42px; text-align:right; font-size:.72rem; font-weight:800; color:var(--ac-deep); }
+
+    .as-loc-item { display:flex; justify-content:space-between; align-items:center; padding:.4rem .5rem; border-radius:8px; font-size:.8rem; }
+    .as-loc-item:nth-child(odd) { background:#fafbfc; }
+    .as-loc-item .loc-name { font-weight:700; color:#1f2937; text-transform:capitalize; }
+    .as-loc-item .loc-cnt { font-weight:800; color:var(--ac-mid); font-size:.78rem; }
+
+    .as-next-event { background:linear-gradient(135deg,rgba(30,15,117,.04),rgba(55,133,216,.06)); border:1px solid rgba(55,133,216,.15); border-radius:14px; padding:.85rem 1rem; }
+    .as-next-event .ne-title { font-weight:800; color:var(--ac-deep); font-size:.95rem; margin-bottom:.3rem; }
+    .as-next-event .ne-meta { font-size:.78rem; color:#6b7280; display:flex; flex-wrap:wrap; gap:.5rem; }
+    .as-next-event .ne-meta span { display:flex; align-items:center; gap:.25rem; }
+    .as-next-event .ne-meta i { color:var(--ac-blue); font-size:.7rem; }
+    .as-next-countdown { display:flex; gap:.4rem; margin-top:.6rem; }
+    .as-next-countdown .cd-block { background:#fff; border:1px solid rgba(30,15,117,.1); border-radius:10px; padding:.35rem .5rem; text-align:center; min-width:48px; }
+    .as-next-countdown .cd-val { font-family:'Sora',sans-serif; font-weight:800; font-size:1rem; color:var(--ac-deep); line-height:1; }
+    .as-next-countdown .cd-lbl { font-size:.58rem; color:#9ca3af; font-weight:700; text-transform:uppercase; margin-top:.1rem; }
+
+    .as-donut-row { display:flex; align-items:center; gap:1.2rem; justify-content:center; flex-wrap:wrap; }
+    .as-donut-legend { display:flex; flex-direction:column; gap:.3rem; }
+    .as-donut-legend-item { display:flex; align-items:center; gap:.4rem; font-size:.78rem; font-weight:600; color:#374151; }
+    .as-donut-legend-dot { width:10px; height:10px; border-radius:3px; flex-shrink:0; }
+
+    @keyframes fadeIn { from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)} }
+    .as-kpi,.as-panel { animation:fadeIn .4s ease both; }
 </style>
 
-<div class="a-stats-head">
-    <h1><i class="fas fa-chart-line me-2"></i> Mes statistiques</h1>
-    <div class="d-flex gap-2">
-        <a href="{{ path('app_evenement_index') }}" class="btn btn-outline-secondary btn-sm">Mes événements</a>
-        <a href="{{ path('app_reservation_artist_owner') }}" class="btn btn-primary btn-sm">Réservations reçues</a>
+<div class="as-shell">
+    <div class="as-header">
+        <div>
+            <h1><i class="fas fa-chart-line"></i> Mes statistiques</h1>
+            <p>Vue d'ensemble complète de vos événements, réservations et performance.</p>
+        </div>
     </div>
-</div>
 
-<div class="a-stats-grid">
-    <div class="a-kpi">
-        <div class="val">{{ overview.total }}</div>
-        <div class="lbl">Événements</div>
-        <div class="sub">+{{ events_this_month }} ce mois</div>
+    {# ======== KPI CARDS ======== #}
+    <div class="as-kpi-grid">
+        <div class="as-kpi">
+            <div class="kpi-icon" style="background:rgba(30,15,117,.08);color:var(--ac-deep);"><i class="fas fa-calendar-alt"></i></div>
+            <div class="kpi-val">{{ overview.total }}</div>
+            <div class="kpi-label">Événements</div>
+            <div class="kpi-sub">+{{ events_this_month }} ce mois</div>
+            <div class="kpi-trend {{ event_growth > 0 ? 'up' : (event_growth < 0 ? 'down' : 'flat') }}">
+                <i class="fas fa-arrow-{{ event_growth > 0 ? 'up' : (event_growth < 0 ? 'down' : 'right') }}"></i>
+                {{ event_growth >= 0 ? '+' : '' }}{{ event_growth }}%
+            </div>
+        </div>
+        <div class="as-kpi">
+            <div class="kpi-icon" style="background:rgba(55,133,216,.08);color:var(--ac-blue);"><i class="fas fa-clock"></i></div>
+            <div class="kpi-val">{{ overview.upcoming }}</div>
+            <div class="kpi-label">À venir</div>
+            <div class="kpi-sub">{{ overview.past }} terminés</div>
+        </div>
+        <div class="as-kpi">
+            <div class="kpi-icon" style="background:rgba(191,140,225,.12);color:var(--ac-lavender);"><i class="fas fa-ticket-alt"></i></div>
+            <div class="kpi-val">{{ reservations_total }}</div>
+            <div class="kpi-label">Réservations</div>
+            <div class="kpi-sub">+{{ res_this_month }} ce mois</div>
+            <div class="kpi-trend {{ res_growth > 0 ? 'up' : (res_growth < 0 ? 'down' : 'flat') }}">
+                <i class="fas fa-arrow-{{ res_growth > 0 ? 'up' : (res_growth < 0 ? 'down' : 'right') }}"></i>
+                {{ res_growth >= 0 ? '+' : '' }}{{ res_growth }}%
+            </div>
+        </div>
+        <div class="as-kpi">
+            <div class="kpi-icon" style="background:rgba(245,158,11,.1);color:#f59e0b;"><i class="fas fa-percentage"></i></div>
+            <div class="kpi-val">{{ fill_rate|number_format(1) }}%</div>
+            <div class="kpi-label">Remplissage</div>
+            <div class="kpi-sub">{{ total_places }} places totales</div>
+        </div>
+        <div class="as-kpi">
+            <div class="kpi-icon" style="background:rgba(34,197,94,.1);color:#22c55e;"><i class="fas fa-coins"></i></div>
+            <div class="kpi-val">{{ revenue_actual|number_format(0, '.', ' ') }}</div>
+            <div class="kpi-label">Revenu (TND)</div>
+            <div class="kpi-sub">/ {{ revenue_potential|number_format(0, '.', ' ') }} potentiel</div>
+        </div>
+        <div class="as-kpi">
+            <div class="kpi-icon" style="background:rgba(30,15,117,.06);color:var(--ac-mid);"><i class="fas fa-chart-bar"></i></div>
+            <div class="kpi-val">{{ overview.total > 0 ? ((overview.totalReservations / overview.total)|number_format(1)) : '0' }}</div>
+            <div class="kpi-label">Moy. / événement</div>
+            <div class="kpi-sub">Réservations par événement</div>
+        </div>
+        <div class="as-kpi">
+            <div class="kpi-icon" style="background:rgba(236,72,153,.1);color:#ec4899;"><i class="fas fa-user-friends"></i></div>
+            <div class="kpi-val">{{ unique_participants }}</div>
+            <div class="kpi-label">Participants uniques</div>
+            <div class="kpi-sub">Personnes distinctes</div>
+        </div>
+        <div class="as-kpi">
+            <div class="kpi-icon" style="background:rgba(139,92,246,.1);color:#8b5cf6;"><i class="fas fa-fire"></i></div>
+            <div class="kpi-val">{{ overview.full }}</div>
+            <div class="kpi-label">Complets</div>
+            <div class="kpi-sub">{{ overview.total > 0 ? ((overview.full / overview.total) * 100)|number_format(0) : 0 }}% de vos events</div>
+        </div>
     </div>
-    <div class="a-kpi">
-        <div class="val">{{ overview.upcoming }}</div>
-        <div class="lbl">À venir</div>
-        <div class="sub">{{ overview.past }} passés</div>
-    </div>
-    <div class="a-kpi">
-        <div class="val">{{ reservations_total }}</div>
-        <div class="lbl">Réservations reçues</div>
-        <div class="sub">{{ overview.full }} événement{{ overview.full > 1 ? 's' }} complet{{ overview.full > 1 ? 's' }}</div>
-    </div>
-    <div class="a-kpi">
-        <div class="val">{{ overview.total > 0 ? ((overview.totalReservations / overview.total)|number_format(1, '.', ' ')) : 0 }}</div>
-        <div class="lbl">Moyenne / événement</div>
-        <div class="sub">Réservations par événement</div>
-    </div>
-</div>
 
-<div class="a-card">
-    <h5><i class="fas fa-trophy me-1" style="color:var(--ac-lavender);"></i> Top événements (par réservations)</h5>
-    <div class="table-responsive">
-        <table class="a-mini-table">
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>Événement</th>
-                    <th>Lieu</th>
-                    <th style="text-align:right;">Réservations</th>
-                    <th style="text-align:right;">Action</th>
-                </tr>
-            </thead>
-            <tbody>
-            {% for item in top_events %}
-                <tr>
-                    <td>{{ loop.index }}</td>
-                    <td class="fw-semibold">{{ item.event.titre }}</td>
-                    <td>{{ item.event.lieu }}</td>
-                    <td style="text-align:right;"><span class="badge bg-primary bg-opacity-75">{{ item.reservations }}</span></td>
-                    <td style="text-align:right;">
-                        <a href="{{ path('app_evenement_show', {id: item.event.id}) }}" class="btn btn-sm btn-outline-primary py-0 px-2">Voir</a>
-                    </td>
-                </tr>
+    {# ======== NEXT EVENT CARD ======== #}
+    {% if next_event %}
+    <div class="as-next-event">
+        <div style="display:flex; justify-content:space-between; align-items:start; flex-wrap:wrap; gap:.5rem;">
+            <div>
+                <div style="font-size:.68rem; font-weight:700; color:var(--ac-mid); text-transform:uppercase; letter-spacing:.05em; margin-bottom:.2rem;">
+                    <i class="fas fa-bolt me-1"></i>Prochain événement
+                </div>
+                <div class="ne-title">{{ next_event.titre }}</div>
+                <div class="ne-meta">
+                    <span><i class="fas fa-calendar-alt"></i> {{ next_event.dateDebut|date('d/m/Y') }}{% if next_event.dateFin %} → {{ next_event.dateFin|date('d/m/Y') }}{% endif %}</span>
+                    <span><i class="fas fa-clock"></i> {{ next_event.dateDebut|date('H\\hi') }}</span>
+                    <span><i class="fas fa-map-marker-alt"></i> {{ next_event.lieu }}</span>
+                    <span><i class="fas fa-users"></i> {{ next_event.reservations|length }}/{{ next_event.nbPlaces }} réservés</span>
+                    <span><i class="fas fa-tag"></i> {{ next_event.prix ? next_event.prix ~ ' TND' : 'Gratuit' }}</span>
+                </div>
+            </div>
+            <a href="{{ path('app_evenement_show', {id: next_event.id}) }}" class="btn btn-sm btn-primary" style="border-radius:10px; font-weight:700; font-size:.78rem;">
+                <i class="fas fa-eye me-1"></i> Voir
+            </a>
+        </div>
+        <div class="as-next-countdown" id="nextEventCountdown"
+             data-target="{{ next_event.dateDebut|date('Y-m-d\\TH:i:s') }}">
+            <div class="cd-block"><div class="cd-val" id="cdDays">--</div><div class="cd-lbl">Jours</div></div>
+            <div class="cd-block"><div class="cd-val" id="cdHours">--</div><div class="cd-lbl">Heures</div></div>
+            <div class="cd-block"><div class="cd-val" id="cdMins">--</div><div class="cd-lbl">Min</div></div>
+            <div class="cd-block"><div class="cd-val" id="cdSecs">--</div><div class="cd-lbl">Sec</div></div>
+        </div>
+    </div>
+    {% endif %}
+
+    {# ======== RESERVATIONS CHART + STATUS ======== #}
+    <div class="as-grid-2">
+        <div class="as-panel">
+            <h5><i class="fas fa-chart-column" style="color:var(--ac-blue);"></i> Réservations (6 mois)</h5>
+            {% set maxR = 0 %}
+            {% for v in monthly_counts %}{% if v > maxR %}{% set maxR = v %}{% endif %}{% endfor %}
+            <div class="as-bars">
+                {% for v in monthly_counts %}
+                    <div class="as-bar">
+                        <div class="val">{{ v }}</div>
+                        {% set h = maxR > 0 ? ((v / maxR) * 85)|round(0, 'floor') : 5 %}
+                        <div class="fill blue" style="height:{{ h < 5 ? 5 : h }}px;"></div>
+                        <div class="lbl">{{ monthly_labels[loop.index0] }}</div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="as-panel">
+            <h5><i class="fas fa-signal" style="color:var(--ac-lavender);"></i> Statuts</h5>
+            <div style="--pct:{{ fill_rate }}" class="as-fill-ring">
+                <div class="as-fill-ring-inner">{{ fill_rate|number_format(0) }}%</div>
+            </div>
+            <div class="text-center mb-3" style="font-size:.68rem;color:#6b7280;font-weight:600;">REMPLISSAGE GLOBAL</div>
+            <div class="as-status-list">
+                <div class="as-status-item as-st-confirmed"><span class="tag"><i class="fas fa-circle-check"></i> Confirmées</span><span class="cnt">{{ status_counts.CONFIRMED|default(0) }}</span></div>
+                <div class="as-status-item as-st-pending"><span class="tag"><i class="fas fa-clock"></i> En attente</span><span class="cnt">{{ status_counts.PENDING|default(0) }}</span></div>
+                <div class="as-status-item as-st-cancelled"><span class="tag"><i class="fas fa-circle-xmark"></i> Annulées</span><span class="cnt">{{ status_counts.CANCELLED|default(0) }}</span></div>
+            </div>
+        </div>
+    </div>
+
+    {# ======== EVENTS CREATED CHART + FREE/PAID + DAY OF WEEK ======== #}
+    <div class="as-grid-3">
+        <div class="as-panel">
+            <h5><i class="fas fa-layer-group" style="color:#8b5cf6;"></i> Événements créés (6 mois)</h5>
+            {% set maxE = 0 %}
+            {% for v in monthly_event_counts %}{% if v > maxE %}{% set maxE = v %}{% endif %}{% endfor %}
+            <div class="as-bars">
+                {% for v in monthly_event_counts %}
+                    <div class="as-bar">
+                        <div class="val">{{ v }}</div>
+                        {% set h = maxE > 0 ? ((v / maxE) * 75)|round(0, 'floor') : 5 %}
+                        <div class="fill purple" style="height:{{ h < 5 ? 5 : h }}px;"></div>
+                        <div class="lbl">{{ monthly_labels[loop.index0] }}</div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="as-panel">
+            <h5><i class="fas fa-tags" style="color:#22c55e;"></i> Gratuit vs Payant</h5>
+            {% set totalEv = free_events + paid_events %}
+            {% set freePct = totalEv > 0 ? ((free_events / totalEv) * 100)|round : 0 %}
+            {% set paidPct = totalEv > 0 ? ((paid_events / totalEv) * 100)|round : 0 %}
+            <div class="as-donut-row">
+                <div style="--pct:{{ paidPct }}" class="as-fill-ring">
+                    <div class="as-fill-ring-inner" style="font-size:.78rem;">{{ totalEv }}</div>
+                </div>
+                <div class="as-donut-legend">
+                    <div class="as-donut-legend-item">
+                        <span class="as-donut-legend-dot" style="background:#22c55e;"></span>
+                        Gratuit: {{ free_events }} ({{ freePct }}%)
+                    </div>
+                    <div class="as-donut-legend-item">
+                        <span class="as-donut-legend-dot" style="background:var(--ac-mid);"></span>
+                        Payant: {{ paid_events }} ({{ paidPct }}%)
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="as-panel">
+            <h5><i class="fas fa-calendar-week" style="color:#f59e0b;"></i> Jours populaires</h5>
+            {% set maxD = 0 %}
+            {% for v in day_of_week_counts %}{% if v > maxD %}{% set maxD = v %}{% endif %}{% endfor %}
+            <div class="as-bars">
+                {% for v in day_of_week_counts %}
+                    <div class="as-bar">
+                        <div class="val">{{ v }}</div>
+                        {% set h = maxD > 0 ? ((v / maxD) * 70)|round(0, 'floor') : 5 %}
+                        <div class="fill orange" style="height:{{ h < 5 ? 5 : h }}px;"></div>
+                        <div class="lbl">{{ day_of_week_labels[loop.index0] }}</div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    {# ======== FILL RATE PER EVENT + TOP LOCATIONS ======== #}
+    <div class="as-grid-2">
+        <div class="as-panel">
+            <h5><i class="fas fa-battery-three-quarters" style="color:var(--ac-blue);"></i> Remplissage par événement</h5>
+            {% if event_fill_data|length > 0 %}
+                {% for ev in event_fill_data %}
+                    <div class="as-fill-bar-row">
+                        <div class="as-fill-bar-name" title="{{ ev.titre }}">{{ ev.titre }}</div>
+                        <div class="as-fill-bar-track">
+                            <div class="as-fill-bar-fill {% if ev.pct < 50 %}low{% elseif ev.pct < 80 %}mid{% else %}high{% endif %}"
+                                 style="width:{{ ev.pct }}%;"></div>
+                        </div>
+                        <div class="as-fill-bar-pct">{{ ev.reserved }}/{{ ev.places }}</div>
+                    </div>
+                {% endfor %}
             {% else %}
-                <tr>
-                    <td colspan="5" class="text-center text-muted py-3">Aucune donnée</td>
-                </tr>
-            {% endfor %}
-            </tbody>
-        </table>
+                <div class="text-center text-muted py-3" style="font-size:.85rem;">Aucun événement</div>
+            {% endif %}
+        </div>
+        <div class="as-panel">
+            <h5><i class="fas fa-map-marker-alt" style="color:#ec4899;"></i> Top lieux</h5>
+            {% if top_locations|length > 0 %}
+                {% for loc, cnt in top_locations %}
+                    <div class="as-loc-item">
+                        <span class="loc-name"><i class="fas fa-location-dot me-1" style="color:var(--ac-blue);font-size:.7rem;"></i>{{ loc }}</span>
+                        <span class="loc-cnt">{{ cnt }} event{{ cnt > 1 ? 's' : '' }}</span>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="text-center text-muted py-3" style="font-size:.85rem;">Aucune donnée</div>
+            {% endif %}
+        </div>
+    </div>
+
+    {# ======== TOP EVENTS TABLE ======== #}
+    <div class="as-panel">
+        <h5><i class="fas fa-trophy" style="color:#f59e0b;"></i> Top événements</h5>
+        {% for item in top_events %}
+            {% set rankClass = loop.index == 1 ? 'r1' : (loop.index == 2 ? 'r2' : (loop.index == 3 ? 'r3' : 'rn')) %}
+            <div class="as-top-row">
+                <div class="as-top-rank {{ rankClass }}">{{ loop.index }}</div>
+                <div class="as-top-info">
+                    <div class="name">{{ item.event.titre }}</div>
+                    <div class="meta">
+                        <i class="fas fa-map-marker-alt me-1"></i>{{ item.event.lieu ?: '—' }}
+                        {% if item.event.dateDebut %}
+                            &middot; {{ item.event.dateDebut|date('d/m/Y') }}{% if item.event.dateFin %} → {{ item.event.dateFin|date('d/m/Y') }}{% endif %}
+                        {% endif %}
+                        &middot; {{ item.event.nbPlaces }} places
+                        {% if item.event.prix %}&middot; {{ item.event.prix }} TND{% endif %}
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-primary bg-opacity-75" style="border-radius:8px;font-size:.75rem;">{{ item.reservations }} résa</span>
+                    <a href="{{ path('app_evenement_show', {id: item.event.id}) }}" class="btn btn-sm btn-outline-primary" style="border-radius:8px;font-size:.7rem;padding:.18rem .45rem;">
+                        <i class="fas fa-eye"></i>
+                    </a>
+                </div>
+            </div>
+        {% else %}
+            <div class="text-center text-muted py-3" style="font-size:.85rem;">
+                <i class="fas fa-chart-area d-block mb-2" style="font-size:1.5rem;color:#ddd;"></i>
+                Aucune donnée. Créez votre premier événement !
+            </div>
+        {% endfor %}
     </div>
 </div>
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script>
+(function() {
+    var el = document.getElementById('nextEventCountdown');
+    if (!el) return;
+    var target = new Date(el.dataset.target).getTime();
+    function tick() {
+        var diff = target - Date.now();
+        if (diff <= 0) {
+            document.getElementById('cdDays').textContent = '0';
+            document.getElementById('cdHours').textContent = '0';
+            document.getElementById('cdMins').textContent = '0';
+            document.getElementById('cdSecs').textContent = '0';
+            return;
+        }
+        var d = Math.floor(diff / 86400000);
+        var h = Math.floor((diff % 86400000) / 3600000);
+        var m = Math.floor((diff % 3600000) / 60000);
+        var s = Math.floor((diff % 60000) / 1000);
+        document.getElementById('cdDays').textContent = d;
+        document.getElementById('cdHours').textContent = h;
+        document.getElementById('cdMins').textContent = m;
+        document.getElementById('cdSecs').textContent = s;
+    }
+    tick();
+    setInterval(tick, 1000);
+})();
+</script>
 {% endblock %}

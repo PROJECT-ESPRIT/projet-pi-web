@@ -163,24 +163,162 @@ class EvenementController extends AbstractController
         $artist = $this->getUser();
         $overview = $evenementRepository->getArtistStatsOverview($artist);
         $topEvents = $evenementRepository->getTopEventsForArtist($artist, 5);
+        $events = $evenementRepository->findBy(['organisateur' => $artist], ['dateDebut' => 'ASC']);
 
         $now = new \DateTimeImmutable();
         $monthStart = $now->modify('first day of this month')->setTime(0, 0, 0);
         $monthEnd = $now->modify('last day of this month')->setTime(23, 59, 59);
+        $lastMonthStart = $monthStart->modify('-1 month');
+        $lastMonthEnd = $monthStart->modify('-1 second');
 
         $eventsThisMonth = 0;
-        foreach ($evenementRepository->findBy(['organisateur' => $artist]) as $event) {
-            $createdAt = $event->getCreatedAt();
-            if ($createdAt !== null && $createdAt >= $monthStart && $createdAt <= $monthEnd) {
-                $eventsThisMonth++;
-            }
+        $eventsLastMonth = 0;
+        $totalPlaces = 0;
+        $totalRevenuePotential = 0.0;
+        $totalRevenueActual = 0.0;
+        $statusCounts = ['CONFIRMED' => 0, 'PENDING' => 0, 'CANCELLED' => 0];
+        $freeEvents = 0;
+        $paidEvents = 0;
+        $dayOfWeekCounts = [0, 0, 0, 0, 0, 0, 0]; // Mon-Sun
+        $dayOfWeekLabels = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+        $locationCounts = [];
+        $nextEvent = null;
+        $eventFillData = [];
+        $uniqueParticipants = [];
+        $resThisMonth = 0;
+        $resLastMonth = 0;
+
+        $monthlyMap = [];
+        $monthlyLabels = [];
+        $monthlyCounts = [];
+        $monthlyEventCounts = [];
+        $cursor = (new \DateTimeImmutable('first day of this month'))->modify('-5 months');
+        for ($i = 0; $i < 6; $i++) {
+            $key = $cursor->format('Y-m');
+            $monthlyLabels[] = $cursor->format('M');
+            $monthlyCounts[] = 0;
+            $monthlyEventCounts[] = 0;
+            $monthlyMap[$key] = $i;
+            $cursor = $cursor->modify('+1 month');
         }
+
+        foreach ($events as $event) {
+            $createdAt = $event->getCreatedAt();
+            if ($createdAt !== null) {
+                if ($createdAt >= $monthStart && $createdAt <= $monthEnd) {
+                    $eventsThisMonth++;
+                }
+                if ($createdAt >= $lastMonthStart && $createdAt <= $lastMonthEnd) {
+                    $eventsLastMonth++;
+                }
+                $ck = $createdAt->format('Y-m');
+                if (isset($monthlyMap[$ck])) {
+                    $monthlyEventCounts[$monthlyMap[$ck]]++;
+                }
+            }
+
+            $places = (int) ($event->getNbPlaces() ?? 0);
+            $totalPlaces += $places;
+            $prix = $event->getPrix() ?? 0;
+            $totalRevenuePotential += $prix * $places;
+
+            if ($prix > 0) {
+                $paidEvents++;
+            } else {
+                $freeEvents++;
+            }
+
+            if ($event->getDateDebut() !== null) {
+                $dow = ((int) $event->getDateDebut()->format('N')) - 1;
+                $dayOfWeekCounts[$dow]++;
+                if ($event->getDateDebut() >= $now && $nextEvent === null) {
+                    $nextEvent = $event;
+                }
+            }
+
+            $lieu = $event->getLieu();
+            if ($lieu) {
+                $lieuKey = mb_strtolower(trim($lieu));
+                $locationCounts[$lieuKey] = ($locationCounts[$lieuKey] ?? 0) + 1;
+            }
+
+            $resCount = 0;
+            foreach ($event->getReservations() as $res) {
+                $status = $res->getStatus();
+                if (!isset($statusCounts[$status])) {
+                    $statusCounts[$status] = 0;
+                }
+                $statusCounts[$status]++;
+                if ($status === 'CONFIRMED') {
+                    $totalRevenueActual += $prix;
+                    $resCount++;
+                }
+                $resDate = $res->getDateReservation();
+                if ($resDate !== null) {
+                    $resKey = $resDate->format('Y-m');
+                    if (isset($monthlyMap[$resKey])) {
+                        $monthlyCounts[$monthlyMap[$resKey]]++;
+                    }
+                    if ($resDate >= $monthStart && $resDate <= $monthEnd) {
+                        $resThisMonth++;
+                    }
+                    if ($resDate >= $lastMonthStart && $resDate <= $lastMonthEnd) {
+                        $resLastMonth++;
+                    }
+                }
+                $participant = $res->getParticipant();
+                if ($participant) {
+                    $uniqueParticipants[$participant->getId()] = true;
+                }
+            }
+
+            $eventFillData[] = [
+                'titre' => $event->getTitre(),
+                'id' => $event->getId(),
+                'places' => $places,
+                'reserved' => $event->getReservations()->count(),
+                'pct' => $places > 0 ? round($event->getReservations()->count() / $places * 100) : 0,
+                'prix' => $prix,
+            ];
+        }
+
+        $fillRate = $totalPlaces > 0 ? round(($overview['totalReservations'] / $totalPlaces) * 100, 1) : 0.0;
+
+        arsort($locationCounts);
+        $topLocations = array_slice($locationCounts, 0, 5, true);
+
+        usort($eventFillData, fn($a, $b) => $b['pct'] - $a['pct']);
+        $eventFillData = array_slice($eventFillData, 0, 8);
+
+        $resGrowth = $resLastMonth > 0 ? round(($resThisMonth - $resLastMonth) / $resLastMonth * 100, 1) : ($resThisMonth > 0 ? 100.0 : 0.0);
+        $eventGrowth = $eventsLastMonth > 0 ? round(($eventsThisMonth - $eventsLastMonth) / $eventsLastMonth * 100, 1) : ($eventsThisMonth > 0 ? 100.0 : 0.0);
 
         return $this->render('evenement/artist_stats.html.twig', [
             'overview' => $overview,
             'events_this_month' => $eventsThisMonth,
+            'events_last_month' => $eventsLastMonth,
+            'event_growth' => $eventGrowth,
             'reservations_total' => $reservationRepository->countForOwnerEvents($artist),
+            'res_this_month' => $resThisMonth,
+            'res_last_month' => $resLastMonth,
+            'res_growth' => $resGrowth,
             'top_events' => $topEvents,
+            'total_places' => $totalPlaces,
+            'fill_rate' => $fillRate,
+            'revenue_potential' => $totalRevenuePotential,
+            'revenue_actual' => $totalRevenueActual,
+            'status_counts' => $statusCounts,
+            'monthly_labels' => $monthlyLabels,
+            'monthly_counts' => $monthlyCounts,
+            'monthly_event_counts' => $monthlyEventCounts,
+            'free_events' => $freeEvents,
+            'paid_events' => $paidEvents,
+            'day_of_week_counts' => $dayOfWeekCounts,
+            'day_of_week_labels' => $dayOfWeekLabels,
+            'top_locations' => $topLocations,
+            'next_event' => $nextEvent,
+            'event_fill_data' => $eventFillData,
+            'unique_participants' => count($uniqueParticipants),
         ]);
     }
 

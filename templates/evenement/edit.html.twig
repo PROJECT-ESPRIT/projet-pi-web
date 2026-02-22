@@ -22,7 +22,7 @@
 
 <div class="ev-delete-zone">
     <p><i class="fas fa-exclamation-triangle me-1"></i> Zone dangereuse — action irréversible</p>
-    <form method="post" action="{{ path('app_evenement_delete', {id: evenement.id}) }}" onsubmit="return confirm('Supprimer cet événement ?')">
+    <form method="post" action="{{ path('app_evenement_delete', {id: evenement.id}) }}" data-confirm-title="Supprimer cet événement" data-confirm="Cette action est irréversible. Voulez-vous continuer ?">
         <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ evenement.id) }}">
         <button class="btn-del"><i class="fas fa-trash me-1"></i> Supprimer</button>
     </form>

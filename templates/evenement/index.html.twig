@@ -3,21 +3,10 @@
 {% block title %}Événements{% endblock %}
 
 {% block body %}
+{% if is_granted('ROLE_ADMIN') %}
+{# ===================== ADMIN VIEW — unchanged ===================== #}
 <style>
-    .ev-card-wrap { position:relative; border-radius:14px; overflow:hidden; transition:transform .2s, box-shadow .2s; }
-    .ev-card-wrap:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(0,0,0,.12); }
-    .ev-card-wrap.ev-past { opacity:.92; }
-    .ev-card-wrap.ev-past .card { background:linear-gradient(180deg, #f5f5f5 0%, #e8e8e8 100%); }
-    .ev-card-wrap.ev-past .card-img-top,
-    .ev-card-wrap.ev-past .card-img-top + div { filter:grayscale(65%); }
-    .ev-card-wrap.ev-past .card-body { color:#6b7280; }
-    .ev-card-wrap.ev-past .card-title { color:#4b5563; }
     .ev-badge-past { position:absolute; top:12px; left:12px; z-index:2; background:rgba(55,65,81,.9); color:#fff; font-size:.7rem; font-weight:700; padding:.35rem .6rem; border-radius:8px; text-transform:uppercase; letter-spacing:.04em; }
-    .ev-badge-date { position:absolute; top:12px; right:12px; z-index:2; font-size:.7rem; font-weight:700; padding:.35rem .6rem; border-radius:8px; }
-    .ev-badge-today { background:linear-gradient(135deg,#059669,#10b981); color:#fff; box-shadow:0 2px 8px rgba(5,150,105,.4); }
-    .ev-badge-tomorrow { background:linear-gradient(135deg,#2563eb,#3b82f6); color:#fff; box-shadow:0 2px 8px rgba(37,99,235,.4); }
-    .ev-badge-week { background:linear-gradient(135deg,#7c3aed,#8b5cf6); color:#fff; box-shadow:0 2px 8px rgba(124,58,237,.4); }
-    .ev-badge-days { background:linear-gradient(135deg,var(--ac-mid),var(--ac-lavender)); color:#fff; box-shadow:0 2px 8px rgba(30,15,117,.3); }
 </style>
 <div class="bo-page-header">
     <h1>
@@ -25,9 +14,7 @@
         <span class="badge bg-primary bg-opacity-75">{{ total }}</span>
     </h1>
     <div class="bo-actions">
-        {% if is_granted('ROLE_ARTISTE') or is_granted('ROLE_ADMIN') %}
-            <a href="{{ path('app_evenement_new') }}" class="btn btn-primary"><i class="fas fa-plus me-1"></i> Nouveau</a>
-        {% endif %}
+        <a href="{{ path('app_evenement_new') }}" class="btn btn-primary"><i class="fas fa-plus me-1"></i> Nouveau</a>
     </div>
 </div>
 
@@ -70,31 +57,21 @@
         </div>
         <div class="col-12 col-md-4 col-lg-3 d-flex gap-2">
             <button type="submit" class="btn btn-primary flex-grow-1">
-            <span class="btn-label"><i class="fas fa-search me-1"></i> Filtrer</span>
-            <span class="btn-spinner" style="display:none;" aria-hidden="true"><i class="fas fa-spinner fa-spin me-1"></i></span>
-        </button>
+                <span class="btn-label"><i class="fas fa-search me-1"></i> Filtrer</span>
+                <span class="btn-spinner" style="display:none;"><i class="fas fa-spinner fa-spin me-1"></i></span>
+            </button>
             <a class="btn btn-outline-secondary" href="{{ path('app_evenement_index') }}">Réinitialiser</a>
         </div>
     </div>
 </form>
 
-{% if is_granted('ROLE_ADMIN') %}
-{# ===================== ADMIN TABLE VIEW ===================== #}
 <div class="bo-table-card">
     {% if evenements is not empty %}
         <div class="table-responsive">
             <table class="table bo-table">
                 <thead>
                     <tr>
-                        <th>#</th>
-                        <th>Événement</th>
-                        <th>Date</th>
-                        <th>Statut</th>
-                        <th>Lieu</th>
-                        <th>Places</th>
-                        <th>Prix</th>
-                        <th>Organisateur</th>
-                        <th class="text-end">Actions</th>
+                        <th>#</th><th>Événement</th><th>Date</th><th>Statut</th><th>Lieu</th><th>Places</th><th>Prix</th><th>Organisateur</th><th class="text-end">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -103,59 +80,29 @@
                     {% set evStartTs = ev.dateDebut ? ev.dateDebut|date('U') : 0 %}
                     {% set isPassedAdmin = ev.dateDebut and evStartTs < nowTs %}
                     {% if isPassedAdmin %}
-                        {% set statusBadge = 'Passé' %}
-                        {% set statusClass = 'bg-secondary' %}
+                        {% set statusBadge = 'Passé' %}{% set statusClass = 'bg-secondary' %}
                     {% else %}
-                        {% set today = "now"|date('Y-m-d') %}
-                        {% set tomorrow = "now"|date_modify('+1 day')|date('Y-m-d') %}
-                        {% set evDay = ev.dateDebut|date('Y-m-d') %}
-                        {% set evWeek = ev.dateDebut|date('Y-W') %}
-                        {% set nowWeek = "now"|date('Y-W') %}
-                        {% if evDay == today %}
-                            {% set statusBadge = 'Aujourd\'hui' %}
-                            {% set statusClass = 'bg-success' %}
-                        {% elseif evDay == tomorrow %}
-                            {% set statusBadge = 'Demain' %}
-                            {% set statusClass = 'bg-primary' %}
-                        {% elseif evWeek == nowWeek %}
-                            {% set statusBadge = 'Cette semaine' %}
-                            {% set statusClass = 'bg-info' %}
-                        {% else %}
-                            {% set daysLeft = ((evStartTs - nowTs) / 86400)|round %}
-                            {% set statusBadge = daysLeft > 0 ? ('J-' ~ daysLeft) : '—' %}
-                            {% set statusClass = 'bg-light text-dark' %}
-                        {% endif %}
+                        {% set today = "now"|date('Y-m-d') %}{% set tomorrow = "now"|date_modify('+1 day')|date('Y-m-d') %}
+                        {% set evDay = ev.dateDebut|date('Y-m-d') %}{% set evWeek = ev.dateDebut|date('Y-W') %}{% set nowWeek = "now"|date('Y-W') %}
+                        {% if evDay == today %}{% set statusBadge = 'Aujourd\'hui' %}{% set statusClass = 'bg-success' %}
+                        {% elseif evDay == tomorrow %}{% set statusBadge = 'Demain' %}{% set statusClass = 'bg-primary' %}
+                        {% elseif evWeek == nowWeek %}{% set statusBadge = 'Cette semaine' %}{% set statusClass = 'bg-info' %}
+                        {% else %}{% set daysLeft = ((evStartTs - nowTs) / 86400)|round %}{% set statusBadge = daysLeft > 0 ? ('J-' ~ daysLeft) : '—' %}{% set statusClass = 'bg-light text-dark' %}{% endif %}
                     {% endif %}
                     <tr class="{{ isPassedAdmin ? 'table-secondary' : '' }}" style="{{ isPassedAdmin ? 'opacity:.88;' : '' }}">
                         <td class="text-muted">{{ ev.id }}</td>
-                        <td>
-                            <div class="fw-semibold">{{ ev.titre }}</div>
-                            <small class="text-muted">{{ ev.description|length > 60 ? ev.description|slice(0, 60) ~ '…' : ev.description }}</small>
-                        </td>
-                        <td style="white-space:nowrap;">
-                            <div>{{ ev.dateDebut ? ev.dateDebut|date('d/m/Y') : '—' }}</div>
-                            <small class="text-muted">{{ ev.dateDebut ? ev.dateDebut|date('H:i') : '' }}{{ ev.dateFin ? ' → ' ~ ev.dateFin|date('H:i') : '' }}</small>
-                        </td>
+                        <td><div class="fw-semibold">{{ ev.titre }}</div><small class="text-muted">{{ ev.description|length > 60 ? ev.description|slice(0, 60) ~ '…' : ev.description }}</small></td>
+                        <td style="white-space:nowrap;"><div>{{ ev.dateDebut ? ev.dateDebut|date('d/m/Y') : '—' }}</div><small class="text-muted">{{ ev.dateDebut ? ev.dateDebut|date('H:i') : '' }}{{ ev.dateFin ? ' → ' ~ ev.dateFin|date('H:i') : '' }}</small></td>
                         <td><span class="badge {{ statusClass }}" style="font-size:.7rem;">{{ statusBadge }}</span></td>
                         <td>{{ ev.lieu }}</td>
-                        <td>
-                            <span class="badge bg-secondary bg-opacity-75">{{ ev.reservations|length }} / {{ ev.nbPlaces }}</span>
-                        </td>
-                        <td>
-                            {% if ev.prix %}
-                                <span class="fw-semibold">{{ ev.prix }} TND</span>
-                            {% else %}
-                                <span class="badge bg-success bg-opacity-75">Gratuit</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            {{ ev.organisateur.prenom }} {{ ev.organisateur.nom|first }}.
-                        </td>
+                        <td><span class="badge bg-secondary bg-opacity-75">{{ ev.reservations|length }} / {{ ev.nbPlaces }}</span></td>
+                        <td>{% if ev.prix %}<span class="fw-semibold">{{ ev.prix }} TND</span>{% else %}<span class="badge bg-success bg-opacity-75">Gratuit</span>{% endif %}</td>
+                        <td>{{ ev.organisateur.prenom }} {{ ev.organisateur.nom|first }}.</td>
                         <td class="text-end">
                             <div class="d-flex gap-1 justify-content-end">
                                 <a href="{{ path('app_evenement_show', {id: ev.id}) }}" class="btn-action btn-view" title="Voir"><i class="fas fa-eye"></i></a>
                                 <a href="{{ path('app_evenement_edit', {id: ev.id}) }}" class="btn-action btn-edit" title="Éditer"><i class="fas fa-pen"></i></a>
-                                <form method="post" action="{{ path('app_evenement_delete', {id: ev.id}) }}" class="d-inline" onsubmit="return confirm('Supprimer cet événement ?')">
+                                <form method="post" action="{{ path('app_evenement_delete', {id: ev.id}) }}" class="d-inline" data-confirm-title="Supprimer cet événement" data-confirm="Cette action est irréversible. Voulez-vous continuer ?">
                                     <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ ev.id) }}">
                                     <button class="btn-action btn-del" title="Supprimer"><i class="fas fa-trash"></i></button>
                                 </form>
@@ -166,118 +113,386 @@
                 </tbody>
             </table>
         </div>
-
         {% if total_pages > 1 %}
             {% set qp = filter_input|default({}) %}
             <div class="bo-pagination">
                 <div class="page-info">Page {{ page }} sur {{ total_pages }} — {{ total }} résultat{{ total > 1 ? 's' }}</div>
-                <nav>
-                    <ul class="pagination">
-                        <li class="page-item {{ page == 1 ? 'disabled' }}">
-                            <a class="page-link" href="{{ path('app_evenement_index', qp|merge({page: page - 1})) }}"><i class="fas fa-chevron-left"></i></a>
-                        </li>
-                        {% for p in 1..total_pages %}
-                            <li class="page-item {{ p == page ? 'active' }}">
-                                <a class="page-link" href="{{ path('app_evenement_index', qp|merge({page: p})) }}">{{ p }}</a>
-                            </li>
-                        {% endfor %}
-                        <li class="page-item {{ page == total_pages ? 'disabled' }}">
-                            <a class="page-link" href="{{ path('app_evenement_index', qp|merge({page: page + 1})) }}"><i class="fas fa-chevron-right"></i></a>
-                        </li>
-                    </ul>
-                </nav>
+                <nav><ul class="pagination">
+                    <li class="page-item {{ page == 1 ? 'disabled' }}"><a class="page-link" href="{{ path('app_evenement_index', qp|merge({page: page - 1})) }}"><i class="fas fa-chevron-left"></i></a></li>
+                    {% for p in 1..total_pages %}<li class="page-item {{ p == page ? 'active' }}"><a class="page-link" href="{{ path('app_evenement_index', qp|merge({page: p})) }}">{{ p }}</a></li>{% endfor %}
+                    <li class="page-item {{ page == total_pages ? 'disabled' }}"><a class="page-link" href="{{ path('app_evenement_index', qp|merge({page: page + 1})) }}"><i class="fas fa-chevron-right"></i></a></li>
+                </ul></nav>
             </div>
         {% endif %}
     {% else %}
-        <div class="bo-empty">
-            <i class="fas fa-calendar-times"></i>
-            <p>Aucun événement trouvé</p>
-        </div>
+        <div class="bo-empty"><i class="fas fa-calendar-times"></i><p>Aucun événement trouvé</p></div>
     {% endif %}
 </div>
 
 {% else %}
-{# ===================== FRONTOFFICE CARD VIEW ===================== #}
-<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+{# ===================== FRONTOFFICE — same cards as home ===================== #}
+<style>
+    .fo-ev-header {
+        display: flex; justify-content: space-between; align-items: center;
+        margin-bottom: 1rem; padding-bottom: .5rem;
+        border-bottom: 2px solid rgba(30,15,117,.06);
+    }
+    .fo-ev-header h1 {
+        margin: 0; font-family: 'Sora', sans-serif;
+        font-size: 1.5rem; font-weight: 700; color: var(--ac-deep);
+        display: flex; align-items: center; gap: .5rem;
+    }
+    .fo-ev-header .badge { font-size: .72rem; border-radius: 8px; }
+
+    /* Filter bar — matching home style */
+    .fo-filter-bar {
+        background: #fff; border-radius: 16px;
+        padding: .8rem 1rem;
+        box-shadow: 0 4px 16px rgba(30,15,117,.06);
+        border: 1px solid rgba(30,15,117,.08);
+        margin-bottom: .4rem;
+    }
+    .fo-filter-row {
+        display: flex; align-items: center; gap: .5rem; flex-wrap: wrap;
+    }
+    .fo-filter-search {
+        flex: 1; min-width: 180px; position: relative;
+    }
+    .fo-filter-search input {
+        width: 100%; border: 1px solid rgba(30,15,117,.1);
+        border-radius: 10px; padding: .5rem .8rem .5rem 2.2rem;
+        font-size: .85rem; background: #faf9fe; transition: all .25s;
+    }
+    .fo-filter-search input:focus {
+        outline: none; border-color: #3785D8;
+        box-shadow: 0 0 0 3px rgba(55,133,216,.1); background: #fff;
+    }
+    .fo-filter-search i {
+        position: absolute; left: .75rem; top: 50%; transform: translateY(-50%);
+        color: #999; font-size: .8rem;
+    }
+    .fo-filter-select {
+        border: 1px solid rgba(30,15,117,.1); border-radius: 10px;
+        padding: .5rem .7rem; font-size: .82rem;
+        background: #faf9fe; cursor: pointer; color: #555;
+    }
+    .fo-filter-select:focus { outline: none; border-color: #3785D8; }
+    .fo-filter-input {
+        border: 1px solid rgba(30,15,117,.1); border-radius: 10px;
+        padding: .5rem .6rem; font-size: .82rem;
+        background: #faf9fe; width: 110px;
+    }
+    .fo-filter-input:focus { outline: none; border-color: #3785D8; box-shadow: 0 0 0 2px rgba(55,133,216,.1); }
+    .fo-filter-btn {
+        border-radius: 10px; font-weight: 700; font-size: .82rem;
+        padding: .5rem 1rem; min-width: 90px; border: none;
+        background: linear-gradient(135deg, #1E0F75, #3785D8);
+        color: #fff; cursor: pointer; transition: all .2s;
+    }
+    .fo-filter-btn:hover { filter: brightness(.95); transform: translateY(-1px); }
+    .fo-filter-reset {
+        border-radius: 10px; font-weight: 600; font-size: .82rem;
+        padding: .5rem .8rem; border: 1px solid rgba(30,15,117,.15);
+        background: transparent; color: #666; cursor: pointer;
+        text-decoration: none; transition: all .2s;
+    }
+    .fo-filter-reset:hover { background: rgba(30,15,117,.04); color: #1E0F75; }
+    .fo-filter-toggle {
+        width: 38px; height: 38px; border-radius: 10px;
+        border: 1px solid rgba(30,15,117,.1); background: #faf9fe;
+        color: #666; display: flex; align-items: center; justify-content: center;
+        cursor: pointer; transition: all .25s; flex-shrink: 0;
+    }
+    .fo-filter-toggle:hover, .fo-filter-toggle.active {
+        background: linear-gradient(135deg, #1E0F75, #3785D8);
+        color: #fff; border-color: transparent;
+    }
+    .fo-filter-advanced {
+        background: #fff; border-radius: 0 0 16px 16px;
+        padding: .7rem 1rem; box-shadow: 0 4px 16px rgba(30,15,117,.06);
+        border: 1px solid rgba(30,15,117,.08); border-top: none;
+        margin-bottom: 1rem;
+        animation: slideDown .3s ease;
+    }
+    @keyframes slideDown { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+    .fo-filter-adv-row { display: flex; gap: .5rem; flex-wrap: wrap; align-items: end; }
+    .fo-filter-adv-group { flex: 1; min-width: 130px; }
+    .fo-filter-adv-group label {
+        display: block; font-size: .7rem; font-weight: 700; color: #666; margin-bottom: .15rem;
+    }
+
+    /* Event cards — same as home */
+    .ev-card {
+        background: #fff; border-radius: 18px; overflow: hidden;
+        box-shadow: 0 8px 24px rgba(30,15,117,.07);
+        border: 1px solid rgba(30,15,117,.06);
+        transition: all .3s cubic-bezier(.4,0,.2,1);
+        height: 100%; display: flex; flex-direction: column; position: relative;
+    }
+    .ev-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 20px 40px rgba(30,15,117,.15);
+        border-color: rgba(55,133,216,.2);
+    }
+    .ev-card.ev-past { opacity: .85; }
+    .ev-card.ev-past .ev-card-img img,
+    .ev-card.ev-past .ev-card-img .placeholder-art { filter: grayscale(60%); }
+    .ev-card-img { height: 180px; position: relative; overflow: hidden; }
+    .ev-card-img img { width: 100%; height: 100%; object-fit: cover; transition: transform .4s; }
+    .ev-card:hover .ev-card-img img { transform: scale(1.05); }
+    .ev-card-img .placeholder-art {
+        width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+        font-size: 3rem; background: linear-gradient(135deg, #f0eaf9, #e3ecf5);
+    }
+    .ev-card-date-badge {
+        position: absolute; top: 12px; left: 12px;
+        background: rgba(255,255,255,.95); backdrop-filter: blur(8px);
+        border-radius: 12px; padding: .4rem .6rem; text-align: center;
+        box-shadow: 0 4px 12px rgba(0,0,0,.1); line-height: 1;
+    }
+    .ev-card-date-badge .day { display: block; font-size: 1.2rem; font-weight: 800; color: #1E0F75; }
+    .ev-card-date-badge .month { display: block; font-size: .65rem; font-weight: 700; color: #3785D8; text-transform: uppercase; }
+    .ev-card-price-tag {
+        position: absolute; top: 12px; right: 12px;
+        padding: .3rem .7rem; border-radius: 10px;
+        font-size: .75rem; font-weight: 700; backdrop-filter: blur(8px);
+    }
+    .ev-card-price-tag.free { background: rgba(25,135,84,.9); color: #fff; }
+    .ev-card-price-tag.paid { background: rgba(255,193,7,.95); color: #1E0F75; }
+    .ev-card-timing-badge {
+        position: absolute; bottom: 8px; left: 12px;
+        font-size: .65rem; font-weight: 700; padding: .22rem .55rem;
+        border-radius: 8px; backdrop-filter: blur(8px); z-index: 2;
+    }
+    .ev-badge-today { background: linear-gradient(135deg,#059669,#10b981); color: #fff; }
+    .ev-badge-tomorrow { background: linear-gradient(135deg,#2563eb,#3b82f6); color: #fff; }
+    .ev-badge-week { background: linear-gradient(135deg,#7c3aed,#8b5cf6); color: #fff; }
+    .ev-badge-days { background: linear-gradient(135deg,var(--ac-mid),var(--ac-lavender)); color: #fff; }
+    .ev-badge-past { background: rgba(55,65,81,.85); color: #fff; }
+    .ev-card-body { padding: 1rem 1.2rem 1.1rem; flex: 1; display: flex; flex-direction: column; }
+    .ev-card-body h3 {
+        font-size: 1rem; font-weight: 700; color: #1E0F75; margin-bottom: .35rem;
+        line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .ev-card-desc {
+        font-size: .78rem; color: #777; margin-bottom: .5rem;
+        display: -webkit-box; -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical; overflow: hidden; line-height: 1.45;
+    }
+    .ev-card-info { display: flex; flex-direction: column; gap: .25rem; margin-bottom: .6rem; font-size: .8rem; color: #666; }
+    .ev-card-info > div { display: flex; align-items: center; gap: .4rem; }
+    .ev-card-info i { color: #3785D8; width: 15px; text-align: center; font-size: .75rem; }
+    .ev-card-footer {
+        margin-top: auto; display: flex; justify-content: space-between; align-items: center;
+        padding-top: .65rem; border-top: 1px solid rgba(30,15,117,.06);
+    }
+    .ev-card-organizer { display: flex; align-items: center; gap: .4rem; font-size: .75rem; color: #888; }
+    .ev-card-organizer .avatar {
+        width: 24px; height: 24px; border-radius: 8px;
+        background: linear-gradient(135deg, #1E0F75, #3785D8); color: #fff;
+        display: flex; align-items: center; justify-content: center;
+        font-size: .6rem; font-weight: 700;
+    }
+    .ev-card-places { display: flex; align-items: center; gap: .4rem; font-size: .75rem; }
+    .places-bar { width: 50px; height: 4px; background: #eee; border-radius: 4px; overflow: hidden; }
+    .places-bar-fill { height: 100%; border-radius: 4px; transition: width .4s; }
+    .places-bar-fill.low { background: linear-gradient(90deg, #198754, #20c997); }
+    .places-bar-fill.medium { background: linear-gradient(90deg, #ffc107, #fd7e14); }
+    .places-bar-fill.high { background: linear-gradient(90deg, #dc3545, #e74c3c); }
+    .ev-card-owner-line {
+        position: absolute; bottom: 0; left: 0; right: 0; height: 3px;
+        background: linear-gradient(90deg, #1E0F75, #3785D8, #BF8CE1);
+    }
+
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+    .ev-card { animation: fadeInUp .4s ease both; }
+
+    .fo-pagination .page-item.active .page-link { background: var(--ac-mid); border-color: var(--ac-mid); color: #fff; }
+    .fo-pagination .page-link { border-radius: 10px; color: #374151; font-weight: 600; font-size: .85rem; }
+
+    .fo-empty {
+        background: #fff; border: 1px solid rgba(30,15,117,.06);
+        border-radius: 18px; box-shadow: 0 8px 24px rgba(30,15,117,.06);
+        text-align: center; padding: 3rem 1.5rem; color: #6b7280;
+    }
+    .fo-empty i { font-size: 2.5rem; color: rgba(191,140,225,.4); margin-bottom: .7rem; display: block; }
+</style>
+
+<div class="fo-ev-header">
+    <h1>
+        <i class="fas fa-calendar-alt" style="color:var(--ac-mid);"></i> Événements
+        <span class="badge bg-primary bg-opacity-75">{{ total }}</span>
+    </h1>
+    <div class="d-flex gap-2">
+        {% if is_granted('ROLE_ARTISTE') %}
+            <a href="{{ path('app_evenement_new') }}" class="btn btn-primary" style="border-radius:12px; font-weight:700; font-size:.85rem;">
+                <i class="fas fa-plus me-1"></i> Créer
+            </a>
+        {% endif %}
+    </div>
+</div>
+
+{# ---- Enhanced Filter Bar ---- #}
+{% set hasAdvFilters = filter_input.lieu|default('') or filter_input.date_start|default('') or filter_input.date_end|default('') or filter_input.prix_min|default('') or filter_input.prix_max|default('') %}
+<form method="get" action="{{ path('app_evenement_index') }}" id="foFilterForm">
+    <div class="fo-filter-bar">
+        <div class="fo-filter-row">
+            <div class="fo-filter-search">
+                <i class="fas fa-search"></i>
+                <input type="text" name="q" value="{{ filter_input.q|default('') }}" placeholder="Rechercher un événement, lieu, artiste...">
+            </div>
+            <select name="sort" class="fo-filter-select">
+                <option value="date_asc" {{ filter_input.sort == 'date_asc' ? 'selected' }}>Date (proche)</option>
+                <option value="date_desc" {{ filter_input.sort == 'date_desc' ? 'selected' }}>Date (lointaine)</option>
+                <option value="prix_asc" {{ filter_input.sort == 'prix_asc' ? 'selected' }}>Prix croissant</option>
+                <option value="prix_desc" {{ filter_input.sort == 'prix_desc' ? 'selected' }}>Prix décroissant</option>
+                <option value="titre_asc" {{ filter_input.sort == 'titre_asc' ? 'selected' }}>Nom A-Z</option>
+                <option value="titre_desc" {{ filter_input.sort == 'titre_desc' ? 'selected' }}>Nom Z-A</option>
+                <option value="created_desc" {{ filter_input.sort == 'created_desc' ? 'selected' }}>Récents</option>
+            </select>
+            <button type="submit" class="fo-filter-btn">
+                <span class="btn-label"><i class="fas fa-search me-1"></i> Filtrer</span>
+                <span class="btn-spinner" style="display:none;"><i class="fas fa-spinner fa-spin"></i></span>
+            </button>
+            <button type="button" class="fo-filter-toggle {{ hasAdvFilters ? 'active' : '' }}" onclick="this.classList.toggle('active');document.getElementById('foAdvFilters').classList.toggle('d-none');" title="Filtres avancés">
+                <i class="fas fa-sliders-h"></i>
+            </button>
+        </div>
+    </div>
+    <div class="fo-filter-advanced {{ not hasAdvFilters ? 'd-none' : '' }}" id="foAdvFilters">
+        <div class="fo-filter-adv-row">
+            <div class="fo-filter-adv-group">
+                <label><i class="fas fa-map-marker-alt me-1"></i>Lieu</label>
+                <input type="text" name="lieu" class="fo-filter-input" style="width:100%;" value="{{ filter_input.lieu|default('') }}" placeholder="Ville / lieu">
+            </div>
+            <div class="fo-filter-adv-group">
+                <label><i class="fas fa-calendar me-1"></i>Date début</label>
+                <input type="date" name="date_start" class="fo-filter-input" style="width:100%;" value="{{ filter_input.date_start|default('') }}">
+            </div>
+            <div class="fo-filter-adv-group">
+                <label><i class="fas fa-calendar-check me-1"></i>Date fin</label>
+                <input type="date" name="date_end" class="fo-filter-input" style="width:100%;" value="{{ filter_input.date_end|default('') }}">
+            </div>
+            <div class="fo-filter-adv-group">
+                <label><i class="fas fa-coins me-1"></i>Prix min</label>
+                <input type="number" step="0.01" name="prix_min" class="fo-filter-input" style="width:100%;" value="{{ filter_input.prix_min|default('') }}" placeholder="0">
+            </div>
+            <div class="fo-filter-adv-group">
+                <label><i class="fas fa-coins me-1"></i>Prix max</label>
+                <input type="number" step="0.01" name="prix_max" class="fo-filter-input" style="width:100%;" value="{{ filter_input.prix_max|default('') }}" placeholder="∞">
+            </div>
+            <div class="fo-filter-adv-group" style="align-self:end; flex:0;">
+                <a href="{{ path('app_evenement_index') }}" class="fo-filter-reset"><i class="fas fa-undo me-1"></i>Reset</a>
+            </div>
+        </div>
+    </div>
+</form>
+
+{# ---- Event Cards Grid ---- #}
+{% if evenements is not empty %}
+<div class="row g-3">
+    {% set icons = ['🎨', '🎭', '🎵', '🎪', '🎬', '🎤', '🖼️', '✨', '🎻'] %}
     {% for ev in evenements %}
         {% set nowTs = "now"|date('U') %}
         {% set evStartTs = ev.dateDebut ? ev.dateDebut|date('U') : 0 %}
         {% set isPassed = ev.dateDebut and evStartTs < nowTs %}
-        {% if isPassed %}
-            {% set dateBadgeLabel = 'Passé' %}
-            {% set dateBadgeClass = '' %}
-        {% else %}
+        {% set reservedCount = ev.reservations|length %}
+        {% set fillPct = ev.nbPlaces > 0 ? ((reservedCount / ev.nbPlaces) * 100)|round : 0 %}
+        {% set isMine = app.user and ev.organisateur and app.user.id == ev.organisateur.id %}
+
+        {% if not isPassed %}
             {% set today = "now"|date('Y-m-d') %}
             {% set tomorrow = "now"|date_modify('+1 day')|date('Y-m-d') %}
-            {% set evDay = ev.dateDebut|date('Y-m-d') %}
-            {% set evWeek = ev.dateDebut|date('Y-W') %}
+            {% set evDay = ev.dateDebut ? ev.dateDebut|date('Y-m-d') : '' %}
+            {% set evWeek = ev.dateDebut ? ev.dateDebut|date('Y-W') : '' %}
             {% set nowWeek = "now"|date('Y-W') %}
             {% if evDay == today %}
-                {% set dateBadgeLabel = 'Aujourd\'hui' %}
-                {% set dateBadgeClass = 'ev-badge-today' %}
+                {% set timingLabel = "Aujourd'hui" %}{% set timingClass = 'ev-badge-today' %}
             {% elseif evDay == tomorrow %}
-                {% set dateBadgeLabel = 'Demain' %}
-                {% set dateBadgeClass = 'ev-badge-tomorrow' %}
+                {% set timingLabel = 'Demain' %}{% set timingClass = 'ev-badge-tomorrow' %}
             {% elseif evWeek == nowWeek %}
-                {% set dateBadgeLabel = 'Cette semaine' %}
-                {% set dateBadgeClass = 'ev-badge-week' %}
+                {% set timingLabel = 'Cette semaine' %}{% set timingClass = 'ev-badge-week' %}
             {% else %}
                 {% set daysLeft = ((evStartTs - nowTs) / 86400)|round %}
-                {% set dateBadgeLabel = daysLeft == 1 ? 'Demain' : (daysLeft < 7 ? daysLeft ~ ' jours' : 'J-' ~ daysLeft) %}
-                {% set dateBadgeClass = 'ev-badge-days' %}
+                {% set timingLabel = daysLeft > 0 ? ('J-' ~ daysLeft) : '' %}
+                {% set timingClass = 'ev-badge-days' %}
             {% endif %}
+        {% else %}
+            {% set timingLabel = 'Passé' %}{% set timingClass = 'ev-badge-past' %}
         {% endif %}
-        <div class="col">
-            <div class="ev-card-wrap {{ isPassed ? 'ev-past' : '' }}">
-                {% if isPassed %}
-                    <span class="ev-badge-past"><i class="fas fa-clock me-1"></i> Événement passé</span>
-                {% else %}
-                    <span class="ev-badge-date {{ dateBadgeClass }}">{{ dateBadgeLabel }}</span>
-                {% endif %}
-                <div class="card h-100 shadow-sm" style="border:none; border-radius:14px; overflow:hidden;">
-                    {% if ev.image %}
-                        <img src="{{ ev.image }}" class="card-img-top" alt="{{ ev.titre }}" style="height:180px; object-fit:cover;">
-                    {% else %}
-                        <div class="card-img-top d-flex align-items-center justify-content-center" style="height:180px; background:linear-gradient(135deg,var(--ac-sky),var(--ac-lavender));">
-                            <i class="fas fa-palette" style="font-size:2.5rem; color:#fff; opacity:.7;"></i>
+
+        <div class="col-sm-6 col-lg-4" style="animation-delay:{{ loop.index0 * 0.05 }}s;">
+            <a href="{{ path('app_evenement_show', {id: ev.id}) }}" class="text-decoration-none">
+                <div class="ev-card {{ isPassed ? 'ev-past' : '' }}">
+                    <div class="ev-card-img">
+                        {% if ev.image %}
+                            <img src="{{ ev.image }}" alt="{{ ev.titre }}" loading="lazy">
+                        {% else %}
+                            <div class="placeholder-art" style="background:linear-gradient({{ loop.index * 50 + 120 }}deg, rgba(30,15,117,.1), rgba(55,133,216,.15), rgba(191,140,225,.1));">
+                                {{ icons[loop.index0 % icons|length] }}
+                            </div>
+                        {% endif %}
+                        {% if ev.dateDebut %}
+                            <div class="ev-card-date-badge">
+                                <span class="day">{{ ev.dateDebut|date('d') }}</span>
+                                <span class="month">{{ ev.dateDebut|date('M') }}</span>
+                            </div>
+                        {% endif %}
+                        <div class="ev-card-price-tag {{ ev.prix ? 'paid' : 'free' }}">
+                            {{ ev.prix ? ev.prix ~ ' TND' : 'Gratuit' }}
                         </div>
-                    {% endif %}
-                    <div class="card-body">
-                        <h6 class="card-title fw-bold mb-1">{{ ev.titre }}</h6>
-                        <p class="text-muted small mb-2">{{ ev.description|length > 80 ? ev.description|slice(0, 80) ~ '…' : ev.description }}</p>
-                        <div class="d-flex flex-wrap gap-1 mb-2">
-                            <span class="badge bg-light text-dark"><i class="fas fa-map-marker-alt me-1 text-muted"></i>{{ ev.lieu }}</span>
-                            <span class="badge bg-light text-dark"><i class="fas fa-clock me-1 text-muted"></i>{{ ev.dateDebut ? ev.dateDebut|date('d/m/Y H:i') : '—' }}</span>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <span class="fw-bold" style="color:var(--ac-mid);">{{ ev.prix ? ev.prix ~ ' TND' : 'Gratuit' }}</span>
-                            <span class="small text-muted">{{ ev.reservations|length }}/{{ ev.nbPlaces }} places</span>
-                        </div>
-                    </div>
-                    <div class="card-footer bg-white border-0 pt-0 pb-3 px-3">
-                        <a href="{{ path('app_evenement_show', {id: ev.id}) }}" class="btn btn-sm w-100" style="background:var(--ac-mid); color:#fff; border-radius:10px; font-weight:600;">
-                            Voir détails
-                        </a>
-                        {% if app.user and (app.user == ev.organisateur) %}
-                            <a href="{{ path('app_evenement_edit', {id: ev.id}) }}" class="btn btn-sm btn-outline-secondary w-100 mt-1" style="border-radius:10px;">Modifier</a>
+                        {% if timingLabel %}
+                            <div class="ev-card-timing-badge {{ timingClass }}">
+                                {% if isPassed %}<i class="fas fa-clock me-1"></i>{% endif %}{{ timingLabel }}
+                            </div>
                         {% endif %}
                     </div>
+                    <div class="ev-card-body">
+                        <h3>{{ ev.titre }}</h3>
+                        <div class="ev-card-desc">{{ ev.description|length > 80 ? ev.description|slice(0, 80) ~ '...' : ev.description }}</div>
+                        <div class="ev-card-info">
+                            <div><i class="fas fa-map-marker-alt"></i> {{ ev.lieu }}</div>
+                            <div><i class="fas fa-calendar-alt"></i> {{ ev.dateDebut ? ev.dateDebut|date('d/m/Y') : 'TBD' }}{% if ev.dateFin %} → {{ ev.dateFin|date('d/m/Y') }}{% endif %}</div>
+                            <div><i class="fas fa-clock"></i> {{ ev.dateDebut ? ev.dateDebut|date('H\\hi') : '' }}{% if ev.dateFin %} — {{ ev.dateFin|date('H\\hi') }}{% endif %}</div>
+                            {% if ev.ageMin or ev.ageMax %}
+                                <div><i class="fas fa-child"></i>
+                                    {% if ev.ageMin and ev.ageMax %}{{ ev.ageMin }} - {{ ev.ageMax }} ans
+                                    {% elseif ev.ageMin %}Dès {{ ev.ageMin }} ans
+                                    {% else %}Jusqu'à {{ ev.ageMax }} ans{% endif %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="ev-card-footer">
+                            {% if ev.organisateur %}
+                                <div class="ev-card-organizer">
+                                    <div class="avatar">{{ ev.organisateur.prenom|first }}{{ ev.organisateur.nom|first }}</div>
+                                    <span>{{ ev.organisateur.prenom }}</span>
+                                </div>
+                            {% else %}
+                                <div></div>
+                            {% endif %}
+                            <div class="ev-card-places">
+                                <div class="places-bar">
+                                    <div class="places-bar-fill {% if fillPct < 50 %}low{% elseif fillPct < 80 %}medium{% else %}high{% endif %}"
+                                         style="width:{{ fillPct }}%;"></div>
+                                </div>
+                                <span class="text-muted">{{ ev.nbPlaces - reservedCount }}/{{ ev.nbPlaces }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    {% if isMine %}
+                        <div class="ev-card-owner-line"></div>
+                    {% endif %}
                 </div>
-            </div>
-        </div>
-    {% else %}
-        <div class="col-12">
-            <div class="text-center py-5 text-muted">
-                <i class="fas fa-calendar-times" style="font-size:2rem;"></i>
-                <p class="mt-2">Aucun événement trouvé</p>
-            </div>
+            </a>
         </div>
     {% endfor %}
 </div>
 
 {% if total_pages > 1 %}
     {% set qp = filter_input|default({}) %}
-    <nav class="mt-4">
+    <nav class="mt-4 fo-pagination">
         <ul class="pagination justify-content-center">
             <li class="page-item {{ page == 1 ? 'disabled' }}">
                 <a class="page-link" href="{{ path('app_evenement_index', qp|merge({page: page - 1})) }}"><i class="fas fa-chevron-left"></i></a>
@@ -293,5 +508,14 @@
         </ul>
     </nav>
 {% endif %}
+
+{% else %}
+    <div class="fo-empty">
+        <i class="fas fa-calendar-times"></i>
+        <p class="mb-1" style="font-size:.95rem; font-weight:600;">Aucun événement trouvé</p>
+        <p class="mb-0" style="font-size:.82rem;">Essayez de modifier vos filtres ou <a href="{{ path('app_evenement_index') }}" style="color:var(--ac-mid); font-weight:700;">réinitialisez la recherche</a>.</p>
+    </div>
+{% endif %}
+
 {% endif %}
 {% endblock %}

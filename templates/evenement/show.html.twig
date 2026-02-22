@@ -93,8 +93,8 @@
     <div class="ev-hero-overlay">
         <h1>{{ evenement.titre }}</h1>
         <div class="ev-meta">
-            <span><i class="fas fa-calendar-alt"></i> {{ evenement.dateDebut|date('d/m/Y') }}</span>
-            <span><i class="fas fa-clock"></i> {{ evenement.dateDebut|date('H:i') }} — {{ evenement.dateFin|date('H:i') }}</span>
+            <span><i class="fas fa-calendar-alt"></i> {{ evenement.dateDebut|date('d/m/Y') }}{% if evenement.dateFin %} → {{ evenement.dateFin|date('d/m/Y') }}{% endif %}</span>
+            <span><i class="fas fa-clock"></i> {{ evenement.dateDebut|date('H:i') }}{% if evenement.dateFin %} — {{ evenement.dateFin|date('H:i') }}{% endif %}</span>
             <span><i class="fas fa-map-marker-alt"></i> {{ evenement.lieu }}</span>
             <span>
                 {% if evenement.prix %}
@@ -238,8 +238,12 @@
                     </div>
                 {% endif %}
             {% elseif is_granted('ROLE_ARTISTE') %}
-                <div class="alert alert-light mb-0" style="border-radius:10px; font-size:.85rem;">
-                    <i class="fas fa-info-circle me-1 text-muted"></i> Seuls les participants peuvent réserver.
+                <div class="alert mb-0" style="border-radius:12px; font-size:.85rem; background: linear-gradient(135deg, rgba(30,15,117,.06), rgba(191,140,225,.08)); border: 1px solid rgba(30,15,117,.12);">
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <i class="fas fa-palette" style="color:var(--ac-mid);"></i>
+                        <strong style="color:var(--ac-deep);">Mode consultation</strong>
+                    </div>
+                    <div class="text-muted" style="font-size:.82rem;">En tant qu'artiste, vous pouvez voir les détails de cet événement mais la réservation est réservée aux participants.</div>
                 </div>
             {% else %}
                 <div class="alert alert-light mb-0" style="border-radius:10px; font-size:.85rem;">
@@ -314,7 +318,7 @@
                 <h5><i class="fas fa-cog me-1"></i> Gestion</h5>
                 <div class="d-grid gap-2">
                     <a href="{{ path('app_evenement_edit', {id: evenement.id}) }}" class="btn btn-outline-warning"><i class="fas fa-pen me-1"></i> Modifier</a>
-                    <form method="post" action="{{ path('app_evenement_delete', {id: evenement.id}) }}" onsubmit="return confirm('Supprimer cet événement ?')">
+                    <form method="post" action="{{ path('app_evenement_delete', {id: evenement.id}) }}" data-confirm-title="Supprimer cet événement" data-confirm="Cette action est irréversible. Voulez-vous continuer ?">
                         <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ evenement.id) }}">
                         <button type="submit" class="btn btn-outline-danger w-100">
                             <span class="btn-label"><i class="fas fa-trash me-1"></i> Supprimer</span>

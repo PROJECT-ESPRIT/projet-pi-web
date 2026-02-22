@@ -20,4 +20,22 @@ class ProduitRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Produit::class);
     }
+
+    public function getTotalStockValue(): float
+    {
+        return (float) $this->createQueryBuilder('p')
+            ->select('COALESCE(SUM(p.prix * p.stock), 0)')
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    public function countLowStock(int $threshold = 5): int
+    {
+        return (int) $this->createQueryBuilder('p')
+            ->select('COUNT(p.id)')
+            ->where('p.stock <= :threshold')
+            ->setParameter('threshold', $threshold)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
 }

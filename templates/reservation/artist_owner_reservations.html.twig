@@ -1,137 +1,216 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Réservations reçues{% endblock %}
+{% block title %}Réservations reçues — Art Connect{% endblock %}
 
 {% block body %}
-<div class="bo-page-header">
+<style>
+    .fo-aor-header {
+        display:flex; justify-content:space-between; align-items:center;
+        margin-bottom:1rem; padding-bottom:.5rem;
+        border-bottom:2px solid rgba(30,15,117,.06);
+    }
+    .fo-aor-header h1 {
+        margin:0; font-family:'Sora',sans-serif;
+        font-size:1.5rem; font-weight:700; color:var(--ac-deep);
+        display:flex; align-items:center; gap:.5rem;
+    }
+    .fo-aor-header .badge { font-size:.72rem; border-radius:8px; }
+
+    /* Shared filter bar */
+    .fo-filter-bar { background:#fff; border-radius:16px; padding:.8rem 1rem; box-shadow:0 4px 16px rgba(30,15,117,.06); border:1px solid rgba(30,15,117,.08); margin-bottom:.4rem; }
+    .fo-filter-row { display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; }
+    .fo-filter-search { flex:1; min-width:170px; position:relative; }
+    .fo-filter-search input { width:100%; border:1px solid rgba(30,15,117,.1); border-radius:10px; padding:.5rem .8rem .5rem 2.2rem; font-size:.85rem; background:#faf9fe; transition:all .25s; }
+    .fo-filter-search input:focus { outline:none; border-color:#3785D8; box-shadow:0 0 0 3px rgba(55,133,216,.1); background:#fff; }
+    .fo-filter-search i { position:absolute; left:.75rem; top:50%; transform:translateY(-50%); color:#999; font-size:.8rem; }
+    .fo-filter-select { border:1px solid rgba(30,15,117,.1); border-radius:10px; padding:.5rem .7rem; font-size:.82rem; background:#faf9fe; cursor:pointer; color:#555; }
+    .fo-filter-select:focus { outline:none; border-color:#3785D8; }
+    .fo-filter-input { border:1px solid rgba(30,15,117,.1); border-radius:10px; padding:.5rem .6rem; font-size:.82rem; background:#faf9fe; width:110px; }
+    .fo-filter-input:focus { outline:none; border-color:#3785D8; box-shadow:0 0 0 2px rgba(55,133,216,.1); }
+    .fo-filter-btn { border-radius:10px; font-weight:700; font-size:.82rem; padding:.5rem 1rem; min-width:90px; border:none; background:linear-gradient(135deg,#1E0F75,#3785D8); color:#fff; cursor:pointer; transition:all .2s; }
+    .fo-filter-btn:hover { filter:brightness(.95); transform:translateY(-1px); }
+    .fo-filter-toggle { width:38px; height:38px; border-radius:10px; border:1px solid rgba(30,15,117,.1); background:#faf9fe; color:#666; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all .25s; flex-shrink:0; }
+    .fo-filter-toggle:hover,.fo-filter-toggle.active { background:linear-gradient(135deg,#1E0F75,#3785D8); color:#fff; border-color:transparent; }
+    .fo-filter-advanced { background:#fff; border-radius:0 0 16px 16px; padding:.7rem 1rem; box-shadow:0 4px 16px rgba(30,15,117,.06); border:1px solid rgba(30,15,117,.08); border-top:none; margin-bottom:1rem; animation:slideDown .3s ease; }
+    @keyframes slideDown { from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)} }
+    .fo-filter-adv-row { display:flex; gap:.5rem; flex-wrap:wrap; align-items:end; }
+    .fo-filter-adv-group { flex:1; min-width:130px; }
+    .fo-filter-adv-group label { display:block; font-size:.7rem; font-weight:700; color:#666; margin-bottom:.15rem; }
+    .fo-filter-reset { border-radius:10px; font-weight:600; font-size:.82rem; padding:.5rem .8rem; border:1px solid rgba(30,15,117,.15); background:transparent; color:#666; cursor:pointer; text-decoration:none; transition:all .2s; white-space:nowrap; display:inline-block; }
+    .fo-filter-reset:hover { background:rgba(30,15,117,.04); color:#1E0F75; }
+
+    /* Table matching style */
+    .fo-aor-table { background:#fff; border:1px solid rgba(30,15,117,.06); border-radius:18px; box-shadow:0 8px 24px rgba(30,15,117,.06); overflow:hidden; }
+    .fo-aor-table .table { margin:0; font-size:.84rem; }
+    .fo-aor-table thead { background:linear-gradient(135deg, rgba(30,15,117,.03), rgba(55,133,216,.04)); }
+    .fo-aor-table thead th { font-size:.72rem; font-weight:700; color:#6b7280; text-transform:uppercase; letter-spacing:.04em; padding:.65rem .75rem; border-bottom:2px solid rgba(30,15,117,.06); }
+    .fo-aor-table tbody td { padding:.6rem .75rem; vertical-align:middle; border-bottom:1px solid rgba(30,15,117,.04); }
+    .fo-aor-table tbody tr:hover { background:rgba(55,133,216,.03); }
+    .fo-aor-table .avatar-sm {
+        width:28px; height:28px; border-radius:8px;
+        background:linear-gradient(135deg,#1E0F75,#3785D8); color:#fff;
+        display:inline-flex; align-items:center; justify-content:center;
+        font-size:.6rem; font-weight:700; flex-shrink:0;
+    }
+    .fo-aor-empty {
+        background:#fff; border:1px solid rgba(30,15,117,.06);
+        border-radius:18px; box-shadow:0 8px 24px rgba(30,15,117,.06);
+        text-align:center; padding:3rem 1.5rem; color:#6b7280;
+    }
+    .fo-aor-empty i { font-size:2.5rem; color:rgba(191,140,225,.4); margin-bottom:.7rem; display:block; }
+    .fo-aor-pagination .page-item.active .page-link { background:var(--ac-mid); border-color:var(--ac-mid); color:#fff; }
+    .fo-aor-pagination .page-link { border-radius:10px; color:#374151; font-weight:600; font-size:.85rem; }
+</style>
+
+<div class="fo-aor-header">
     <h1>
-        <i class="fas fa-ticket-alt"></i> Réservations reçues
+        <i class="fas fa-ticket-alt" style="color:var(--ac-mid);"></i> Réservations reçues
         <span class="badge bg-primary bg-opacity-75">{{ total }}</span>
     </h1>
-    <div class="bo-actions">
-        <a href="{{ path('app_artist_event_stats') }}" class="btn btn-outline-primary">
-            <i class="fas fa-chart-line me-1"></i> Stats
-        </a>
-    </div>
 </div>
 
-<form method="get" action="{{ path('app_reservation_artist_owner') }}" class="bo-filter-bar">
-    <div class="row g-2 align-items-end">
-        <div class="col-12 col-md-4">
-            <label>Recherche</label>
-            <input type="text" name="q" class="form-control" value="{{ filter_input.q|default('') }}" placeholder="Événement, lieu, participant…">
-        </div>
-        <div class="col-6 col-md-2">
-            <label>Date début</label>
-            <input type="date" name="date_start" class="form-control" value="{{ filter_input.date_start|default('') }}">
-        </div>
-        <div class="col-6 col-md-2">
-            <label>Date fin</label>
-            <input type="date" name="date_end" class="form-control" value="{{ filter_input.date_end|default('') }}">
-        </div>
-        <div class="col-6 col-md-2">
-            <label>Statut</label>
-            <select name="status" class="form-select">
-                <option value="" {{ filter_input.status|default('') == '' ? 'selected' : '' }}>Tous</option>
+{# ---- Enhanced Filter Bar ---- #}
+{% set hasAdvAorFilters = filter_input.date_start|default('') or filter_input.date_end|default('') %}
+<form method="get" action="{{ path('app_reservation_artist_owner') }}">
+    <div class="fo-filter-bar">
+        <div class="fo-filter-row">
+            <div class="fo-filter-search">
+                <i class="fas fa-search"></i>
+                <input type="text" name="q" value="{{ filter_input.q|default('') }}" placeholder="Événement, lieu, participant...">
+            </div>
+            <select name="status" class="fo-filter-select">
+                <option value="" {{ filter_input.status|default('') == '' ? 'selected' : '' }}>Tous statuts</option>
                 <option value="CONFIRMED" {{ filter_input.status|default('') == 'CONFIRMED' ? 'selected' : '' }}>Confirmé</option>
                 <option value="PENDING" {{ filter_input.status|default('') == 'PENDING' ? 'selected' : '' }}>En attente</option>
                 <option value="CANCELLED" {{ filter_input.status|default('') == 'CANCELLED' ? 'selected' : '' }}>Annulé</option>
             </select>
-        </div>
-        <div class="col-6 col-md-2">
-            <label>Tri</label>
-            <select name="sort" class="form-select">
-                <option value="date_desc" {{ filter_input.sort|default('date_desc') == 'date_desc' ? 'selected' : '' }}>Réservation récent</option>
-                <option value="date_asc" {{ filter_input.sort|default('date_desc') == 'date_asc' ? 'selected' : '' }}>Réservation ancien</option>
-                <option value="event_date_desc" {{ filter_input.sort|default('date_desc') == 'event_date_desc' ? 'selected' : '' }}>Événement récent</option>
-                <option value="event_date_asc" {{ filter_input.sort|default('date_desc') == 'event_date_asc' ? 'selected' : '' }}>Événement ancien</option>
+            <select name="sort" class="fo-filter-select">
+                <option value="date_desc" {{ filter_input.sort|default('date_desc') == 'date_desc' ? 'selected' : '' }}>Récent</option>
+                <option value="date_asc" {{ filter_input.sort|default('date_desc') == 'date_asc' ? 'selected' : '' }}>Ancien</option>
+                <option value="event_date_desc" {{ filter_input.sort|default('date_desc') == 'event_date_desc' ? 'selected' : '' }}>Event récent</option>
+                <option value="event_date_asc" {{ filter_input.sort|default('date_desc') == 'event_date_asc' ? 'selected' : '' }}>Event ancien</option>
             </select>
-        </div>
-        <div class="col-12 col-md-4 d-flex gap-2">
             <input type="hidden" name="page" value="1">
-            <button class="btn btn-primary flex-grow-1"><i class="fas fa-search me-1"></i> Filtrer</button>
-            <a href="{{ path('app_reservation_artist_owner') }}" class="btn btn-outline-secondary">Réinitialiser</a>
+            <button type="submit" class="fo-filter-btn">
+                <span class="btn-label"><i class="fas fa-search me-1"></i> Filtrer</span>
+                <span class="btn-spinner" style="display:none;"><i class="fas fa-spinner fa-spin"></i></span>
+            </button>
+            <button type="button" class="fo-filter-toggle {{ hasAdvAorFilters ? 'active' : '' }}" onclick="this.classList.toggle('active');document.getElementById('foAdvAorFilters').classList.toggle('d-none');" title="Filtres avancés">
+                <i class="fas fa-sliders-h"></i>
+            </button>
+        </div>
+    </div>
+    <div class="fo-filter-advanced {{ not hasAdvAorFilters ? 'd-none' : '' }}" id="foAdvAorFilters">
+        <div class="fo-filter-adv-row">
+            <div class="fo-filter-adv-group">
+                <label><i class="fas fa-calendar me-1"></i>Date début</label>
+                <input type="date" name="date_start" class="fo-filter-input" style="width:100%;" value="{{ filter_input.date_start|default('') }}">
+            </div>
+            <div class="fo-filter-adv-group">
+                <label><i class="fas fa-calendar-check me-1"></i>Date fin</label>
+                <input type="date" name="date_end" class="fo-filter-input" style="width:100%;" value="{{ filter_input.date_end|default('') }}">
+            </div>
+            <div class="fo-filter-adv-group" style="align-self:end; flex:0;">
+                <a href="{{ path('app_reservation_artist_owner') }}" class="fo-filter-reset"><i class="fas fa-undo me-1"></i>Reset</a>
+            </div>
         </div>
     </div>
 </form>
 
-<div class="bo-table-card">
-    {% if reservations is not empty %}
-        <div class="table-responsive">
-            <table class="table bo-table">
-                <thead>
+{# ---- Table ---- #}
+{% if reservations is not empty %}
+<div class="fo-aor-table">
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Événement</th>
+                    <th>Participant</th>
+                    <th>Place</th>
+                    <th>Date résa</th>
+                    <th>Statut</th>
+                    <th class="text-end">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in reservations %}
                     <tr>
-                        <th>#</th>
-                        <th>Événement</th>
-                        <th>Participant</th>
-                        <th>Place</th>
-                        <th>Date résa</th>
-                        <th>Statut</th>
-                        <th class="text-end">Action</th>
+                        <td class="text-muted" style="font-size:.78rem;">{{ r.id }}</td>
+                        <td>
+                            <div class="fw-bold" style="font-size:.85rem; color:#1E0F75;">{{ r.evenement.titre }}</div>
+                            <div style="font-size:.72rem; color:#6b7280;">
+                                <i class="fas fa-map-marker-alt me-1"></i>{{ r.evenement.lieu }}
+                                &middot; {{ r.evenement.dateDebut ? r.evenement.dateDebut|date('d/m/Y') : '—' }}{% if r.evenement.dateFin %} → {{ r.evenement.dateFin|date('d/m/Y') }}{% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="avatar-sm">{{ r.participant.prenom|first|upper }}{{ r.participant.nom|first|upper }}</span>
+                                <div>
+                                    <div class="fw-bold" style="font-size:.82rem;">{{ r.participant.prenom }} {{ r.participant.nom }}</div>
+                                    <div style="font-size:.7rem; color:#6b7280;">{{ r.participant.email }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            {% if r.seatLabel %}
+                                <span class="badge" style="background:rgba(55,133,216,.12); color:var(--ac-mid); font-weight:700; border-radius:8px;">{{ r.seatLabel }}</span>
+                            {% else %}
+                                <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                        <td style="white-space:nowrap; font-size:.82rem;">{{ r.dateReservation ? r.dateReservation|date('d/m/Y H:i') : '—' }}</td>
+                        <td>
+                            {% if r.status == 'CONFIRMED' %}
+                                <span class="badge" style="background:rgba(34,197,94,.12); color:#15803d; font-weight:700; border-radius:8px;"><i class="fas fa-check-circle me-1"></i>Confirmé</span>
+                            {% elseif r.status == 'CANCELLED' %}
+                                <span class="badge" style="background:rgba(239,68,68,.12); color:#dc2626; font-weight:700; border-radius:8px;"><i class="fas fa-times-circle me-1"></i>Annulé</span>
+                            {% elseif r.status == 'PENDING' %}
+                                <span class="badge" style="background:rgba(245,158,11,.12); color:#b45309; font-weight:700; border-radius:8px;"><i class="fas fa-clock me-1"></i>En attente</span>
+                            {% else %}
+                                <span class="badge bg-secondary bg-opacity-75">{{ r.status }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            <a href="{{ path('app_evenement_show', {id: r.evenement.id}) }}"
+                               class="btn btn-sm" style="background:linear-gradient(135deg,var(--ac-deep),var(--ac-mid)); color:#fff; border-radius:8px; font-size:.72rem; font-weight:700; padding:.25rem .55rem;"
+                               title="Voir l'événement">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </td>
                     </tr>
-                </thead>
-                <tbody>
-                    {% for r in reservations %}
-                        <tr>
-                            <td class="text-muted">{{ r.id }}</td>
-                            <td>
-                                <div class="fw-semibold">{{ r.evenement.titre }}</div>
-                                <small class="text-muted">{{ r.evenement.lieu }}</small>
-                            </td>
-                            <td>
-                                <div class="fw-semibold">{{ r.participant.prenom }} {{ r.participant.nom }}</div>
-                                <small class="text-muted">{{ r.participant.email }}</small>
-                            </td>
-                            <td>{{ r.seatLabel ?: '—' }}</td>
-                            <td>{{ r.dateReservation ? r.dateReservation|date('d/m/Y H:i') : '—' }}</td>
-                            <td>
-                                {% if r.status == 'CONFIRMED' %}
-                                    <span class="badge bg-success bg-opacity-75">Confirmé</span>
-                                {% elseif r.status == 'CANCELLED' %}
-                                    <span class="badge bg-danger bg-opacity-75">Annulé</span>
-                                {% elseif r.status == 'PENDING' %}
-                                    <span class="badge bg-warning text-dark">En attente</span>
-                                {% else %}
-                                    <span class="badge bg-secondary bg-opacity-75">{{ r.status }}</span>
-                                {% endif %}
-                            </td>
-                            <td class="text-end">
-                                <a href="{{ path('app_evenement_show', {id: r.evenement.id}) }}" class="btn-action btn-view" title="Voir l'événement">
-                                    <i class="fas fa-eye"></i>
-                                </a>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-
-        {% if total_pages > 1 %}
-            {% set qp = filter_input|default({}) %}
-            <div class="bo-pagination">
-                <div class="page-info">Page {{ page }} sur {{ total_pages }} — {{ total }} résultat{{ total > 1 ? 's' }}</div>
-                <nav>
-                    <ul class="pagination">
-                        <li class="page-item {{ page == 1 ? 'disabled' }}">
-                            <a class="page-link" href="{{ path('app_reservation_artist_owner', qp|merge({page: page - 1})) }}"><i class="fas fa-chevron-left"></i></a>
-                        </li>
-                        {% for p in 1..total_pages %}
-                            <li class="page-item {{ p == page ? 'active' }}">
-                                <a class="page-link" href="{{ path('app_reservation_artist_owner', qp|merge({page: p})) }}">{{ p }}</a>
-                            </li>
-                        {% endfor %}
-                        <li class="page-item {{ page == total_pages ? 'disabled' }}">
-                            <a class="page-link" href="{{ path('app_reservation_artist_owner', qp|merge({page: page + 1})) }}"><i class="fas fa-chevron-right"></i></a>
-                        </li>
-                    </ul>
-                </nav>
-            </div>
-        {% endif %}
-    {% else %}
-        <div class="bo-empty">
-            <i class="fas fa-ticket-alt"></i>
-            <p>Aucune réservation reçue pour vos événements</p>
-        </div>
-    {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
+
+{% if total_pages > 1 %}
+    {% set qp = filter_input|default({}) %}
+    <nav class="mt-4 fo-aor-pagination">
+        <ul class="pagination justify-content-center">
+            <li class="page-item {{ page == 1 ? 'disabled' }}">
+                <a class="page-link" href="{{ path('app_reservation_artist_owner', qp|merge({page: page - 1})) }}"><i class="fas fa-chevron-left"></i></a>
+            </li>
+            {% for p in 1..total_pages %}
+                <li class="page-item {{ p == page ? 'active' }}">
+                    <a class="page-link" href="{{ path('app_reservation_artist_owner', qp|merge({page: p})) }}">{{ p }}</a>
+                </li>
+            {% endfor %}
+            <li class="page-item {{ page == total_pages ? 'disabled' }}">
+                <a class="page-link" href="{{ path('app_reservation_artist_owner', qp|merge({page: page + 1})) }}"><i class="fas fa-chevron-right"></i></a>
+            </li>
+        </ul>
+    </nav>
+{% endif %}
+
+{% else %}
+    <div class="fo-aor-empty">
+        <i class="fas fa-ticket-alt"></i>
+        <p class="mb-1" style="font-size:.95rem; font-weight:600;">Aucune réservation reçue</p>
+        <p class="mb-0" style="font-size:.82rem;">Vos événements n'ont pas encore de réservations.</p>
+    </div>
+{% endif %}
+
 {% endblock %}

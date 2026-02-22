@@ -12,7 +12,7 @@
     <div class="fo-profile-header">
         <div>
             <h1 class="fo-profile-title"><i class="fas fa-palette"></i> Mon profil artiste</h1>
-            <p class="fo-profile-subtitle">Mettez à jour vos informations visibles sur la plateforme.</p>
+            <p class="fo-profile-subtitle">Mettez à jour vos informations et suivez vos performances en direct.</p>
         </div>
     </div>
 
@@ -33,7 +33,7 @@
                         <p class="fo-profile-name">{{ app.user.prenom }} {{ app.user.nom }}</p>
                         <p class="fo-profile-age">
                             {% if app.user.dateNaissance %}
-                                {{ app.user.age }} ans • Né(e) le {{ app.user.dateNaissance|date('d/m/Y') }}
+                                {{ app.user.age }} ans &middot; Né(e) le {{ app.user.dateNaissance|date('d/m/Y') }}
                             {% else %}
                                 Date de naissance non renseignée
                             {% endif %}
@@ -43,45 +43,120 @@
 
                 <div class="fo-profile-actions">
                     <a href="{{ path('artist_profile_edit') }}" class="btn btn-primary">
-                        <i class="fas fa-pen me-1"></i> Modifier
+                        <span class="btn-label"><i class="fas fa-pen me-1"></i> Modifier</span>
+                        <span class="btn-spinner"><i class="fas fa-spinner fa-spin"></i></span>
                     </a>
                     <a href="{{ path('app_artist_event_stats') }}" class="btn btn-outline-primary">
-                        <i class="fas fa-chart-line me-1"></i> Mes stats
+                        <span class="btn-label"><i class="fas fa-chart-line me-1"></i> Mes stats</span>
+                        <span class="btn-spinner"><i class="fas fa-spinner fa-spin"></i></span>
                     </a>
                 </div>
             </div>
 
             <div class="fo-profile-grid">
                 <div class="fo-profile-meta">
-                    <p class="label">Email</p>
+                    <p class="label"><i class="fas fa-envelope me-1" style="color:var(--ac-blue);"></i>Email</p>
                     <p class="value">{{ app.user.email }}</p>
                 </div>
                 <div class="fo-profile-meta">
-                    <p class="label">Téléphone</p>
+                    <p class="label"><i class="fas fa-phone me-1" style="color:var(--ac-blue);"></i>Téléphone</p>
                     <p class="value">{{ app.user.telephone ?: 'Non renseigné' }}</p>
                 </div>
                 <div class="fo-profile-meta">
-                    <p class="label">Date de naissance</p>
+                    <p class="label"><i class="fas fa-birthday-cake me-1" style="color:var(--ac-lavender);"></i>Date de naissance</p>
                     <p class="value">{{ app.user.dateNaissance ? app.user.dateNaissance|date('d/m/Y') : 'Non renseignée' }}</p>
                 </div>
                 <div class="fo-profile-meta">
-                    <p class="label">Image de profil</p>
-                    <p class="value text-truncate">{{ app.user.profileImageUrl ?: 'Image par défaut (initiales)' }}</p>
+                    <p class="label"><i class="fas fa-image me-1" style="color:var(--ac-lavender);"></i>Image de profil</p>
+                    <p class="value text-truncate">{{ app.user.profileImageUrl ? 'Photo personnalisée' : 'Initiales (par défaut)' }}</p>
                 </div>
             </div>
 
             <div class="fo-profile-note">
                 <i class="fas fa-circle-info me-1"></i>
                 {% if not app.user.dateNaissance %}
-                    Vous pouvez renseigner votre date de naissance une seule fois.
+                    Complétez votre date de naissance pour fiabiliser les recommandations de la plateforme.
                 {% else %}
                     Votre date de naissance est verrouillée après la première saisie.
                 {% endif %}
             </div>
+
+            <div class="fo-artist-stats-grid">
+                <div class="fo-artist-kpi">
+                    <div class="kpi-value">{{ overview.total }}</div>
+                    <div class="kpi-label">Événements créés</div>
+                </div>
+                <div class="fo-artist-kpi">
+                    <div class="kpi-value">{{ overview.upcoming }}</div>
+                    <div class="kpi-label">À venir</div>
+                </div>
+                <div class="fo-artist-kpi">
+                    <div class="kpi-value">{{ reservations_total }}</div>
+                    <div class="kpi-label">Réservations reçues</div>
+                </div>
+                <div class="fo-artist-kpi">
+                    <div class="kpi-value">{{ fill_rate|number_format(1, '.', ' ') }}%</div>
+                    <div class="kpi-label">Taux de remplissage</div>
+                </div>
+            </div>
+
+            <div class="fo-artist-charts">
+                <div class="fo-artist-panel">
+                    <h6><i class="fas fa-chart-column me-1"></i>Réservations (6 derniers mois)</h6>
+                    {% set maxCount = 0 %}
+                    {% for value in monthly_counts %}
+                        {% if value > maxCount %}{% set maxCount = value %}{% endif %}
+                    {% endfor %}
+                    <div class="fo-bars">
+                        {% for value in monthly_counts %}
+                            <div class="fo-bar">
+                                {% set h = maxCount > 0 ? ((value / maxCount) * 80)|round(0, 'floor') : 6 %}
+                                <div class="fill" style="height: {{ h < 6 ? 6 : h }}px;" title="{{ value }} réservations"></div>
+                                <div class="lbl">{{ monthly_labels[loop.index0] }}</div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="fo-artist-panel">
+                    <h6><i class="fas fa-signal me-1"></i>Statuts des réservations</h6>
+                    <div class="fo-status-list">
+                        <div class="fo-status-item fo-status-confirmed">
+                            <span class="tag"><i class="fas fa-circle-check me-1"></i>Confirmées</span>
+                            <span class="count">{{ status_counts.CONFIRMED|default(0) }}</span>
+                        </div>
+                        <div class="fo-status-item fo-status-pending">
+                            <span class="tag"><i class="fas fa-clock me-1"></i>En attente</span>
+                            <span class="count">{{ status_counts.PENDING|default(0) }}</span>
+                        </div>
+                        <div class="fo-status-item fo-status-cancelled">
+                            <span class="tag"><i class="fas fa-circle-xmark me-1"></i>Annulées</span>
+                            <span class="count">{{ status_counts.CANCELLED|default(0) }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="fo-artist-panel fo-top-list">
+                <h6><i class="fas fa-trophy me-1"></i>Top événements</h6>
+                {% for item in top_events %}
+                    <div class="fo-top-row">
+                        <div>
+                            <div class="name">{{ item.event.titre }}</div>
+                            <div class="meta">
+                                <i class="fas fa-map-marker-alt me-1"></i>{{ item.event.lieu ?: 'Lieu non défini' }}
+                                {% if item.event.dateDebut %}
+                                    &middot; {{ item.event.dateDebut|date('d/m/Y') }}{% if item.event.dateFin %} → {{ item.event.dateFin|date('d/m/Y') }}{% endif %}
+                                {% endif %}
+                            </div>
+                        </div>
+                        <span class="badge bg-primary bg-opacity-75">{{ item.reservations }} résa</span>
+                    </div>
+                {% else %}
+                    <div class="text-muted small">Aucune donnée pour le moment.</div>
+                {% endfor %}
+            </div>
         </div>
     </article>
 </section>
-{% endblock %}
-    </div>
-</div>
 {% endblock %}

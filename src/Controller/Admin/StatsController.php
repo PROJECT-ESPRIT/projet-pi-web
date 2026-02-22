@@ -6,6 +6,7 @@ use App\Repository\CommandeRepository;
 use App\Repository\DonationRepository;
 use App\Repository\EvenementRepository;
 use App\Repository\ForumRepository;
+use App\Repository\ForumReponseRepository;
 use App\Repository\ProduitRepository;
 use App\Repository\ReservationRepository;
 use App\Repository\UserRepository;
@@ -26,6 +27,7 @@ class StatsController extends AbstractController
         DonationRepository $donationRepository,
         ProduitRepository $produitRepository,
         ForumRepository $forumRepository,
+        ForumReponseRepository $forumReponseRepository,
     ): Response {
         $reservationsByStatus = $reservationRepository->countByStatus();
         $totalReservations = $reservationRepository->count([]);
@@ -46,6 +48,21 @@ class StatsController extends AbstractController
         $totalProducts = $produitRepository->count([]);
         $totalForumPosts = $forumRepository->count([]);
 
+        $orderRevenue = $commandeRepository->getTotalRevenue();
+        $ordersByStatus = $commandeRepository->countByStatus();
+        $monthlyOrders = $commandeRepository->getMonthlyOrders(6);
+        $monthlyRevenue = $commandeRepository->getMonthlyRevenue(6);
+
+        $donationsThisMonth = $donationRepository->countThisMonth();
+        $monthlyDonations = $donationRepository->getMonthlyDonations(6);
+        $donationsByType = $donationRepository->countByType();
+
+        $lowStockProducts = $produitRepository->countLowStock(5);
+        $stockValue = $produitRepository->getTotalStockValue();
+
+        $totalForumReplies = $forumReponseRepository->count([]);
+        $monthlyForumPosts = $forumRepository->getMonthlyPosts(6);
+
         return $this->render('admin/stats.html.twig', [
             'totalReservations' => $totalReservations,
             'reservationsThisMonth' => $reservationsThisMonth,
@@ -62,6 +79,17 @@ class StatsController extends AbstractController
             'totalDonations' => $totalDonations,
             'totalProducts' => $totalProducts,
             'totalForumPosts' => $totalForumPosts,
+            'orderRevenue' => $orderRevenue,
+            'ordersByStatus' => $ordersByStatus,
+            'monthlyOrders' => $monthlyOrders,
+            'monthlyRevenue' => $monthlyRevenue,
+            'donationsThisMonth' => $donationsThisMonth,
+            'monthlyDonations' => $monthlyDonations,
+            'donationsByType' => $donationsByType,
+            'lowStockProducts' => $lowStockProducts,
+            'stockValue' => $stockValue,
+            'totalForumReplies' => $totalForumReplies,
+            'monthlyForumPosts' => $monthlyForumPosts,
         ]);
     }
 }

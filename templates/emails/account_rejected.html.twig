@@ -1,57 +1,67 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compte non approuvé</title>
 </head>
-<body style="margin:0; padding:0; background:#f4f5f7; font-family:'Segoe UI',Roboto,Arial,sans-serif;">
-    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f5f7; padding:40px 0;">
-        <tr>
-            <td align="center">
-                <table width="560" cellpadding="0" cellspacing="0" style="background:#fff; border-radius:16px; overflow:hidden; box-shadow:0 4px 24px rgba(0,0,0,.06);">
-                    <tr>
-                        <td style="background:linear-gradient(135deg,#1e0f75,#6d28d9); padding:32px 40px; text-align:center;">
-                            <h1 style="margin:0; color:#fff; font-size:22px; font-weight:700;">Art Connect</h1>
-                            <p style="margin:6px 0 0; color:rgba(255,255,255,.8); font-size:14px;">Mise à jour de votre compte</p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="padding:36px 40px;">
-                            <p style="margin:0 0 16px; color:#1f2937; font-size:16px;">
-                                Bonjour <strong>{{ user.prenom }}</strong>,
-                            </p>
-                            <p style="margin:0 0 24px; color:#4b5563; font-size:14px; line-height:1.6;">
-                                Après examen, votre demande de compte n'a pas pu être approuvée pour le moment.
-                            </p>
+<body style="margin:0;padding:0;background:linear-gradient(180deg,#eef2fb 0%,#f8f9fc 100%);font-family:'Segoe UI',Roboto,Arial,sans-serif;-webkit-font-smoothing:antialiased;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="padding:32px 16px;">
+        <tr><td align="center">
+            <table width="580" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 8px 40px rgba(30,15,117,.1);">
+                <!-- Header -->
+                <tr>
+                    <td style="background:linear-gradient(135deg,#1e0f75 0%,#3785d8 60%,#bf8ce1 100%);padding:36px 40px 32px;text-align:center;">
+                        <table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center">
+                            <div style="display:inline-block;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.2);border-radius:50px;padding:6px 18px;font-size:12px;font-weight:700;color:#fff;letter-spacing:.05em;margin-bottom:14px;">&#128221; MISE À JOUR COMPTE</div>
+                        </td></tr></table>
+                        <h1 style="margin:0;color:#fff;font-size:24px;font-weight:800;letter-spacing:-.02em;">Art Connect</h1>
+                        <p style="margin:8px 0 0;color:rgba(255,255,255,.85);font-size:14px;font-weight:500;">Mise à jour de votre compte</p>
+                    </td>
+                </tr>
+                <!-- Body -->
+                <tr>
+                    <td style="padding:36px 40px 20px;">
+                        <p style="margin:0 0 8px;color:#1f2937;font-size:17px;font-weight:700;">
+                            Bonjour {{ user.prenom }},
+                        </p>
+                        <p style="margin:0 0 28px;color:#6b7280;font-size:14px;line-height:1.65;">
+                            Après examen, votre demande de compte n'a pas pu être approuvée pour le moment.
+                        </p>
 
-                            <table width="100%" cellpadding="0" cellspacing="0">
-                                <tr>
-                                    <td align="center">
-                                        <div style="background:#fef2f2; border:1px solid #fecaca; border-radius:12px; padding:16px 32px; display:inline-block;">
-                                            <p style="margin:0; color:#dc2626; font-size:14px; font-weight:700;">
-                                                Compte non approuvé
-                                            </p>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </table>
+                        <!-- Rejection Card -->
+                        <table width="100%" cellpadding="0" cellspacing="0">
+                            <tr><td align="center">
+                                <div style="background:linear-gradient(135deg,#fef2f2,#fee2e2);border:1px solid rgba(252,165,165,.4);border-radius:16px;padding:24px 40px;display:inline-block;box-shadow:0 4px 14px rgba(220,38,38,.08);">
+                                    <div style="font-size:32px;margin-bottom:8px;">&#128533;</div>
+                                    <div style="font-size:15px;font-weight:800;color:#dc2626;">Compte non approuvé</div>
+                                </div>
+                            </td></tr>
+                        </table>
 
-                            <p style="margin:24px 0 0; color:#4b5563; font-size:14px; line-height:1.6;">
-                                Si vous pensez qu'il s'agit d'une erreur ou si vous souhaitez plus d'informations,
-                                n'hésitez pas à nous contacter en répondant à cet email.
-                            </p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="background:#f9fafb; padding:20px 40px; text-align:center; border-top:1px solid #e5e7eb;">
-                            <p style="margin:0; color:#9ca3af; font-size:12px;">
-                                &copy; {{ 'now'|date('Y') }} Art Connect — Tous droits réservés
-                            </p>
-                        </td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
+                        <!-- Contact info -->
+                        <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:28px;">
+                            <tr><td style="background:linear-gradient(160deg,#fafbff,#f4f0fc);border-radius:14px;padding:18px 22px;border:1px solid rgba(30,15,117,.08);">
+                                <div style="font-size:14px;color:#4b5563;line-height:1.65;">
+                                    Si vous pensez qu'il s'agit d'une erreur ou si vous souhaitez plus d'informations, n'hésitez pas à <strong style="color:#1e0f75;">nous contacter</strong> en répondant directement à cet email.
+                                </div>
+                            </td></tr>
+                        </table>
+
+                        <p style="margin:24px 0 0;color:#9ca3af;font-size:12px;line-height:1.6;text-align:center;">
+                            Nous vous remercions de votre intérêt pour Art Connect.
+                        </p>
+                    </td>
+                </tr>
+                <!-- Footer -->
+                <tr>
+                    <td style="background:linear-gradient(135deg,#f8f9fc,#f0eef9);padding:24px 40px;text-align:center;border-top:1px solid rgba(30,15,117,.06);">
+                        <p style="margin:0 0 4px;color:#1e0f75;font-size:13px;font-weight:700;">Art Connect</p>
+                        <p style="margin:0;color:#9ca3af;font-size:11px;">L'art inclusif pour tous &middot; &copy; {{ 'now'|date('Y') }}</p>
+                    </td>
+                </tr>
+            </table>
+        </td></tr>
     </table>
 </body>
 </html>

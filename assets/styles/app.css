@@ -303,6 +303,17 @@ form .btn {
     border-color: var(--brand-blue);
 }
 
+/* ===== GLOBAL BUTTON LOADING STATE ===== */
+.btn .btn-spinner { display: none; }
+.btn.is-loading .btn-label { display: none !important; }
+.btn.is-loading .btn-spinner { display: inline-flex !important; align-items: center; justify-content: center; }
+
+form button[type="submit"],
+form .btn-reserve,
+a.btn {
+    transition: all 0.2s;
+}
+
 @media (max-width: 991px) {
     .home-hero {
         padding: 2.2rem 1.25rem;

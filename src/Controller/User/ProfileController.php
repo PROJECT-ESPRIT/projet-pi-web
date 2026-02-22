@@ -3,6 +3,8 @@
 namespace App\Controller\User;
 
 use App\Form\User\ParticipantProfileType;
+use App\Repository\EvenementRepository;
+use App\Repository\ReservationRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -53,9 +55,66 @@ class ProfileController extends AbstractController
 
     #[Route('/artist/profile', name: 'artist_profile')]
     #[IsGranted('ROLE_ARTISTE')]
-    public function artist(): Response
+    public function artist(EvenementRepository $evenementRepository, ReservationRepository $reservationRepository): Response
     {
-        return $this->render('profile/artist.html.twig');
+        $artist = $this->getUser();
+        $overview = $evenementRepository->getArtistStatsOverview($artist);
+        $topEvents = $evenementRepository->getTopEventsForArtist($artist, 5);
+        $reservationsTotal = $reservationRepository->countForOwnerEvents($artist);
+
+        $events = $evenementRepository->findBy(['organisateur' => $artist]);
+        $totalPlaces = 0;
+        foreach ($events as $event) {
+            $totalPlaces += (int) ($event->getNbPlaces() ?? 0);
+        }
+        $fillRate = $totalPlaces > 0 ? round(($overview['totalReservations'] / $totalPlaces) * 100, 1) : 0.0;
+
+        $statusCounts = ['CONFIRMED' => 0, 'PENDING' => 0, 'CANCELLED' => 0];
+        foreach ($events as $event) {
+            foreach ($event->getReservations() as $reservation) {
+                $status = $reservation->getStatus();
+                if (!isset($statusCounts[$status])) {
+                    $statusCounts[$status] = 0;
+                }
+                $statusCounts[$status]++;
+            }
+        }
+
+        $months = [];
+        $monthlyCounts = [];
+        $monthlyMap = [];
+        $cursor = (new \DateTimeImmutable('first day of this month'))->modify('-5 months');
+        for ($i = 0; $i < 6; $i++) {
+            $key = $cursor->format('Y-m');
+            $months[] = $cursor->format('M');
+            $monthlyCounts[] = 0;
+            $monthlyMap[$key] = $i;
+            $cursor = $cursor->modify('+1 month');
+        }
+
+        foreach ($events as $event) {
+            foreach ($event->getReservations() as $reservation) {
+                $date = $reservation->getDateReservation();
+                if ($date === null) {
+                    continue;
+                }
+                $key = $date->format('Y-m');
+                if (isset($monthlyMap[$key])) {
+                    $monthlyCounts[$monthlyMap[$key]]++;
+                }
+            }
+        }
+
+        return $this->render('profile/artist.html.twig', [
+            'overview' => $overview,
+            'top_events' => $topEvents,
+            'reservations_total' => $reservationsTotal,
+            'total_places' => $totalPlaces,
+            'fill_rate' => $fillRate,
+            'status_counts' => $statusCounts,
+            'monthly_labels' => $months,
+            'monthly_counts' => $monthlyCounts,
+        ]);
     }
 
     #[Route('/artist/profile/edit', name: 'artist_profile_edit', methods: ['GET', 'POST'])]

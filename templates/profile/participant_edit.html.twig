@@ -15,22 +15,27 @@
     <div class="fo-profile-header">
         <div>
             <h1 class="fo-profile-title"><i class="fas fa-user-edit"></i> Modifier mon profil {{ roleLabel|lower }}</h1>
-            <p class="fo-profile-subtitle">Votre date de naissance est modifiable une seule fois.</p>
+            <p class="fo-profile-subtitle">Vos informations seront utilisées pour personnaliser votre expérience.</p>
         </div>
     </div>
 
     <div class="bo-filter-bar">
+        <div class="form-note mb-3">
+            <i class="fas fa-circle-info me-1"></i>
+            La date de naissance est modifiable une seule fois, puis verrouillée automatiquement.
+        </div>
         {{ form_start(form, { attr: { class: 'row g-2 align-items-end' } }) }}
             <div class="col-12 col-lg-6">{{ form_row(form.prenom) }}</div>
             <div class="col-12 col-lg-6">{{ form_row(form.nom) }}</div>
             <div class="col-12 col-lg-6">{{ form_row(form.telephone) }}</div>
-            <div class="col-12 col-lg-6">{{ form_row(form.dateNaissance) }}</div>
-            <div class="col-12">{{ form_row(form.email) }}</div>
+            <div class="col-12 col-lg-6">{{ form_row(form.email) }}</div>
+            <div class="col-12">{{ form_row(form.dateNaissance) }}</div>
             <div class="col-12">{{ form_row(form.profileImageUrl) }}</div>
 
             <div class="col-12 d-flex flex-wrap gap-2 pt-2">
                 <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-check me-1"></i> Enregistrer
+                    <span class="btn-label"><i class="fas fa-check me-1"></i> Enregistrer</span>
+                    <span class="btn-spinner" style="display:none;"><i class="fas fa-spinner fa-spin me-1"></i> Sauvegarde...</span>
                 </button>
                 <a href="{{ path(backRoute) }}" class="btn btn-outline-secondary">Annuler</a>
             </div>
