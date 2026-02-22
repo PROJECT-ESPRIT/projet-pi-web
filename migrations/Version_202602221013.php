@@ -25,12 +25,12 @@ final class Version_202602221013 extends AbstractMigration
             [ParameterType::STRING]
         );
         if (!$exists) {
-            $this->addSql('ALTER TABLE user ADD profile_image_url VARCHAR(500) DEFAULT NULL');
+            $this->addSql('ALTER TABLE `user` ADD profile_image_url VARCHAR(500) DEFAULT NULL');
         }
     }
 
     public function down(Schema $schema): void
     {
-        $this->addSql('ALTER TABLE user DROP profile_image_url');
+        $this->addSql('ALTER TABLE `user` DROP profile_image_url');
     }
 }

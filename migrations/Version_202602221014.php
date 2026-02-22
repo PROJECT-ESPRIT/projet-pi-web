@@ -18,7 +18,7 @@ final class Version_202602221014 extends AbstractMigration
     public function up(Schema $schema): void
     {
         $conn = $this->connection;
-        $db = $conn->getDatabase();
+        $db = method_exists($conn, 'getDatabase') ? $conn->getDatabase() : ($conn->getParams()['dbname'] ?? '');
         $exists = $conn->fetchOne(
             "SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'reservation' AND COLUMN_NAME = 'scanned_at'",
             [$db],

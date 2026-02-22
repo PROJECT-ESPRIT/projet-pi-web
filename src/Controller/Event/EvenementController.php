@@ -29,7 +29,6 @@ class EvenementController extends AbstractController
             'prix_min' => (string) $request->query->get('prix_min', ''),
             'prix_max' => (string) $request->query->get('prix_max', ''),
             'sort' => (string) $request->query->get('sort', 'date_asc'),
-            'scope' => (string) $request->query->get('scope', ''),
         ];
 
         $filters = [
@@ -44,31 +43,7 @@ class EvenementController extends AbstractController
 
         $user = $this->getUser();
         $isArtist = $user && \in_array('ROLE_ARTISTE', $user->getRoles(), true);
-        $registeredEventIds = [];
-        $totalMine = 0;
-        $totalOthers = 0;
-        $totalAll = 0;
-        $totalRegistered = 0;
-
-        if (!$this->isGranted('ROLE_ADMIN') && $user) {
-            if ($isArtist) {
-                $scope = \in_array($filterInput['scope'], ['mine', 'others', 'all'], true) ? $filterInput['scope'] : 'mine';
-                $filterInput['scope'] = $scope;
-                $filters['owner_id'] = ($scope === 'mine') ? $user->getId() : null;
-                $filters['exclude_owner_id'] = ($scope === 'others') ? $user->getId() : null;
-                $totalMine = $evenementRepository->countByFilters(array_merge($filters, ['owner_id' => $user->getId(), 'exclude_owner_id' => null]));
-                $totalOthers = $evenementRepository->countByFilters(array_merge($filters, ['owner_id' => null, 'exclude_owner_id' => $user->getId()]));
-                $totalAll = $evenementRepository->countByFilters(array_merge($filters, ['owner_id' => null, 'exclude_owner_id' => null]));
-            } else {
-                $registeredEventIds = $reservationRepository->getEventIdsWithReservationFor($user);
-                $scope = \in_array($filterInput['scope'], ['others', 'all'], true) ? $filterInput['scope'] : 'all';
-                $filterInput['scope'] = $scope;
-                $filters['event_ids'] = null;
-                $filters['exclude_event_ids'] = ($scope === 'others' && $registeredEventIds) ? $registeredEventIds : null;
-                $totalOthers = $evenementRepository->countByFilters(array_merge($filters, ['event_ids' => null, 'exclude_event_ids' => $registeredEventIds]));
-                $totalAll = $evenementRepository->countByFilters(array_merge($filters, ['event_ids' => null, 'exclude_event_ids' => null]));
-            }
-        }
+        $registeredEventIds = $user ? $reservationRepository->getEventIdsWithReservationFor($user) : [];
 
         $page = max(1, (int) $request->query->get('page', 1));
         $perPage = 10;
@@ -88,11 +63,6 @@ class EvenementController extends AbstractController
             'total_pages' => $totalPages,
             'total' => $total,
             'is_artist' => $isArtist,
-            'scope' => $filterInput['scope'] ?? 'all',
-            'total_mine' => $totalMine,
-            'total_others' => $totalOthers,
-            'total_all' => $totalAll,
-            'total_registered' => $totalRegistered,
             'registered_event_ids' => $registeredEventIds,
         ]);
     }
