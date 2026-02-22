@@ -216,8 +216,32 @@
         background: rgba(30,15,117,0.06);
         color: #1E0F75;
     }
+    .filter-search-wrap {
+        display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;
+        flex: 1; min-width: 0;
+    }
+    .filter-search-wrap .filter-search { flex: 1; min-width: 160px; }
+    .filter-search-wrap .filter-sort { min-width: 140px; }
+    .filter-tab.filter-tab-all {
+        cursor: default; pointer-events: none;
+    }
+    .filter-toggle-adv { position: relative; }
+    .filter-toggle-adv .filter-adv-dot {
+        position: absolute; top: 6px; right: 6px;
+        width: 6px; height: 6px; border-radius: 50%;
+        background: #fff; opacity: 0.9; display: none;
+    }
+    .filter-toggle-adv.active .filter-adv-dot { display: block; }
+    .filter-adv-title {
+        font-size: 0.8rem; font-weight: 700; color: #1E0F75;
+        margin-bottom: 0.6rem; display: block;
+    }
+    .filter-adv-actions { min-width: auto; }
+    .visually-hidden {
+        position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+        overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+    }
     .filter-search {
-        flex: 1; min-width: 180px;
         position: relative;
     }
     .filter-search input {
@@ -272,7 +296,7 @@
     }
     .filter-advanced {
         background: #fff;
-        border-radius: 0 0 16px 16px;
+        border-radius: 24px;
         padding: 0.8rem 1rem;
         box-shadow: 0 4px 16px rgba(30,15,117,0.06);
         border: 1px solid rgba(30,15,117,0.08);
@@ -291,7 +315,7 @@
     }
     .filter-adv-group input {
         width: 100%; border: 1px solid rgba(30,15,117,0.1);
-        border-radius: 8px; padding: 0.4rem 0.6rem;
+        border-radius: 14px; padding: 0.5rem 0.75rem;
         font-size: 0.82rem; background: #faf9fe;
     }
     .filter-adv-group input:focus {
@@ -301,8 +325,8 @@
     .filter-reset-btn {
         border: 1px solid rgba(220,53,69,0.3);
         background: rgba(220,53,69,0.05);
-        color: #dc3545; border-radius: 8px;
-        padding: 0.4rem 0.8rem; font-size: 0.78rem;
+        color: #dc3545; border-radius: 14px;
+        padding: 0.5rem 0.9rem; font-size: 0.78rem;
         font-weight: 600; cursor: pointer;
         transition: all 0.2s; white-space: nowrap;
         text-decoration: none; display: inline-block;
@@ -445,97 +469,76 @@
     </div>
 </div>
 
-{# ---- Filter Bar — same as home ---- #}
+{# ---- Events filter bar: Tous | Gratuit | Payant | search | sort | Filtrer | advanced ---- #}
 {% set hasAdvFilters = filter_input.lieu|default('') or filter_input.date_start|default('') or filter_input.date_end|default('') or filter_input.prix_min|default('') or filter_input.prix_max|default('') %}
-{% set qp = { q: filter_input.q|default(''), lieu: filter_input.lieu|default(''), date_start: filter_input.date_start|default(''), date_end: filter_input.date_end|default(''), sort: filter_input.sort|default('date_asc'), scope: scope|default('all'), prix_min: filter_input.prix_min|default(''), prix_max: filter_input.prix_max|default('') } %}
+{% set qp = { q: filter_input.q|default(''), lieu: filter_input.lieu|default(''), date_start: filter_input.date_start|default(''), date_end: filter_input.date_end|default(''), sort: filter_input.sort|default('date_asc'), prix_min: filter_input.prix_min|default(''), prix_max: filter_input.prix_max|default('') } %}
 {% set isFreeActive = filter_input.prix_max|default('') == '0' and (filter_input.prix_min|default('')) == '' %}
 {% set isPaidActive = (filter_input.prix_min|default('')) != '' and (filter_input.prix_max|default('')) == '' %}
-<form method="get" action="{{ path('app_evenement_index') }}" id="eventFilterForm">
-    <input type="hidden" name="scope" value="{{ scope|default('all') }}">
+<form method="get" action="{{ path('app_evenement_index') }}" id="eventFilterForm" class="event-filter-form">
+    <input type="hidden" name="page" value="1">
     <div class="filter-bar" id="eventFilterBar">
-        <div class="filter-tabs">
-            {% if app.user and not is_granted('ROLE_ADMIN') %}
-                {% if is_artist|default(false) %}
-                    <a href="{{ path('app_evenement_index', qp|merge({ scope: 'mine', page: 1, prix_min: '', prix_max: '' })) }}" class="filter-tab {{ scope|default('all') == 'mine' ? 'active' : '' }}">
-                        <i class="fas fa-paint-brush me-1"></i>Événements que je crée
-                        <span class="filter-count">{{ total_mine|default(0) }}</span>
-                    </a>
-                    <a href="{{ path('app_evenement_index', qp|merge({ scope: 'others', page: 1, prix_min: '', prix_max: '' })) }}" class="filter-tab {{ scope|default('all') == 'others' ? 'active' : '' }}">
-                        <i class="fas fa-users me-1"></i>Autres artistes
-                        <span class="filter-count">{{ total_others|default(0) }}</span>
-                    </a>
-                    <a href="{{ path('app_evenement_index', qp|merge({ scope: 'all', page: 1, prix_min: '', prix_max: '' })) }}" class="filter-tab {{ scope|default('all') == 'all' ? 'active' : '' }}">
-                        <i class="fas fa-globe-americas me-1"></i>Tous
-                        <span class="filter-count">{{ total_all|default(total) }}</span>
-                    </a>
-                {% else %}
-                    <a href="{{ path('app_evenement_index', qp|merge({ scope: 'others', page: 1, prix_min: '', prix_max: '' })) }}" class="filter-tab {{ scope|default('all') == 'others' ? 'active' : '' }}">
-                        <i class="fas fa-compass me-1"></i>À découvrir
-                        <span class="filter-count">{{ total_others|default(0) }}</span>
-                    </a>
-                    <a href="{{ path('app_evenement_index', qp|merge({ scope: 'all', page: 1, prix_min: '', prix_max: '' })) }}" class="filter-tab {{ scope|default('all') == 'all' ? 'active' : '' }}">
-                        <i class="fas fa-globe-americas me-1"></i>Tous
-                        <span class="filter-count">{{ total_all|default(total) }}</span>
-                    </a>
-                {% endif %}
-            {% else %}
-                <a href="{{ path('app_evenement_index', qp|merge({ scope: 'all', page: 1, prix_min: '', prix_max: '' })) }}" class="filter-tab {{ scope|default('all') == 'all' ? 'active' : '' }}">
-                    <i class="fas fa-globe-americas me-1"></i>Tous
-                    <span class="filter-count">{{ total }}</span>
-                </a>
-            {% endif %}
-            <a href="{{ path('app_evenement_index', qp|merge({ scope: scope|default('all'), page: 1, prix_min: '', prix_max: '0' })) }}" class="filter-tab {{ isFreeActive ? 'active' : '' }}">
+        <div class="filter-tabs" role="group" aria-label="Filtres rapides">
+            <span class="filter-tab filter-tab-all active">
+                <i class="fas fa-globe-americas me-1"></i>Tous
+                <span class="filter-count">{{ total }}</span>
+            </span>
+            <a href="{{ path('app_evenement_index', qp|merge({ page: 1, prix_min: '', prix_max: '0' })) }}" class="filter-tab {{ isFreeActive ? 'active' : '' }}" title="Événements gratuits">
                 <i class="fas fa-gift me-1"></i>Gratuit
             </a>
-            <a href="{{ path('app_evenement_index', qp|merge({ scope: scope|default('all'), page: 1, prix_min: '0.01', prix_max: '' })) }}" class="filter-tab {{ isPaidActive ? 'active' : '' }}">
+            <a href="{{ path('app_evenement_index', qp|merge({ page: 1, prix_min: '0.01', prix_max: '' })) }}" class="filter-tab {{ isPaidActive ? 'active' : '' }}" title="Événements payants">
                 <i class="fas fa-coins me-1"></i>Payant
             </a>
         </div>
-        <div class="filter-search">
-            <i class="fas fa-search"></i>
-            <input type="text" name="q" value="{{ filter_input.q|default('') }}" placeholder="Rechercher un événement...">
+        <div class="filter-search-wrap">
+            <label class="visually-hidden" for="eventSearchInput">Rechercher un événement</label>
+            <div class="filter-search">
+                <i class="fas fa-search" aria-hidden="true"></i>
+                <input type="text" id="eventSearchInput" name="q" value="{{ filter_input.q|default('') }}" placeholder="Rechercher un événement...">
+            </div>
+            <select name="sort" class="filter-sort" aria-label="Trier par">
+                <option value="date_asc" {{ filter_input.sort == 'date_asc' ? 'selected' : '' }}>Date (proche)</option>
+                <option value="date_desc" {{ filter_input.sort == 'date_desc' ? 'selected' : '' }}>Date (lointaine)</option>
+                <option value="prix_asc" {{ filter_input.sort == 'prix_asc' ? 'selected' : '' }}>Prix croissant</option>
+                <option value="prix_desc" {{ filter_input.sort == 'prix_desc' ? 'selected' : '' }}>Prix décroissant</option>
+                <option value="titre_asc" {{ filter_input.sort == 'titre_asc' ? 'selected' : '' }}>Nom A-Z</option>
+                <option value="titre_desc" {{ filter_input.sort == 'titre_desc' ? 'selected' : '' }}>Nom Z-A</option>
+                <option value="created_desc" {{ filter_input.sort == 'created_desc' ? 'selected' : '' }}>Récents</option>
+            </select>
+            <button type="submit" class="filter-btn-submit">
+                <span class="btn-label"><i class="fas fa-filter me-1"></i> Filtrer</span>
+                <span class="btn-spinner" style="display:none;"><i class="fas fa-spinner fa-spin"></i></span>
+            </button>
         </div>
-        <select name="sort" class="filter-sort">
-            <option value="date_asc" {{ filter_input.sort == 'date_asc' ? 'selected' : '' }}>Date (proche)</option>
-            <option value="date_desc" {{ filter_input.sort == 'date_desc' ? 'selected' : '' }}>Date (lointaine)</option>
-            <option value="prix_asc" {{ filter_input.sort == 'prix_asc' ? 'selected' : '' }}>Prix croissant</option>
-            <option value="prix_desc" {{ filter_input.sort == 'prix_desc' ? 'selected' : '' }}>Prix décroissant</option>
-            <option value="titre_asc" {{ filter_input.sort == 'titre_asc' ? 'selected' : '' }}>Nom A-Z</option>
-            <option value="titre_desc" {{ filter_input.sort == 'titre_desc' ? 'selected' : '' }}>Nom Z-A</option>
-            <option value="created_desc" {{ filter_input.sort == 'created_desc' ? 'selected' : '' }}>Récents</option>
-        </select>
-        <button type="submit" class="filter-btn-submit">
-            <span class="btn-label"><i class="fas fa-search me-1"></i> Filtrer</span>
-            <span class="btn-spinner" style="display:none;"><i class="fas fa-spinner fa-spin"></i></span>
-        </button>
-        <button type="button" class="filter-toggle-adv {{ hasAdvFilters ? 'active' : '' }}" onclick="this.classList.toggle('active');document.getElementById('eventAdvFilters').classList.toggle('d-none');" title="Filtres avancés">
+        <button type="button" class="filter-toggle-adv {{ hasAdvFilters ? 'active' : '' }}" onclick="this.classList.toggle('active');document.getElementById('eventAdvFilters').classList.toggle('d-none');" title="Filtres avancés (date, lieu, prix)">
             <i class="fas fa-sliders-h"></i>
+            <span class="filter-adv-dot"></span>
         </button>
     </div>
     <div class="filter-advanced {{ not hasAdvFilters ? 'd-none' : '' }}" id="eventAdvFilters">
+        <p class="filter-adv-title"><i class="fas fa-sliders-h me-1"></i> Filtres avancés</p>
         <div class="filter-adv-row">
             <div class="filter-adv-group">
-                <label><i class="fas fa-calendar me-1"></i>Date début</label>
-                <input type="date" name="date_start" value="{{ filter_input.date_start|default('') }}">
+                <label for="eventDateStart"><i class="fas fa-calendar me-1"></i>Date début</label>
+                <input type="date" id="eventDateStart" name="date_start" value="{{ filter_input.date_start|default('') }}">
             </div>
             <div class="filter-adv-group">
-                <label><i class="fas fa-calendar-check me-1"></i>Date fin</label>
-                <input type="date" name="date_end" value="{{ filter_input.date_end|default('') }}">
+                <label for="eventDateEnd"><i class="fas fa-calendar-check me-1"></i>Date fin</label>
+                <input type="date" id="eventDateEnd" name="date_end" value="{{ filter_input.date_end|default('') }}">
             </div>
             <div class="filter-adv-group">
-                <label><i class="fas fa-map-marker-alt me-1"></i>Lieu</label>
-                <input type="text" name="lieu" value="{{ filter_input.lieu|default('') }}" placeholder="Filtrer par lieu...">
+                <label for="eventLieu"><i class="fas fa-map-marker-alt me-1"></i>Lieu</label>
+                <input type="text" id="eventLieu" name="lieu" value="{{ filter_input.lieu|default('') }}" placeholder="Ville ou lieu">
             </div>
             <div class="filter-adv-group">
-                <label><i class="fas fa-coins me-1"></i>Prix max (TND)</label>
-                <input type="number" name="prix_max" min="0" step="0.01" value="{{ filter_input.prix_max|default('') }}" placeholder="Max">
+                <label for="eventPrixMin"><i class="fas fa-coins me-1"></i>Prix min (TND)</label>
+                <input type="number" id="eventPrixMin" name="prix_min" min="0" step="0.01" value="{{ filter_input.prix_min|default('') }}" placeholder="0">
             </div>
             <div class="filter-adv-group">
-                <label><i class="fas fa-coins me-1"></i>Prix min (TND)</label>
-                <input type="number" name="prix_min" min="0" step="0.01" value="{{ filter_input.prix_min|default('') }}" placeholder="0">
+                <label for="eventPrixMax"><i class="fas fa-coins me-1"></i>Prix max (TND)</label>
+                <input type="number" id="eventPrixMax" name="prix_max" min="0" step="0.01" value="{{ filter_input.prix_max|default('') }}" placeholder="Max">
             </div>
-            <div class="filter-adv-group" style="align-self:end;">
-                <a href="{{ path('app_evenement_index', { scope: scope|default('all') }) }}" class="filter-reset-btn">
+            <div class="filter-adv-group filter-adv-actions">
+                <a href="{{ path('app_evenement_index', { page: 1 }) }}" class="filter-reset-btn">
                     <i class="fas fa-undo me-1"></i>Réinitialiser
                 </a>
             </div>

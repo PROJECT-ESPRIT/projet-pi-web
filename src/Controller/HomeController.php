@@ -19,6 +19,9 @@ class HomeController extends AbstractController
         ProduitRepository $produitRepository,
         ForumRepository $forumRepository,
     ): Response {
+        if ($this->isGranted('ROLE_ADMIN')) {
+            return $this->redirectToRoute('admin_stats');
+        }
         $user = $this->getUser();
         $allUpcoming = $evenementRepository->findBy([], ['dateDebut' => 'ASC'], 12);
 

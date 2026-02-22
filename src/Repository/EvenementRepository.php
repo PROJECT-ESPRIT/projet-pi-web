@@ -42,6 +42,44 @@ class EvenementRepository extends ServiceEntityRepository
     }
 
     /**
+     * Count events where organisateur_id = connected user ID (artist's own events). Pure ID comparison.
+     */
+    public function countByOrganisateur(User $user): int
+    {
+        $userId = $user->getId();
+        if ($userId === null) {
+            return 0;
+        }
+        $em = $this->getEntityManager();
+        $meta = $em->getClassMetadata(Evenement::class);
+        $table = $meta->getTableName();
+        $joinCol = $meta->getAssociationMapping('organisateur')['joinColumns'][0]['name'] ?? 'organisateur_id';
+        $conn = $em->getConnection();
+        $sql = sprintf('SELECT COUNT(e.id) FROM %s e WHERE e.%s = :userId', $table, $joinCol);
+        $result = $conn->executeQuery($sql, ['userId' => (int) $userId]);
+        return (int) $result->fetchOne();
+    }
+
+    /**
+     * Count events where organisateur_id != connected user ID (other artists' events). Pure ID comparison.
+     */
+    public function countExcludingOrganisateur(User $user): int
+    {
+        $userId = $user->getId();
+        $em = $this->getEntityManager();
+        $meta = $em->getClassMetadata(Evenement::class);
+        $table = $meta->getTableName();
+        $joinCol = $meta->getAssociationMapping('organisateur')['joinColumns'][0]['name'] ?? 'organisateur_id';
+        $conn = $em->getConnection();
+        if ($userId === null) {
+            return (int) $conn->executeQuery(sprintf('SELECT COUNT(id) FROM %s', $table))->fetchOne();
+        }
+        $sql = sprintf('SELECT COUNT(e.id) FROM %s e WHERE e.%s IS NOT NULL AND e.%s != :userId', $table, $joinCol, $joinCol);
+        $result = $conn->executeQuery($sql, ['userId' => (int) $userId]);
+        return (int) $result->fetchOne();
+    }
+
+    /**
      * @return Evenement[]
      */
     public function searchAndSort(array $filters, int $page, int $perPage): Paginator
@@ -84,12 +122,24 @@ class EvenementRepository extends ServiceEntityRepository
                 ->setParameter('prixMax', $filters['prix_max']);
         }
 
-        // Scope: for artists "mine" / "others", for participants "registered" / "others"
-        if (!empty($filters['owner_id'])) {
-            $qb->andWhere('o.id = :ownerId')->setParameter('ownerId', $filters['owner_id']);
+        // Scope (artist): organisateur ID = connected user → mine; organisateur ID != connected user → others
+        $ownerId = null;
+        if (isset($filters['owner']) && $filters['owner'] instanceof User && $filters['owner']->getId() !== null) {
+            $ownerId = (int) $filters['owner']->getId();
+        } elseif (isset($filters['owner_id']) && $filters['owner_id'] !== null && $filters['owner_id'] !== '') {
+            $ownerId = (int) $filters['owner_id'];
         }
-        if (isset($filters['exclude_owner_id']) && $filters['exclude_owner_id'] !== null) {
-            $qb->andWhere('(o.id IS NULL OR o.id != :excludeOwnerId)')->setParameter('excludeOwnerId', $filters['exclude_owner_id']);
+        if ($ownerId !== null) {
+            $qb->andWhere('o.id = :ownerId')->setParameter('ownerId', $ownerId);
+        }
+        $excludeOwnerId = null;
+        if (isset($filters['exclude_owner']) && $filters['exclude_owner'] instanceof User && $filters['exclude_owner']->getId() !== null) {
+            $excludeOwnerId = (int) $filters['exclude_owner']->getId();
+        } elseif (isset($filters['exclude_owner_id']) && $filters['exclude_owner_id'] !== null && $filters['exclude_owner_id'] !== '') {
+            $excludeOwnerId = (int) $filters['exclude_owner_id'];
+        }
+        if ($excludeOwnerId !== null) {
+            $qb->andWhere('o.id IS NOT NULL AND o.id != :excludeOwnerId')->setParameter('excludeOwnerId', $excludeOwnerId);
         }
         if (!empty($filters['event_ids'])) {
             $qb->andWhere('e.id IN (:eventIds)')->setParameter('eventIds', $filters['event_ids']);
@@ -168,7 +218,7 @@ class EvenementRepository extends ServiceEntityRepository
             $qb->andWhere('o.id = :ownerId')->setParameter('ownerId', $filters['owner_id']);
         }
         if (isset($filters['exclude_owner_id']) && $filters['exclude_owner_id'] !== null) {
-            $qb->andWhere('(o.id IS NULL OR o.id != :excludeOwnerId)')->setParameter('excludeOwnerId', $filters['exclude_owner_id']);
+            $qb->andWhere('o.id IS NOT NULL AND o.id != :excludeOwnerId')->setParameter('excludeOwnerId', $filters['exclude_owner_id']);
         }
         if (!empty($filters['event_ids'])) {
             $qb->andWhere('e.id IN (:eventIds)')->setParameter('eventIds', $filters['event_ids']);
