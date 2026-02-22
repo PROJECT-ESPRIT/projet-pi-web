@@ -1,4 +1,7 @@
-<form method="post" action="{{ path('app_evenement_delete', {'id': evenement.id}) }}" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cet événement ?');">
+<form method="post" action="{{ path('app_evenement_delete', {'id': evenement.id}) }}" data-confirm-title="Supprimer cet événement" data-confirm="Cette action est irréversible. Voulez-vous continuer ?">
     <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ evenement.id) }}">
-    <button class="btn btn-danger w-100">Supprimer</button>
+    <button type="submit" class="btn btn-danger w-100">
+    <span class="btn-label">Supprimer</span>
+    <span class="btn-spinner" style="display:none;" aria-hidden="true"><i class="fas fa-spinner fa-spin me-1"></i></span>
+</button>
 </form>

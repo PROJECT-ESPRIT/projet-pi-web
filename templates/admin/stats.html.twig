@@ -1,183 +1,366 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Tableau de bord — Art Connect{% endblock %}
+{% block title %}Statistiques — Art Connect{% endblock %}
 
 {% block body %}
 <style>
-    .dash-header { margin-bottom:1.25rem; }
-    .dash-header h1 { font-family:'Sora',sans-serif; font-weight:700; font-size:1.4rem; color:var(--ac-deep); margin:0; }
-    .dash-header p { color:#6b7280; font-size:.84rem; margin:.2rem 0 0; }
+    .stats-header {
+        margin-bottom:1rem; display:flex; align-items:flex-end; justify-content:space-between;
+        flex-wrap:wrap; gap:.5rem;
+        padding:1.1rem 1.4rem; border-radius:16px;
+        background:linear-gradient(135deg, var(--ac-deep) 0%, var(--ac-mid) 50%, var(--ac-blue) 100%);
+        color:#fff;
+    }
+    .stats-header h1 {
+        font-family:'Sora',sans-serif; font-weight:700; font-size:1.3rem;
+        color:#fff; margin:0; display:flex; align-items:center; gap:.5rem;
+    }
+    .stats-header h1 i { color:var(--ac-sky); }
+    .stats-header p { color:rgba(255,255,255,.7); font-size:.82rem; margin:.15rem 0 0; }
+    .stats-header .stats-date {
+        font-size:.76rem; color:rgba(255,255,255,.85);
+        background:rgba(255,255,255,.12); padding:.35rem .8rem;
+        border-radius:8px; backdrop-filter:blur(4px);
+    }
 
-    .kpi-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(170px,1fr)); gap:.75rem; margin-bottom:1.25rem; }
-    .kpi { background:#fff; border-radius:14px; padding:1rem 1.1rem; box-shadow:0 2px 10px rgba(0,0,0,.04); border:1px solid #f0f0f0; position:relative; overflow:hidden; }
-    .kpi-icon { position:absolute; top:.8rem; right:.8rem; font-size:1.4rem; opacity:.12; }
-    .kpi-val { font-family:'Sora',sans-serif; font-weight:800; font-size:1.6rem; color:var(--ac-deep); line-height:1.1; }
-    .kpi-label { font-size:.72rem; font-weight:600; color:#6b7280; text-transform:uppercase; letter-spacing:.04em; margin-top:.25rem; }
-    .kpi-sub { font-size:.7rem; color:#9ca3af; margin-top:.15rem; }
-    .kpi-accent { border-left:3px solid; }
+    /* ---- KPI Row ---- */
+    .kpi-row {
+        display:grid; grid-template-columns:repeat(7, 1fr);
+        gap:.6rem; margin-bottom:1rem;
+    }
+    @media(max-width:1200px){ .kpi-row { grid-template-columns:repeat(4, 1fr); } }
+    @media(max-width:768px){ .kpi-row { grid-template-columns:repeat(2, 1fr); } }
 
-    .dash-row { display:grid; gap:1rem; margin-bottom:1rem; }
-    .dash-2 { grid-template-columns:1fr 1fr; }
-    .dash-3 { grid-template-columns:1fr 1fr 1fr; }
-    .dash-2-1 { grid-template-columns:2fr 1fr; }
-    @media(max-width:992px) { .dash-2,.dash-3,.dash-2-1 { grid-template-columns:1fr; } }
+    .kpi-card {
+        border-radius:14px; padding:.9rem 1rem; position:relative; overflow:hidden;
+        transition: transform .18s, box-shadow .18s; border:none;
+        color:#fff; min-height:110px; display:flex; flex-direction:column; justify-content:space-between;
+    }
+    .kpi-card:hover { transform:translateY(-3px); box-shadow:0 8px 25px rgba(0,0,0,.18); }
+    .kpi-card::after {
+        content:''; position:absolute; top:-20px; right:-20px;
+        width:70px; height:70px; border-radius:50%;
+        background:rgba(255,255,255,.1);
+    }
+    .kpi-card::before {
+        content:''; position:absolute; bottom:-30px; left:-15px;
+        width:60px; height:60px; border-radius:50%;
+        background:rgba(255,255,255,.06);
+    }
+    .kpi-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:.4rem; position:relative; z-index:1; }
+    .kpi-icon-wrap {
+        width:34px; height:34px; border-radius:10px; display:flex;
+        align-items:center; justify-content:center; font-size:.9rem;
+        background:rgba(255,255,255,.2); color:#fff; backdrop-filter:blur(4px);
+    }
+    .kpi-value {
+        font-family:'Sora',sans-serif; font-weight:800; font-size:1.6rem;
+        color:#fff; line-height:1.1; position:relative; z-index:1;
+    }
+    .kpi-label {
+        font-size:.65rem; font-weight:700; color:rgba(255,255,255,.85);
+        text-transform:uppercase; letter-spacing:.05em;
+    }
+    .kpi-sub { font-size:.65rem; color:rgba(255,255,255,.65); margin-top:.1rem; position:relative; z-index:1; }
 
-    .dash-card { background:#fff; border-radius:14px; padding:1.25rem; box-shadow:0 2px 10px rgba(0,0,0,.04); border:1px solid #f0f0f0; }
-    .dash-card h5 { font-family:'Sora',sans-serif; font-weight:700; font-size:.9rem; color:var(--ac-deep); margin-bottom:.85rem; display:flex; align-items:center; gap:.4rem; }
-    .dash-card h5 i { color:var(--ac-lavender); }
+    /* ---- Grid layouts ---- */
+    .st-grid { display:grid; gap:.75rem; margin-bottom:.75rem; }
+    .st-2 { grid-template-columns:1fr 1fr; }
+    .st-3 { grid-template-columns:1fr 1fr 1fr; }
+    .st-2-1 { grid-template-columns:2fr 1fr; }
+    @media(max-width:1100px){ .st-3 { grid-template-columns:1fr 1fr; } }
+    @media(max-width:768px){ .st-2, .st-3, .st-2-1 { grid-template-columns:1fr; } }
 
-    .mini-table { width:100%; font-size:.8rem; }
-    .mini-table th { font-weight:700; color:#6b7280; font-size:.7rem; text-transform:uppercase; letter-spacing:.03em; padding:.4rem .5rem; border-bottom:2px solid #f3f4f6; }
-    .mini-table td { padding:.45rem .5rem; border-bottom:1px solid #f9fafb; color:#374151; }
-    .mini-table tr:last-child td { border-bottom:none; }
+    /* ---- Cards ---- */
+    .st-card {
+        background:#fff; border-radius:16px; padding:1.15rem 1.3rem;
+        box-shadow:0 2px 12px rgba(30,15,117,.05); border:1px solid rgba(30,15,117,.06);
+        transition: box-shadow .2s;
+    }
+    .st-card:hover { box-shadow:0 6px 24px rgba(30,15,117,.09); }
+    .st-card-title {
+        font-family:'Sora',sans-serif; font-weight:700; font-size:.84rem;
+        color:var(--ac-deep); margin-bottom:.75rem; display:flex;
+        align-items:center; gap:.45rem;
+    }
+    .st-card-title i {
+        width:26px; height:26px; border-radius:8px; display:inline-flex;
+        align-items:center; justify-content:center; font-size:.75rem;
+        background:linear-gradient(135deg, var(--ac-lavender), var(--ac-blue));
+        color:#fff;
+    }
 
-    .progress-sm { height:6px; border-radius:3px; background:#f3f4f6; overflow:hidden; }
-    .progress-sm-fill { height:100%; border-radius:3px; transition:width .4s; }
+    /* ---- Mini tables ---- */
+    .st-table { width:100%; font-size:.78rem; }
+    .st-table th {
+        font-weight:700; color:#6b7280; font-size:.67rem;
+        text-transform:uppercase; letter-spacing:.03em;
+        padding:.35rem .4rem; border-bottom:2px solid #f3f4f6;
+    }
+    .st-table td { padding:.35rem .4rem; border-bottom:1px solid #f9fafb; color:#374151; }
+    .st-table tr:last-child td { border-bottom:none; }
 
-    .stat-ring { display:inline-flex; align-items:center; justify-content:center; width:54px; height:54px; border-radius:50%; position:relative; }
-    .stat-ring svg { transform:rotate(-90deg); }
-    .stat-ring-val { position:absolute; font-size:.7rem; font-weight:800; color:var(--ac-deep); }
+    .progress-bar-wrap { height:6px; border-radius:3px; background:#f0f1f5; overflow:hidden; }
+    .progress-bar-fill { height:100%; border-radius:3px; transition:width .5s ease; }
+
+    /* ---- Event stats grid ---- */
+    .ev-stat-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:.5rem; text-align:center; }
+    .ev-stat-item {
+        padding:.6rem .3rem; border-radius:10px; background:#f8f9fc;
+        transition: background .15s;
+    }
+    .ev-stat-item:hover { background:#eef0f7; }
+    .ev-stat-val { font-family:'Sora',sans-serif; font-size:1.25rem; font-weight:800; line-height:1.1; }
+    .ev-stat-lbl { font-size:.62rem; color:#6b7280; font-weight:600; margin-top:.15rem; }
+
+    /* ---- Revenue highlight ---- */
+    .revenue-box {
+        background:linear-gradient(135deg, var(--ac-deep) 0%, var(--ac-mid) 60%, var(--ac-blue) 100%);
+        border-radius:16px; padding:1.1rem 1.3rem; color:#fff;
+        position:relative; overflow:hidden;
+    }
+    .revenue-box::after {
+        content:''; position:absolute; top:-25px; right:-25px;
+        width:90px; height:90px; border-radius:50%;
+        background:rgba(255,255,255,.08);
+    }
+    .revenue-box .rev-amount { font-family:'Sora',sans-serif; font-weight:800; font-size:1.6rem; position:relative; z-index:1; }
+    .revenue-box .rev-label { font-size:.7rem; opacity:.7; text-transform:uppercase; letter-spacing:.04em; position:relative; z-index:1; }
+    .revenue-box .rev-sub { font-size:.75rem; opacity:.8; margin-top:.25rem; position:relative; z-index:1; }
+
+    /* ---- Donation type pills ---- */
+    .don-type-item {
+        display:flex; align-items:center; gap:.5rem;
+        padding:.4rem .5rem; margin-bottom:.2rem; border-radius:8px;
+        transition: background .15s;
+    }
+    .don-type-item:hover { background:#f8f9fc; }
+    .don-type-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+    .don-type-name { flex:1; font-size:.78rem; color:#374151; font-weight:500; }
+    .don-type-count { font-size:.78rem; font-weight:700; color:var(--ac-deep); }
 </style>
 
-<div class="dash-header">
-    <h1><i class="fas fa-chart-line me-2" style="color:var(--ac-lavender);"></i> Tableau de bord</h1>
-    <p>Vue d'ensemble de la plateforme Art Connect</p>
+{# ===== HEADER ===== #}
+<div class="stats-header">
+    <div>
+        <h1><i class="fas fa-chart-pie"></i> Statistiques</h1>
+        <p>Vue d'ensemble de la plateforme Art Connect</p>
+    </div>
+    <div class="stats-date">
+        <i class="far fa-clock me-1"></i> {{ "now"|date("d/m/Y H:i") }}
+    </div>
 </div>
 
 {# ===== KPI CARDS ===== #}
-<div class="kpi-grid">
-    <div class="kpi kpi-accent" style="border-color:var(--ac-mid);">
-        <i class="fas fa-users kpi-icon" style="color:var(--ac-mid);"></i>
-        <div class="kpi-val">{{ totalUsers }}</div>
-        <div class="kpi-label">Utilisateurs</div>
+<div class="kpi-row">
+    <div class="kpi-card" style="background:linear-gradient(135deg, #1C1DAB, #3785D8);">
+        <div class="kpi-top">
+            <div class="kpi-label">Utilisateurs</div>
+            <div class="kpi-icon-wrap"><i class="fas fa-users"></i></div>
+        </div>
+        <div class="kpi-value">{{ totalUsers }}</div>
         <div class="kpi-sub">+{{ newUsersThisMonth }} ce mois</div>
     </div>
-    <div class="kpi kpi-accent" style="border-color:var(--ac-blue);">
-        <i class="fas fa-calendar-alt kpi-icon" style="color:var(--ac-blue);"></i>
-        <div class="kpi-val">{{ eventStats.total }}</div>
-        <div class="kpi-label">Événements</div>
+
+    <div class="kpi-card" style="background:linear-gradient(135deg, #3785D8, #5BA3E6);">
+        <div class="kpi-top">
+            <div class="kpi-label">Événements</div>
+            <div class="kpi-icon-wrap"><i class="fas fa-calendar-alt"></i></div>
+        </div>
+        <div class="kpi-value">{{ eventStats.total }}</div>
         <div class="kpi-sub">{{ eventStats.upcoming }} à venir</div>
     </div>
-    <div class="kpi kpi-accent" style="border-color:#22c55e;">
-        <i class="fas fa-ticket-alt kpi-icon" style="color:#22c55e;"></i>
-        <div class="kpi-val">{{ totalReservations }}</div>
-        <div class="kpi-label">Réservations</div>
+
+    <div class="kpi-card" style="background:linear-gradient(135deg, #059669, #34d399);">
+        <div class="kpi-top">
+            <div class="kpi-label">Réservations</div>
+            <div class="kpi-icon-wrap"><i class="fas fa-ticket-alt"></i></div>
+        </div>
+        <div class="kpi-value">{{ totalReservations }}</div>
         <div class="kpi-sub">+{{ reservationsThisMonth }} ce mois</div>
     </div>
-    <div class="kpi kpi-accent" style="border-color:var(--ac-lavender);">
-        <i class="fas fa-shopping-bag kpi-icon" style="color:var(--ac-lavender);"></i>
-        <div class="kpi-val">{{ totalOrders }}</div>
-        <div class="kpi-label">Commandes</div>
+
+    <div class="kpi-card" style="background:linear-gradient(135deg, #7c3aed, #BF8CE1);">
+        <div class="kpi-top">
+            <div class="kpi-label">Commandes</div>
+            <div class="kpi-icon-wrap"><i class="fas fa-shopping-bag"></i></div>
+        </div>
+        <div class="kpi-value">{{ totalOrders }}</div>
         <div class="kpi-sub">{{ totalProducts }} produits</div>
     </div>
-    <div class="kpi kpi-accent" style="border-color:var(--ac-pink);">
-        <i class="fas fa-hand-holding-heart kpi-icon" style="color:var(--ac-pink);"></i>
-        <div class="kpi-val">{{ totalDonations }}</div>
-        <div class="kpi-label">Donations</div>
+
+    <div class="kpi-card" style="background:linear-gradient(135deg, #db2777, #EBB2C3);">
+        <div class="kpi-top">
+            <div class="kpi-label">Dons</div>
+            <div class="kpi-icon-wrap"><i class="fas fa-hand-holding-heart"></i></div>
+        </div>
+        <div class="kpi-value">{{ totalDonations }}</div>
+        <div class="kpi-sub">+{{ donationsThisMonth }} ce mois</div>
     </div>
-    <div class="kpi kpi-accent" style="border-color:#f59e0b;">
-        <i class="fas fa-comments kpi-icon" style="color:#f59e0b;"></i>
-        <div class="kpi-val">{{ totalForumPosts }}</div>
-        <div class="kpi-label">Forum</div>
-        <div class="kpi-sub">discussions</div>
+
+    <div class="kpi-card" style="background:linear-gradient(135deg, #d97706, #fbbf24);">
+        <div class="kpi-top">
+            <div class="kpi-label">Forum</div>
+            <div class="kpi-icon-wrap"><i class="fas fa-comments"></i></div>
+        </div>
+        <div class="kpi-value">{{ totalForumPosts }}</div>
+        <div class="kpi-sub">{{ totalForumReplies }} réponses</div>
+    </div>
+
+    <div class="kpi-card" style="background:linear-gradient(135deg, #dc2626, #f87171);">
+        <div class="kpi-top">
+            <div class="kpi-label">Stock faible</div>
+            <div class="kpi-icon-wrap"><i class="fas fa-exclamation-triangle"></i></div>
+        </div>
+        <div class="kpi-value">{{ lowStockProducts }}</div>
+        <div class="kpi-sub">produits &le; 5 unités</div>
     </div>
 </div>
 
-{# ===== ROW 1: Event Stats + Revenue ===== #}
-<div class="dash-row dash-2-1">
-    <div class="dash-card">
-        <h5><i class="fas fa-calendar-check"></i> Événements — Vue globale</h5>
-        <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:.75rem; text-align:center;">
-            <div>
-                <div style="font-size:1.3rem; font-weight:800; color:var(--ac-blue);">{{ eventStats.upcoming }}</div>
-                <div style="font-size:.7rem; color:#6b7280; font-weight:600;">À VENIR</div>
+{# ===== ROW 1: Events overview + Revenue ===== #}
+<div class="st-grid st-2-1">
+    <div class="st-card">
+        <div class="st-card-title"><i class="fas fa-calendar-check"></i> Événements — Vue globale</div>
+        <div class="ev-stat-grid" style="margin-bottom:.75rem;">
+            <div class="ev-stat-item">
+                <div class="ev-stat-val" style="color:var(--ac-blue);">{{ eventStats.upcoming }}</div>
+                <div class="ev-stat-lbl">À venir</div>
             </div>
-            <div>
-                <div style="font-size:1.3rem; font-weight:800; color:#22c55e;">{{ eventStats.ongoing }}</div>
-                <div style="font-size:.7rem; color:#6b7280; font-weight:600;">EN COURS</div>
+            <div class="ev-stat-item">
+                <div class="ev-stat-val" style="color:#059669;">{{ eventStats.ongoing }}</div>
+                <div class="ev-stat-lbl">En cours</div>
             </div>
-            <div>
-                <div style="font-size:1.3rem; font-weight:800; color:#9ca3af;">{{ eventStats.past }}</div>
-                <div style="font-size:.7rem; color:#6b7280; font-weight:600;">TERMINÉS</div>
+            <div class="ev-stat-item">
+                <div class="ev-stat-val" style="color:#9ca3af;">{{ eventStats.past }}</div>
+                <div class="ev-stat-lbl">Terminés</div>
             </div>
-            <div>
-                <div style="font-size:1.3rem; font-weight:800; color:#ef4444;">{{ eventStats.full }}</div>
-                <div style="font-size:.7rem; color:#6b7280; font-weight:600;">COMPLETS</div>
+            <div class="ev-stat-item">
+                <div class="ev-stat-val" style="color:#ef4444;">{{ eventStats.full }}</div>
+                <div class="ev-stat-lbl">Complets</div>
             </div>
         </div>
-        <hr style="margin:.75rem 0;">
+        <hr style="margin:.5rem 0; border-color:#eef0f5;">
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:.75rem;">
             <div>
-                <div style="font-size:.72rem; color:#6b7280; font-weight:600; text-transform:uppercase;">Taux d'occupation global</div>
-                <div style="display:flex; align-items:center; gap:.6rem; margin-top:.3rem;">
-                    <div class="progress-sm" style="flex:1;">
-                        <div class="progress-sm-fill" style="width:{{ eventStats.occupancy }}%; background:linear-gradient(90deg,var(--ac-mid),var(--ac-blue));"></div>
+                <div style="font-size:.68rem; color:#6b7280; font-weight:600; text-transform:uppercase;">Taux d'occupation</div>
+                <div style="display:flex; align-items:center; gap:.5rem; margin-top:.35rem;">
+                    <div class="progress-bar-wrap" style="flex:1;">
+                        <div class="progress-bar-fill" style="width:{{ eventStats.occupancy }}%; background:linear-gradient(90deg,var(--ac-mid),var(--ac-blue));"></div>
                     </div>
-                    <span style="font-weight:800; font-size:.85rem; color:var(--ac-deep);">{{ eventStats.occupancy }}%</span>
+                    <span style="font-weight:800; font-size:.84rem; color:var(--ac-deep);">{{ eventStats.occupancy }}%</span>
                 </div>
-                <div style="font-size:.7rem; color:#9ca3af; margin-top:.2rem;">{{ eventStats.totalTaken }} places prises sur {{ eventStats.totalPlaces }}</div>
+                <div style="font-size:.65rem; color:#9ca3af; margin-top:.15rem;">{{ eventStats.totalTaken }}/{{ eventStats.totalPlaces }} places</div>
             </div>
             <div>
-                <div style="font-size:.72rem; color:#6b7280; font-weight:600; text-transform:uppercase;">Revenus événements</div>
-                <div style="font-weight:800; font-size:1rem; color:#22c55e; margin-top:.3rem;">{{ eventStats.revenueActual|number_format(2, '.', ' ') }} TND</div>
-                <div style="font-size:.7rem; color:#9ca3af;">Potentiel: {{ eventStats.revenuePotential|number_format(2, '.', ' ') }} TND</div>
+                <div style="font-size:.68rem; color:#6b7280; font-weight:600; text-transform:uppercase;">Revenus événements</div>
+                <div style="font-weight:800; font-size:1.05rem; color:#059669; margin-top:.35rem;">{{ eventStats.revenueActual|number_format(2, '.', ' ') }} TND</div>
+                <div style="font-size:.65rem; color:#9ca3af;">Potentiel: {{ eventStats.revenuePotential|number_format(2, '.', ' ') }} TND</div>
             </div>
         </div>
     </div>
 
-    <div class="dash-card">
-        <h5><i class="fas fa-trophy"></i> Top événements</h5>
-        {% if topEvents|length > 0 %}
-            {% for item in topEvents %}
-            <div style="display:flex; align-items:center; gap:.6rem; margin-bottom:.6rem; {% if not loop.last %}padding-bottom:.6rem; border-bottom:1px solid #f3f4f6;{% endif %}">
-                <span style="width:22px; height:22px; border-radius:50%; background:{% if loop.index <= 3 %}linear-gradient(135deg,var(--ac-mid),var(--ac-blue)){% else %}#e5e7eb{% endif %}; color:{% if loop.index <= 3 %}#fff{% else %}#6b7280{% endif %}; display:flex; align-items:center; justify-content:center; font-size:.65rem; font-weight:800; flex-shrink:0;">{{ loop.index }}</span>
-                <div style="flex:1; min-width:0;">
-                    <div style="font-weight:700; font-size:.8rem; color:#1f2937; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ item.event.titre }}</div>
-                    <div style="font-size:.68rem; color:#9ca3af;">{{ item.event.lieu }}</div>
-                </div>
-                <span class="badge bg-primary bg-opacity-75" style="font-size:.68rem;">{{ item.reservations }} rés.</span>
+    <div style="display:flex; flex-direction:column; gap:.75rem;">
+        <div class="revenue-box">
+            <div class="rev-label"><i class="fas fa-coins me-1"></i> Chiffre d'affaires boutique</div>
+            <div class="rev-amount">{{ orderRevenue|number_format(2, '.', ' ') }} TND</div>
+            <div class="rev-sub">{{ totalOrders }} commande{{ totalOrders > 1 ? 's' : '' }} · {{ totalProducts }} produit{{ totalProducts > 1 ? 's' : '' }}</div>
+        </div>
+        <div class="st-card" style="flex:1;">
+            <div class="st-card-title"><i class="fas fa-warehouse"></i> Inventaire</div>
+            <div style="display:flex; align-items:baseline; gap:.35rem; margin-bottom:.35rem;">
+                <span style="font-family:'Sora',sans-serif; font-weight:800; font-size:1.15rem; color:var(--ac-deep);">{{ stockValue|number_format(2, '.', ' ') }}</span>
+                <span style="font-size:.72rem; color:#6b7280;">TND valeur stock</span>
+            </div>
+            {% if lowStockProducts > 0 %}
+            <div style="display:inline-flex; align-items:center; gap:.3rem; font-size:.72rem; color:#dc2626; font-weight:600; background:rgba(220,38,38,.08); padding:.25rem .6rem; border-radius:6px;">
+                <i class="fas fa-exclamation-circle"></i> {{ lowStockProducts }} produit{{ lowStockProducts > 1 ? 's' : '' }} en stock faible
+            </div>
+            {% else %}
+            <div style="display:inline-flex; align-items:center; gap:.3rem; font-size:.72rem; color:#059669; font-weight:600; background:rgba(5,150,105,.08); padding:.25rem .6rem; border-radius:6px;">
+                <i class="fas fa-check-circle"></i> Stock suffisant
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{# ===== ROW 2: Charts — Reservations + Registrations ===== #}
+<div class="st-grid st-2">
+    <div class="st-card">
+        <div class="st-card-title"><i class="fas fa-chart-bar"></i> Réservations mensuelles</div>
+        <div style="height:220px;"><canvas id="monthlyResChart"></canvas></div>
+    </div>
+    <div class="st-card">
+        <div class="st-card-title"><i class="fas fa-chart-area"></i> Inscriptions mensuelles</div>
+        <div style="height:220px;"><canvas id="monthlyRegChart"></canvas></div>
+    </div>
+</div>
+
+{# ===== ROW 3: Revenue chart + Orders + Donations ===== #}
+<div class="st-grid st-3">
+    <div class="st-card">
+        <div class="st-card-title"><i class="fas fa-money-bill-wave"></i> Revenus mensuels</div>
+        <div style="height:200px;"><canvas id="monthlyRevChart"></canvas></div>
+    </div>
+    <div class="st-card">
+        <div class="st-card-title"><i class="fas fa-shopping-cart"></i> Commandes par statut</div>
+        <div style="height:180px; margin-bottom:.5rem;"><canvas id="orderStatusChart"></canvas></div>
+        <table class="st-table">
+            <thead><tr><th>Statut</th><th style="text-align:right;">Nb</th></tr></thead>
+            <tbody>
+                {% for o in ordersByStatus %}
+                <tr>
+                    <td>
+                        {% if o.status == 'EN_ATTENTE' %}<span class="badge" style="font-size:.65rem; background:linear-gradient(135deg,#d97706,#fbbf24); color:#fff;">En attente</span>
+                        {% elseif o.status == 'VALIDEE' %}<span class="badge" style="font-size:.65rem; background:linear-gradient(135deg,#059669,#34d399); color:#fff;">Validée</span>
+                        {% elseif o.status == 'ANNULEE' %}<span class="badge" style="font-size:.65rem; background:linear-gradient(135deg,#dc2626,#f87171); color:#fff;">Annulée</span>
+                        {% elseif o.status == 'LIVREE' %}<span class="badge" style="font-size:.65rem; background:linear-gradient(135deg,#3785D8,#5BA3E6); color:#fff;">Livrée</span>
+                        {% else %}<span class="badge bg-secondary" style="font-size:.65rem;">{{ o.status }}</span>
+                        {% endif %}
+                    </td>
+                    <td style="text-align:right; font-weight:700;">{{ o.count }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="st-card">
+        <div class="st-card-title"><i class="fas fa-hand-holding-heart"></i> Dons par type</div>
+        {% if donationsByType|length > 0 %}
+            {% set donColors = ['#BF8CE1','#3785D8','#EBB2C3','#059669','#d97706','#ADC6E5'] %}
+            <div style="height:170px; margin-bottom:.5rem;"><canvas id="donTypeChart"></canvas></div>
+            {% for dt in donationsByType %}
+            <div class="don-type-item">
+                <div class="don-type-dot" style="background:{{ donColors[loop.index0 % donColors|length] }};"></div>
+                <div class="don-type-name">{{ dt.typeName ?? 'Non catégorisé' }}</div>
+                <div class="don-type-count">{{ dt.count }}</div>
             </div>
             {% endfor %}
         {% else %}
-            <div style="color:#9ca3af; font-size:.82rem; text-align:center; padding:1rem 0;">Aucun événement</div>
+            <div style="text-align:center; color:#9ca3af; font-size:.82rem; padding:2rem 0;">
+                <i class="fas fa-heart" style="font-size:1.8rem; opacity:.2; display:block; margin-bottom:.5rem;"></i>
+                Aucun don enregistré
+            </div>
         {% endif %}
     </div>
 </div>
 
-{# ===== ROW 2: Charts ===== #}
-<div class="dash-row dash-2">
-    <div class="dash-card">
-        <h5><i class="fas fa-chart-bar"></i> Réservations mensuelles</h5>
-        <div style="height:220px;">
-            <canvas id="monthlyResChart"></canvas>
-        </div>
-    </div>
-    <div class="dash-card">
-        <h5><i class="fas fa-chart-area"></i> Inscriptions mensuelles</h5>
-        <div style="height:220px;">
-            <canvas id="monthlyRegChart"></canvas>
-        </div>
-    </div>
-</div>
-
-{# ===== ROW 3: Users + Reservations breakdown ===== #}
-<div class="dash-row dash-3">
-    <div class="dash-card">
-        <h5><i class="fas fa-user-tag"></i> Utilisateurs par rôle</h5>
-        <div style="height:180px; margin-bottom:.75rem;">
-            <canvas id="usersRoleChart"></canvas>
-        </div>
-        <table class="mini-table">
+{# ===== ROW 4: Users by role + Reservations by status + Monthly events ===== #}
+<div class="st-grid st-3">
+    <div class="st-card">
+        <div class="st-card-title"><i class="fas fa-user-tag"></i> Utilisateurs par rôle</div>
+        <div style="height:170px; margin-bottom:.5rem;"><canvas id="usersRoleChart"></canvas></div>
+        <table class="st-table">
             <thead><tr><th>Rôle</th><th style="text-align:right;">Nb</th><th style="text-align:right;">%</th></tr></thead>
             <tbody>
                 {% set uTotal = usersByRole|reduce((s,u) => s + u.count, 0) %}
                 {% for u in usersByRole %}
                 <tr>
                     <td>
-                        {% if u.role == 'ROLE_ADMIN' %}<span class="badge bg-danger" style="font-size:.68rem;">Admin</span>
-                        {% elseif u.role == 'ROLE_ARTISTE' %}<span class="badge bg-primary" style="font-size:.68rem;">Artiste</span>
-                        {% elseif u.role == 'ROLE_PARTICIPANT' %}<span class="badge bg-success" style="font-size:.68rem;">Participant</span>
-                        {% else %}<span class="badge bg-secondary" style="font-size:.68rem;">{{ u.role|replace({'ROLE_':''})|title }}</span>
+                        {% if u.role == 'ROLE_ADMIN' %}<span class="badge" style="font-size:.65rem; background:linear-gradient(135deg,#dc2626,#f87171); color:#fff;">Admin</span>
+                        {% elseif u.role == 'ROLE_ARTISTE' %}<span class="badge" style="font-size:.65rem; background:linear-gradient(135deg,var(--ac-mid),var(--ac-blue)); color:#fff;">Artiste</span>
+                        {% elseif u.role == 'ROLE_PARTICIPANT' %}<span class="badge" style="font-size:.65rem; background:linear-gradient(135deg,#059669,#34d399); color:#fff;">Participant</span>
+                        {% else %}<span class="badge bg-secondary" style="font-size:.65rem;">{{ u.role|replace({'ROLE_':''})|title }}</span>
                         {% endif %}
                     </td>
                     <td style="text-align:right; font-weight:700;">{{ u.count }}</td>
@@ -188,22 +371,20 @@
         </table>
     </div>
 
-    <div class="dash-card">
-        <h5><i class="fas fa-clipboard-list"></i> Réservations par statut</h5>
-        <div style="height:180px; margin-bottom:.75rem;">
-            <canvas id="resStatusChart"></canvas>
-        </div>
-        <table class="mini-table">
+    <div class="st-card">
+        <div class="st-card-title"><i class="fas fa-clipboard-list"></i> Réservations par statut</div>
+        <div style="height:170px; margin-bottom:.5rem;"><canvas id="resStatusChart"></canvas></div>
+        <table class="st-table">
             <thead><tr><th>Statut</th><th style="text-align:right;">Nb</th><th style="text-align:right;">%</th></tr></thead>
             <tbody>
                 {% set rTotal = reservationsByStatus|reduce((s,r) => s + r.count, 0) %}
                 {% for r in reservationsByStatus %}
                 <tr>
                     <td>
-                        {% if r.status == 'CONFIRMED' %}<span class="badge bg-success" style="font-size:.68rem;">Confirmé</span>
-                        {% elseif r.status == 'CANCELLED' %}<span class="badge bg-danger" style="font-size:.68rem;">Annulé</span>
-                        {% elseif r.status == 'PENDING' %}<span class="badge bg-warning text-dark" style="font-size:.68rem;">En attente</span>
-                        {% else %}<span class="badge bg-secondary" style="font-size:.68rem;">{{ r.status }}</span>
+                        {% if r.status == 'CONFIRMED' %}<span class="badge" style="font-size:.65rem; background:linear-gradient(135deg,#059669,#34d399); color:#fff;">Confirmé</span>
+                        {% elseif r.status == 'CANCELLED' %}<span class="badge" style="font-size:.65rem; background:linear-gradient(135deg,#dc2626,#f87171); color:#fff;">Annulé</span>
+                        {% elseif r.status == 'PENDING' %}<span class="badge" style="font-size:.65rem; background:linear-gradient(135deg,#d97706,#fbbf24); color:#fff;">En attente</span>
+                        {% else %}<span class="badge bg-secondary" style="font-size:.65rem;">{{ r.status }}</span>
                         {% endif %}
                     </td>
                     <td style="text-align:right; font-weight:700;">{{ r.count }}</td>
@@ -214,12 +395,10 @@
         </table>
     </div>
 
-    <div class="dash-card">
-        <h5><i class="fas fa-calendar-plus"></i> Événements mensuels</h5>
-        <div style="height:180px; margin-bottom:.75rem;">
-            <canvas id="monthlyEvChart"></canvas>
-        </div>
-        <table class="mini-table">
+    <div class="st-card">
+        <div class="st-card-title"><i class="fas fa-calendar-plus"></i> Événements mensuels</div>
+        <div style="height:170px; margin-bottom:.5rem;"><canvas id="monthlyEvChart"></canvas></div>
+        <table class="st-table">
             <thead><tr><th>Mois</th><th style="text-align:right;">Créés</th></tr></thead>
             <tbody>
                 {% for m in monthlyEvents %}
@@ -233,6 +412,52 @@
     </div>
 </div>
 
+{# ===== ROW 5: Forum + Donations trend + Top Events ===== #}
+<div class="st-grid st-3">
+    <div class="st-card">
+        <div class="st-card-title"><i class="fas fa-comments"></i> Activité Forum</div>
+        <div style="height:190px;"><canvas id="forumChart"></canvas></div>
+        <div style="display:flex; justify-content:center; gap:2rem; margin-top:.7rem; text-align:center;">
+            <div>
+                <div style="font-family:'Sora',sans-serif; font-weight:800; font-size:1.1rem; color:var(--ac-deep);">{{ totalForumPosts }}</div>
+                <div style="font-size:.63rem; color:#6b7280; font-weight:600; text-transform:uppercase;">Sujets</div>
+            </div>
+            <div style="width:1px; background:#e5e7eb;"></div>
+            <div>
+                <div style="font-family:'Sora',sans-serif; font-weight:800; font-size:1.1rem; color:var(--ac-blue);">{{ totalForumReplies }}</div>
+                <div style="font-size:.63rem; color:#6b7280; font-weight:600; text-transform:uppercase;">Réponses</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="st-card">
+        <div class="st-card-title"><i class="fas fa-chart-line"></i> Dons mensuels</div>
+        <div style="height:210px;"><canvas id="monthlyDonChart"></canvas></div>
+    </div>
+
+    <div class="st-card">
+        <div class="st-card-title"><i class="fas fa-trophy"></i> Top événements</div>
+        {% if topEvents|length > 0 %}
+            {% for item in topEvents %}
+            <div style="display:flex; align-items:center; gap:.55rem; padding:.5rem .4rem; margin-bottom:.15rem; border-radius:8px; transition:background .15s; {% if not loop.last %}border-bottom:1px solid #f3f4f6;{% endif %}"
+                 onmouseover="this.style.background='#f8f9fc'" onmouseout="this.style.background='transparent'">
+                <span style="width:22px; height:22px; border-radius:50%; background:{% if loop.index == 1 %}linear-gradient(135deg,#d97706,#fbbf24){% elseif loop.index == 2 %}linear-gradient(135deg,#9ca3af,#d1d5db){% elseif loop.index == 3 %}linear-gradient(135deg,#b45309,#d97706){% else %}#e5e7eb{% endif %}; color:{% if loop.index <= 3 %}#fff{% else %}#6b7280{% endif %}; display:flex; align-items:center; justify-content:center; font-size:.62rem; font-weight:800; flex-shrink:0;">{{ loop.index }}</span>
+                <div style="flex:1; min-width:0;">
+                    <div style="font-weight:700; font-size:.78rem; color:#1f2937; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ item.event.titre }}</div>
+                    <div style="font-size:.63rem; color:#9ca3af;">{{ item.event.lieu }}</div>
+                </div>
+                <span class="badge" style="font-size:.63rem; background:linear-gradient(135deg,var(--ac-mid),var(--ac-blue)); color:#fff;">{{ item.reservations }} rés.</span>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div style="color:#9ca3af; font-size:.82rem; text-align:center; padding:1.5rem 0;">
+                <i class="fas fa-calendar-times" style="font-size:1.5rem; opacity:.25; display:block; margin-bottom:.4rem;"></i>
+                Aucun événement
+            </div>
+        {% endif %}
+    </div>
+</div>
+
 {% endblock %}
 
 {% block javascripts %}
@@ -240,89 +465,139 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    var font = { family: "'Manrope', sans-serif" };
-    Chart.defaults.font.family = font.family;
+    Chart.defaults.font.family = "'Manrope', sans-serif";
     Chart.defaults.font.size = 11;
 
-    var colors = {
-        deep: '#1E0F75', mid: '#1C1DAB', blue: '#3785D8', lavender: '#BF8CE1',
-        sky: '#ADC6E5', pink: '#EBB2C3', green: '#22c55e', red: '#ef4444', amber: '#f59e0b', gray: '#9ca3af'
+    var C = {
+        deep:'#1E0F75', mid:'#1C1DAB', blue:'#3785D8', lavender:'#BF8CE1',
+        sky:'#ADC6E5', pink:'#EBB2C3', green:'#059669', greenLight:'#34d399',
+        red:'#dc2626', redLight:'#f87171', amber:'#d97706', amberLight:'#fbbf24',
+        gray:'#9ca3af', purple:'#7c3aed'
     };
 
-    // Monthly Reservations Bar
-    new Chart(document.getElementById('monthlyResChart'), {
-        type: 'bar',
-        data: {
-            labels: {{ monthlyReservations|map(m => m.month)|json_encode|raw }},
-            datasets: [{
-                label: 'Réservations',
-                data: {{ monthlyReservations|map(m => m.count)|json_encode|raw }},
-                backgroundColor: colors.blue + '88',
-                borderColor: colors.blue,
-                borderWidth: 1.5,
-                borderRadius: 6,
-                barPercentage: 0.6
-            }]
-        },
-        options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true,ticks:{stepSize:1}},x:{grid:{display:false}}} }
+    function makeGradient(ctx, c1, c2) {
+        var g = ctx.createLinearGradient(0, 0, 0, ctx.canvas.height);
+        g.addColorStop(0, c1); g.addColorStop(1, c2);
+        return g;
+    }
+
+    var commonBar = { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+        scales:{y:{beginAtZero:true,ticks:{stepSize:1},grid:{color:'#f3f4f6',drawBorder:false}},x:{grid:{display:false}}} };
+    var commonLine = { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+        scales:{y:{beginAtZero:true,ticks:{stepSize:1},grid:{color:'#f3f4f6',drawBorder:false}},x:{grid:{display:false}}} };
+    var commonDoughnut = { responsive:true, maintainAspectRatio:false, cutout:'65%', plugins:{legend:{display:false}} };
+
+    // Reservations
+    var resCtx = document.getElementById('monthlyResChart').getContext('2d');
+    var resGrad = makeGradient(resCtx, C.blue+'99', C.blue+'33');
+    new Chart(resCtx, {
+        type:'bar',
+        data:{ labels:{{ monthlyReservations|map(m => m.month)|json_encode|raw }},
+            datasets:[{ data:{{ monthlyReservations|map(m => m.count)|json_encode|raw }},
+                backgroundColor:resGrad, borderColor:C.blue, borderWidth:1.5, borderRadius:6, barPercentage:.6 }] },
+        options:commonBar
     });
 
-    // Monthly Registrations Line
-    new Chart(document.getElementById('monthlyRegChart'), {
-        type: 'line',
-        data: {
-            labels: {{ monthlyRegistrations|map(m => m.month)|json_encode|raw }},
-            datasets: [{
-                label: 'Inscriptions',
-                data: {{ monthlyRegistrations|map(m => m.count)|json_encode|raw }},
-                borderColor: colors.lavender,
-                backgroundColor: colors.lavender + '22',
-                borderWidth: 2.5,
-                fill: true,
-                tension: 0.35,
-                pointBackgroundColor: colors.lavender,
-                pointRadius: 4
-            }]
-        },
-        options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true,ticks:{stepSize:1}},x:{grid:{display:false}}} }
+    // Registrations
+    var regCtx = document.getElementById('monthlyRegChart').getContext('2d');
+    var regGrad = makeGradient(regCtx, C.lavender+'44', C.lavender+'05');
+    new Chart(regCtx, {
+        type:'line',
+        data:{ labels:{{ monthlyRegistrations|map(m => m.month)|json_encode|raw }},
+            datasets:[{ data:{{ monthlyRegistrations|map(m => m.count)|json_encode|raw }},
+                borderColor:C.lavender, backgroundColor:regGrad, borderWidth:2.5,
+                fill:true, tension:.4, pointBackgroundColor:'#fff', pointBorderColor:C.lavender,
+                pointBorderWidth:2, pointRadius:4, pointHoverRadius:6 }] },
+        options:commonLine
     });
 
-    // Users by Role Doughnut
+    // Revenue
+    var revCtx = document.getElementById('monthlyRevChart').getContext('2d');
+    var revGrad = makeGradient(revCtx, C.green+'88', C.greenLight+'22');
+    new Chart(revCtx, {
+        type:'bar',
+        data:{ labels:{{ monthlyRevenue|map(m => m.month)|json_encode|raw }},
+            datasets:[{ data:{{ monthlyRevenue|map(m => m.total)|json_encode|raw }},
+                backgroundColor:revGrad, borderColor:C.green, borderWidth:1.5, borderRadius:6, barPercentage:.6 }] },
+        options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+            scales:{y:{beginAtZero:true,grid:{color:'#f3f4f6',drawBorder:false}},x:{grid:{display:false}}} }
+    });
+
+    // Order status
+    new Chart(document.getElementById('orderStatusChart'), {
+        type:'doughnut',
+        data:{ labels:{{ ordersByStatus|map(o => o.status)|json_encode|raw }},
+            datasets:[{ data:{{ ordersByStatus|map(o => o.count)|json_encode|raw }},
+                backgroundColor:[C.amber, C.green, C.red, C.blue, C.gray],
+                borderWidth:2, borderColor:'#fff', hoverOffset:6 }] },
+        options:commonDoughnut
+    });
+
+    // Donations by type
+    {% if donationsByType|length > 0 %}
+    new Chart(document.getElementById('donTypeChart'), {
+        type:'doughnut',
+        data:{ labels:{{ donationsByType|map(d => d.typeName ?? 'Autre')|json_encode|raw }},
+            datasets:[{ data:{{ donationsByType|map(d => d.count)|json_encode|raw }},
+                backgroundColor:[C.lavender, C.blue, C.pink, C.green, C.amber, C.sky],
+                borderWidth:2, borderColor:'#fff', hoverOffset:6 }] },
+        options:commonDoughnut
+    });
+    {% endif %}
+
+    // Users by role
     new Chart(document.getElementById('usersRoleChart'), {
-        type: 'doughnut',
-        data: {
-            labels: {{ usersByRole|map(u => u.role|replace({'ROLE_': ''})|title)|json_encode|raw }},
-            datasets: [{ data: {{ usersByRole|map(u => u.count)|json_encode|raw }}, backgroundColor: [colors.red, colors.blue, colors.green, colors.amber], borderWidth: 0 }]
-        },
-        options: { responsive:true, maintainAspectRatio:false, cutout:'65%', plugins:{legend:{display:false}} }
+        type:'doughnut',
+        data:{ labels:{{ usersByRole|map(u => u.role|replace({'ROLE_': ''})|title)|json_encode|raw }},
+            datasets:[{ data:{{ usersByRole|map(u => u.count)|json_encode|raw }},
+                backgroundColor:[C.red, C.blue, C.green, C.amber],
+                borderWidth:2, borderColor:'#fff', hoverOffset:6 }] },
+        options:commonDoughnut
     });
 
-    // Reservations by Status Doughnut
+    // Reservations by status
     new Chart(document.getElementById('resStatusChart'), {
-        type: 'doughnut',
-        data: {
-            labels: {{ reservationsByStatus|map(r => r.status)|json_encode|raw }},
-            datasets: [{ data: {{ reservationsByStatus|map(r => r.count)|json_encode|raw }}, backgroundColor: [colors.green, colors.amber, colors.red, colors.gray], borderWidth: 0 }]
-        },
-        options: { responsive:true, maintainAspectRatio:false, cutout:'65%', plugins:{legend:{display:false}} }
+        type:'doughnut',
+        data:{ labels:{{ reservationsByStatus|map(r => r.status)|json_encode|raw }},
+            datasets:[{ data:{{ reservationsByStatus|map(r => r.count)|json_encode|raw }},
+                backgroundColor:[C.green, C.amber, C.red, C.gray],
+                borderWidth:2, borderColor:'#fff', hoverOffset:6 }] },
+        options:commonDoughnut
     });
 
-    // Monthly Events Bar
-    new Chart(document.getElementById('monthlyEvChart'), {
-        type: 'bar',
-        data: {
-            labels: {{ monthlyEvents|map(m => m.month)|json_encode|raw }},
-            datasets: [{
-                label: 'Événements',
-                data: {{ monthlyEvents|map(m => m.count)|json_encode|raw }},
-                backgroundColor: colors.lavender + '88',
-                borderColor: colors.lavender,
-                borderWidth: 1.5,
-                borderRadius: 6,
-                barPercentage: 0.6
-            }]
-        },
-        options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true,ticks:{stepSize:1}},x:{grid:{display:false}}} }
+    // Monthly events
+    var evCtx = document.getElementById('monthlyEvChart').getContext('2d');
+    var evGrad = makeGradient(evCtx, C.lavender+'88', C.lavender+'22');
+    new Chart(evCtx, {
+        type:'bar',
+        data:{ labels:{{ monthlyEvents|map(m => m.month)|json_encode|raw }},
+            datasets:[{ data:{{ monthlyEvents|map(m => m.count)|json_encode|raw }},
+                backgroundColor:evGrad, borderColor:C.lavender, borderWidth:1.5, borderRadius:6, barPercentage:.6 }] },
+        options:commonBar
+    });
+
+    // Forum
+    var fCtx = document.getElementById('forumChart').getContext('2d');
+    var fGrad = makeGradient(fCtx, C.amber+'44', C.amberLight+'08');
+    new Chart(fCtx, {
+        type:'line',
+        data:{ labels:{{ monthlyForumPosts|map(m => m.month)|json_encode|raw }},
+            datasets:[{ label:'Sujets', data:{{ monthlyForumPosts|map(m => m.count)|json_encode|raw }},
+                borderColor:C.amber, backgroundColor:fGrad, borderWidth:2.5, fill:true, tension:.4,
+                pointBackgroundColor:'#fff', pointBorderColor:C.amber, pointBorderWidth:2, pointRadius:4 }] },
+        options:commonLine
+    });
+
+    // Monthly donations
+    var dCtx = document.getElementById('monthlyDonChart').getContext('2d');
+    var dGrad = makeGradient(dCtx, C.pink+'44', C.pink+'08');
+    new Chart(dCtx, {
+        type:'line',
+        data:{ labels:{{ monthlyDonations|map(m => m.month)|json_encode|raw }},
+            datasets:[{ data:{{ monthlyDonations|map(m => m.count)|json_encode|raw }},
+                borderColor:'#db2777', backgroundColor:dGrad, borderWidth:2.5, fill:true, tension:.4,
+                pointBackgroundColor:'#fff', pointBorderColor:'#db2777', pointBorderWidth:2, pointRadius:4 }] },
+        options:commonLine
     });
 });
 </script>

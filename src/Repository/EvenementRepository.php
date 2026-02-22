@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\Evenement;
+use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\ORM\Tools\Pagination\Paginator;
@@ -83,6 +84,20 @@ class EvenementRepository extends ServiceEntityRepository
                 ->setParameter('prixMax', $filters['prix_max']);
         }
 
+        // Scope: for artists "mine" / "others", for participants "registered" / "others"
+        if (!empty($filters['owner_id'])) {
+            $qb->andWhere('o.id = :ownerId')->setParameter('ownerId', $filters['owner_id']);
+        }
+        if (isset($filters['exclude_owner_id']) && $filters['exclude_owner_id'] !== null) {
+            $qb->andWhere('(o.id IS NULL OR o.id != :excludeOwnerId)')->setParameter('excludeOwnerId', $filters['exclude_owner_id']);
+        }
+        if (!empty($filters['event_ids'])) {
+            $qb->andWhere('e.id IN (:eventIds)')->setParameter('eventIds', $filters['event_ids']);
+        }
+        if (!empty($filters['exclude_event_ids'])) {
+            $qb->andWhere('e.id NOT IN (:excludeEventIds)')->setParameter('excludeEventIds', $filters['exclude_event_ids']);
+        }
+
         $sortMap = [
             'date_asc' => ['e.dateDebut', 'ASC'],
             'date_desc' => ['e.dateDebut', 'DESC'],
@@ -115,6 +130,54 @@ class EvenementRepository extends ServiceEntityRepository
             ->setMaxResults($perPage);
 
         return new Paginator($query);
+    }
+
+    /**
+     * Count events matching the same filters as searchAndSort (no pagination).
+     */
+    public function countByFilters(array $filters): int
+    {
+        $qb = $this->createQueryBuilder('e')
+            ->select('COUNT(e.id)')
+            ->leftJoin('e.organisateur', 'o');
+
+        if (!empty($filters['q'])) {
+            $query = '%' . strtolower($filters['q']) . '%';
+            $qb->andWhere(
+                'LOWER(e.titre) LIKE :q OR LOWER(e.description) LIKE :q OR LOWER(e.lieu) LIKE :q OR LOWER(o.nom) LIKE :q OR LOWER(o.prenom) LIKE :q'
+            )
+                ->setParameter('q', $query);
+        }
+        if (!empty($filters['lieu'])) {
+            $lieu = '%' . strtolower($filters['lieu']) . '%';
+            $qb->andWhere('LOWER(e.lieu) LIKE :lieu')->setParameter('lieu', $lieu);
+        }
+        if (!empty($filters['date_start'])) {
+            $qb->andWhere('e.dateDebut >= :dateStart')->setParameter('dateStart', $filters['date_start']);
+        }
+        if (!empty($filters['date_end'])) {
+            $qb->andWhere('e.dateDebut <= :dateEnd')->setParameter('dateEnd', $filters['date_end']);
+        }
+        if ($filters['prix_min'] !== null) {
+            $qb->andWhere('COALESCE(e.prix, 0) >= :prixMin')->setParameter('prixMin', $filters['prix_min']);
+        }
+        if ($filters['prix_max'] !== null) {
+            $qb->andWhere('COALESCE(e.prix, 0) <= :prixMax')->setParameter('prixMax', $filters['prix_max']);
+        }
+        if (!empty($filters['owner_id'])) {
+            $qb->andWhere('o.id = :ownerId')->setParameter('ownerId', $filters['owner_id']);
+        }
+        if (isset($filters['exclude_owner_id']) && $filters['exclude_owner_id'] !== null) {
+            $qb->andWhere('(o.id IS NULL OR o.id != :excludeOwnerId)')->setParameter('excludeOwnerId', $filters['exclude_owner_id']);
+        }
+        if (!empty($filters['event_ids'])) {
+            $qb->andWhere('e.id IN (:eventIds)')->setParameter('eventIds', $filters['event_ids']);
+        }
+        if (!empty($filters['exclude_event_ids'])) {
+            $qb->andWhere('e.id NOT IN (:excludeEventIds)')->setParameter('excludeEventIds', $filters['exclude_event_ids']);
+        }
+
+        return (int) $qb->getQuery()->getSingleScalarResult();
     }
 
     public function getStatsOverview(): array
@@ -214,5 +277,61 @@ class EvenementRepository extends ServiceEntityRepository
         }
 
         return array_values($results);
+    }
+
+    public function getArtistStatsOverview(User $artist): array
+    {
+        $now = new \DateTime();
+        $events = $this->findBy(['organisateur' => $artist]);
+        $total = count($events);
+        $upcoming = 0;
+        $past = 0;
+        $full = 0;
+        $totalReservations = 0;
+
+        foreach ($events as $event) {
+            $reservationsCount = $event->getReservations()->count();
+            $totalReservations += $reservationsCount;
+
+            if ($event->getDateDebut() !== null && $event->getDateDebut() >= $now) {
+                $upcoming++;
+            } else {
+                $past++;
+            }
+
+            if (($event->getNbPlaces() ?? 0) > 0 && $reservationsCount >= $event->getNbPlaces()) {
+                $full++;
+            }
+        }
+
+        return [
+            'total' => $total,
+            'upcoming' => $upcoming,
+            'past' => $past,
+            'full' => $full,
+            'totalReservations' => $totalReservations,
+        ];
+    }
+
+    public function getTopEventsForArtist(User $artist, int $limit = 5): array
+    {
+        $events = $this->createQueryBuilder('e')
+            ->leftJoin('e.reservations', 'r')
+            ->addSelect('COUNT(r.id) as resCount')
+            ->andWhere('e.organisateur = :artist')
+            ->setParameter('artist', $artist)
+            ->groupBy('e.id')
+            ->orderBy('resCount', 'DESC')
+            ->addOrderBy('e.id', 'DESC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+
+        $result = [];
+        foreach ($events as $row) {
+            $result[] = ['event' => $row[0], 'reservations' => (int) ($row['resCount'] ?? 0)];
+        }
+
+        return $result;
     }
 }

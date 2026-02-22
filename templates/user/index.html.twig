@@ -6,7 +6,7 @@
 <div class="bo-page-header">
     <h1>
         <i class="fas fa-users"></i> Utilisateurs
-        <span class="badge bg-primary bg-opacity-75">{{ users|length }}{% if total_pages > 1 %} / page{% endif %}</span>
+        <span class="badge">{{ users|length }}{% if total_pages > 1 %} / page{% endif %}</span>
     </h1>
     <div class="bo-actions">
         <a href="{{ path('admin_stats') }}" class="btn btn-outline-primary"><i class="fas fa-chart-bar me-1"></i> Stats</a>
@@ -17,13 +17,11 @@
 <form method="get" class="bo-filter-bar">
     <div class="row g-2 align-items-end">
         <div class="col-12 col-md-4">
-            <label>Recherche</label>
-            <div class="position-relative">
-                <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Email, nom, prénom, rôle…">
-            </div>
+            <label><i class="fas fa-search me-1"></i>Recherche</label>
+            <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Email, nom, prénom, rôle…">
         </div>
         <div class="col-6 col-md-2">
-            <label>Trier par</label>
+            <label><i class="fas fa-sort me-1"></i>Trier par</label>
             <select name="sort" class="form-select">
                 <option value="id" {{ sort == 'id' ? 'selected' }}>ID</option>
                 <option value="nom" {{ sort == 'nom' ? 'selected' }}>Nom</option>
@@ -32,7 +30,7 @@
             </select>
         </div>
         <div class="col-6 col-md-2">
-            <label>Ordre</label>
+            <label><i class="fas fa-arrows-alt-v me-1"></i>Ordre</label>
             <select name="dir" class="form-select">
                 <option value="asc" {{ dir == 'asc' ? 'selected' }}>Croissant</option>
                 <option value="desc" {{ dir == 'desc' ? 'selected' }}>Décroissant</option>
@@ -40,8 +38,11 @@
         </div>
         <div class="col-12 col-md-4 d-flex gap-2">
             <input type="hidden" name="page" value="1">
-            <button class="btn btn-primary flex-grow-1"><i class="fas fa-search me-1"></i> Filtrer</button>
-            <a href="{{ path('app_user_index') }}" class="btn btn-outline-secondary">Réinitialiser</a>
+            <button type="submit" class="btn btn-primary flex-grow-1">
+                <span class="btn-label"><i class="fas fa-search me-1"></i> Filtrer</span>
+                <span class="btn-spinner" style="display:none;" aria-hidden="true"><i class="fas fa-spinner fa-spin me-1"></i></span>
+            </button>
+            <a href="{{ path('app_user_index') }}" class="btn btn-outline-secondary"><i class="fas fa-undo me-1"></i>Reset</a>
         </div>
     </div>
 </form>
@@ -63,35 +64,45 @@
                 <tbody>
                 {% for user in users %}
                     <tr>
-                        <td class="text-muted">{{ user.id }}</td>
+                        <td class="text-muted" style="font-size:.78rem;">{{ user.id }}</td>
                         <td>
-                            <div class="fw-semibold">{{ user.prenom }} {{ user.nom }}</div>
-                            {% if user.telephone %}
-                                <small class="text-muted">{{ user.telephone }}</small>
-                            {% endif %}
+                            <div style="display:flex; align-items:center; gap:.55rem;">
+                                <span style="width:32px; height:32px; border-radius:10px; background:linear-gradient(135deg,var(--ac-deep),var(--ac-blue)); color:#fff; display:inline-flex; align-items:center; justify-content:center; font-size:.68rem; font-weight:700; flex-shrink:0;">{{ user.prenom|first|upper }}{{ user.nom|first|upper }}</span>
+                                <div>
+                                    <div class="fw-semibold" style="color:var(--ac-deep); font-size:.88rem;">{{ user.prenom }} {{ user.nom }}</div>
+                                    {% if user.telephone %}
+                                        <small class="text-muted" style="font-size:.72rem;">{{ user.telephone }}</small>
+                                    {% endif %}
+                                </div>
+                            </div>
                         </td>
-                        <td>{{ user.email }}</td>
+                        <td style="font-size:.84rem;">{{ user.email }}</td>
                         <td>
                             {% for role in user.roles %}
                                 {% if role != 'ROLE_USER' %}
-                                    {% set color = role == 'ROLE_ADMIN' ? 'danger' : (role == 'ROLE_ARTISTE' ? 'info' : 'secondary') %}
-                                    <span class="badge bg-{{ color }} bg-opacity-75">{{ role|replace({'ROLE_': ''}) }}</span>
+                                    {% if role == 'ROLE_ADMIN' %}
+                                        <span class="badge bg-danger">Admin</span>
+                                    {% elseif role == 'ROLE_ARTISTE' %}
+                                        <span class="badge bg-info">Artiste</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ role|replace({'ROLE_': ''}) }}</span>
+                                    {% endif %}
                                 {% endif %}
                             {% endfor %}
                         </td>
                         <td>
                             {% if user.status == 'APPROVED' %}
-                                <span class="badge bg-success bg-opacity-75">Approuvé</span>
+                                <span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>Approuvé</span>
                             {% elseif user.status == 'EMAIL_PENDING' %}
-                                <span class="badge bg-secondary bg-opacity-75">Email non vérifié</span>
+                                <span class="badge bg-secondary"><i class="fas fa-envelope me-1"></i>Email non vérifié</span>
                             {% elseif user.status == 'EMAIL_VERIFIED' %}
-                                <span class="badge bg-warning text-dark">En attente admin</span>
+                                <span class="badge bg-warning"><i class="fas fa-clock me-1"></i>En attente admin</span>
                             {% elseif user.status == 'REJECTED' %}
-                                <span class="badge bg-danger bg-opacity-75">Refusé</span>
+                                <span class="badge bg-danger"><i class="fas fa-times-circle me-1"></i>Refusé</span>
                             {% elseif user.status == 'SUSPENDED' %}
-                                <span class="badge bg-dark bg-opacity-75">Suspendu</span>
+                                <span class="badge bg-dark"><i class="fas fa-ban me-1"></i>Suspendu</span>
                             {% else %}
-                                <span class="badge bg-secondary bg-opacity-75">{{ user.status }}</span>
+                                <span class="badge bg-secondary">{{ user.status }}</span>
                             {% endif %}
                         </td>
                         <td class="text-end">
@@ -113,7 +124,7 @@
                                 {% if user.status == 'APPROVED' %}
                                     <form method="post" action="{{ path('app_user_suspend', {id: user.id}) }}" class="d-inline">
                                         <input type="hidden" name="_token" value="{{ csrf_token('suspend' ~ user.id) }}">
-                                        <button class="btn-action" title="Suspendre" style="color:#6b7280;"><i class="fas fa-ban"></i></button>
+                                        <button class="btn-action" title="Suspendre" style="background:rgba(107,114,128,.08); color:#6b7280; width:32px; height:32px; border-radius:10px; border:none; display:inline-flex; align-items:center; justify-content:center; transition:all .2s;" onmouseover="this.style.background='linear-gradient(135deg,#4b5563,#6b7280)';this.style.color='#fff'" onmouseout="this.style.background='rgba(107,114,128,.08)';this.style.color='#6b7280'"><i class="fas fa-ban"></i></button>
                                     </form>
                                 {% endif %}
                             </div>

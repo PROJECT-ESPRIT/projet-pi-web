@@ -4,6 +4,7 @@ namespace App\Form;
 
 use App\Entity\Evenement;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\DateTimeType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\Extension\Core\Type\MoneyType;
@@ -67,7 +68,31 @@ class EvenementType extends AbstractType
                 'currency' => 'TND',
                 'attr' => ['class' => 'form-control']
             ])
-            // Image upload will be handled later if needed
+            ->add('image', TextType::class, [
+                'label' => 'URL de l\'image',
+                'required' => false,
+                'attr' => ['class' => 'form-control', 'placeholder' => 'https://...']
+            ])
+            ->add('layoutType', ChoiceType::class, [
+                'label' => 'Type de plan',
+                'required' => false,
+                'placeholder' => 'Aucun',
+                'choices' => [
+                    'Théâtre' => 'theatre',
+                    'Banquet' => 'banquet',
+                ],
+                'attr' => ['class' => 'form-select']
+            ])
+            ->add('layoutRows', IntegerType::class, [
+                'label' => 'Nombre de rangées / tables',
+                'required' => false,
+                'attr' => ['class' => 'form-control', 'min' => 0]
+            ])
+            ->add('layoutCols', IntegerType::class, [
+                'label' => 'Nombre de sièges / chaises',
+                'required' => false,
+                'attr' => ['class' => 'form-control', 'min' => 0]
+            ])
         ;
     }
 

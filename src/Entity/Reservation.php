@@ -41,6 +41,10 @@ class Reservation
     #[ORM\Column(nullable: true)]
     private ?int $amountPaid = null;
 
+    /** When the ticket was scanned at entrance (null = not scanned). */
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $scannedAt = null;
+
     public function __construct()
     {
         $this->dateReservation = new \DateTimeImmutable();
@@ -130,6 +134,17 @@ class Reservation
     public function setAmountPaid(?int $amountPaid): static
     {
         $this->amountPaid = $amountPaid;
+        return $this;
+    }
+
+    public function getScannedAt(): ?\DateTimeImmutable
+    {
+        return $this->scannedAt;
+    }
+
+    public function setScannedAt(?\DateTimeImmutable $scannedAt): static
+    {
+        $this->scannedAt = $scannedAt;
         return $this;
     }
 }

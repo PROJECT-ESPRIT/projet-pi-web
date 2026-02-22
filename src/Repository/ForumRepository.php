@@ -55,28 +55,29 @@ class ForumRepository extends ServiceEntityRepository
         $qb->orderBy($sortExpr, $direction);
     }
 
-    //    /**
-    //     * @return Forum[] Returns an array of Forum objects
-    //     */
-    //    public function findByExampleField($value): array
-    //    {
-    //        return $this->createQueryBuilder('f')
-    //            ->andWhere('f.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->orderBy('f.id', 'ASC')
-    //            ->setMaxResults(10)
-    //            ->getQuery()
-    //            ->getResult()
-    //        ;
-    //    }
+    public function getMonthlyPosts(int $months = 6): array
+    {
+        $conn = $this->getEntityManager()->getConnection();
+        $rows = $conn->executeQuery("
+            SELECT DATE_FORMAT(date_creation, '%Y-%m') AS m, COUNT(*) AS c
+            FROM forum
+            WHERE date_creation >= DATE_SUB(CURRENT_DATE, INTERVAL :months MONTH)
+            GROUP BY m ORDER BY m
+        ", ['months' => $months])->fetchAllAssociative();
 
-    //    public function findOneBySomeField($value): ?Forum
-    //    {
-    //        return $this->createQueryBuilder('f')
-    //            ->andWhere('f.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->getQuery()
-    //            ->getOneOrNullResult()
-    //        ;
-    //    }
+        $data = [];
+        $period = new \DateTimeImmutable("-{$months} months");
+        for ($i = 0; $i < $months; $i++) {
+            $d = $period->modify("+{$i} months");
+            $key = $d->format('Y-m');
+            $data[$key] = ['month' => $d->format('M Y'), 'count' => 0];
+        }
+        foreach ($rows as $r) {
+            if (isset($data[$r['m']])) {
+                $data[$r['m']]['count'] = (int) $r['c'];
+            }
+        }
+
+        return array_values($data);
+    }
 }

@@ -1,5 +1,7 @@
 twig:
     file_name_pattern: '*.twig'
+    globals:
+        stripe_publishable_key: '%stripe_publishable_key%'
 
 when@test:
     twig:

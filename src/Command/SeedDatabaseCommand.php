@@ -77,7 +77,7 @@ class SeedDatabaseCommand extends Command
 
         $io->success('Database seeded successfully!');
         $io->table(['Entity', 'Count'], [
-            ['Users', 1 + count($artists) + count($participants)],
+            ['Users', 1 + count($artists) + count($participants) + 2],
             ['TypeDon', count($types)],
             ['Evenements', count($events)],
             ['Produits', count($produits)],
@@ -116,10 +116,11 @@ class SeedDatabaseCommand extends Command
 
     private function createUsers(SymfonyStyle $io): array
     {
-        $admin = $this->makeUser('admin@artconnect.tn', 'Admin', 'Super', ['ROLE_ADMIN']);
-        $io->text(' + admin@artconnect.tn (ADMIN)');
+        $admin = $this->makeUser('admin@art.com', 'Admin', 'Super', ['ROLE_ADMIN']);
+        $io->text(' + admin@art.com (ADMIN)');
 
         $artistData = [
+            ['youssefjobrane98@gmail.com', 'Jobrane', 'Youssef'],
             ['leila.art@mail.tn', 'Ben Salah', 'Leila'],
             ['karim.design@mail.tn', 'Trabelsi', 'Karim'],
             ['nour.music@mail.tn', 'Gharbi', 'Nour'],
@@ -166,6 +167,7 @@ class SeedDatabaseCommand extends Command
         $user->setStatus($status);
         $user->setTelephone('+216 ' . random_int(20, 99) . ' ' . random_int(100, 999) . ' ' . random_int(100, 999));
         $user->setPassword($this->hasher->hashPassword($user, 'password123'));
+        $user->setProfileImageUrl('https://i.pravatar.cc/200?u=' . urlencode($email));
         $this->em->persist($user);
 
         return $user;
@@ -208,17 +210,27 @@ class SeedDatabaseCommand extends Command
             'https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=800',
             'https://images.unsplash.com/photo-1554048612-b6a482bc67e5?w=800',
             'https://images.unsplash.com/photo-1508700929628-666bc8bd84ea?w=800',
+            'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800',
+            'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=800',
+            'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=800',
+            'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=800',
         ];
 
+        $youssefArtist = $artists[0];
+
         $data = [
-            ['Atelier Aquarelle pour enfants', 'Découvrez les techniques de base de l\'aquarelle dans un cadre ludique et bienveillant. Adapté aux enfants de 5 à 12 ans, cet atelier est encadré par des artistes professionnels.', 'Espace Culturel El Menzah, Tunis', 25, 0, 5, 12, 15.00],
-            ['Initiation à la Poterie', 'Apprenez à modeler l\'argile et créez vos premières œuvres en poterie. Un moment de détente et de créativité pour petits et grands.', 'Maison des Arts, La Marsa', 20, 0, 6, 14, 20.00],
-            ['Concert Inclusif : Musique pour Tous', 'Un concert interactif où les enfants découvrent les instruments de musique et participent à la création musicale collective.', 'Théâtre Municipal de Tunis', 100, 0, 3, null, null],
+            ['Atelier Aquarelle pour enfants', 'Découvrez les techniques de base de l\'aquarelle dans un cadre ludique et bienveillant. Adapté aux enfants de 5 à 12 ans.', 'Espace Culturel El Menzah, Tunis', 25, 0, 5, 12, 15.00],
+            ['Initiation à la Poterie', 'Apprenez à modeler l\'argile et créez vos premières œuvres en poterie. Un moment de détente et de créativité.', 'Maison des Arts, La Marsa', 20, 0, 6, 14, 20.00],
+            ['Concert Inclusif : Musique pour Tous', 'Un concert interactif où les enfants découvrent les instruments et participent à la création musicale collective.', 'Théâtre Municipal de Tunis', 100, 0, 3, null, null],
             ['Atelier Dessin Manga', 'Plongez dans l\'univers du manga ! Les enfants apprendront les bases du dessin manga avec un illustrateur professionnel.', 'Centre Culturel Hammam-Lif', 18, 0, 8, 16, 12.00],
-            ['Peinture Murale Collaborative', 'Un projet artistique collectif : les enfants créent ensemble une fresque murale sur le thème de la nature et de l\'inclusion.', 'École Primaire Ariana, Ariana', 30, 0, 6, 15, null],
-            ['Spectacle de Marionnettes', 'Un spectacle coloré de marionnettes suivi d\'un atelier où les enfants fabriquent leurs propres marionnettes en tissu.', 'Bibliothèque Nationale, Tunis', 40, 0, 4, 10, 8.00],
-            ['Atelier Photo Créative', 'Les enfants explorent la photographie artistique avec des appareils adaptés. Thème : mon quartier vu par mes yeux.', 'Cité de la Culture, Tunis', 15, 0, 10, 16, 25.00],
-            ['Danse Inclusive : Bouge avec moi', 'Un atelier de danse où chaque enfant trouve sa propre expression corporelle. Accessible à tous, y compris les enfants à mobilité réduite.', 'Salle Omnisports Mégrine', 35, 0, 4, 14, null],
+            ['Peinture Murale Collaborative', 'Projet artistique collectif : les enfants créent une fresque murale sur le thème de la nature et de l\'inclusion.', 'École Primaire Ariana, Ariana', 30, 0, 6, 15, 18.00],
+            ['Spectacle de Marionnettes', 'Un spectacle coloré de marionnettes suivi d\'un atelier où les enfants fabriquent leurs propres marionnettes.', 'Bibliothèque Nationale, Tunis', 40, 0, 4, 10, 8.00],
+            ['Atelier Photo Créative', 'Les enfants explorent la photographie artistique. Thème : mon quartier vu par mes yeux.', 'Cité de la Culture, Tunis', 15, 0, 10, 16, 25.00],
+            ['Danse Inclusive : Bouge avec moi', 'Atelier de danse où chaque enfant trouve sa propre expression corporelle. Accessible à tous.', 'Salle Omnisports Mégrine', 35, 0, 4, 14, 10.00],
+            ['Stage Théâtre Ados (payant)', 'Stage intensif de théâtre pour adolescents : improvisation, texte et mise en scène. Encadrement professionnel.', 'Théâtre El Hamra, Tunis', 20, 0, 12, 17, 45.00],
+            ['Concert Jazz & World (payant)', 'Soirée jazz et musiques du monde avec musiciens invités. Bar et restauration sur place.', 'Café des Nuits, La Marsa', 60, 0, 16, null, 35.00],
+            ['Atelier Calligraphie Arabe (payant)', 'Initiation à la calligraphie arabe : outils, gestes et réalisation d\'une œuvre encadrée.', 'Institut des Beaux-Arts, Tunis', 12, 0, 14, null, 40.00],
+            ['Festival Street Art (payant)', 'Week-end street art : démonstrations live, ateliers bombes et pochoirs, exposition. Prévoir tenue adaptée.', 'Friche industrielle, Ben Arous', 80, 0, 10, null, 22.00],
         ];
 
         $events = [];
@@ -236,8 +248,8 @@ class SeedDatabaseCommand extends Command
             $start->setTime(random_int(9, 15), 0);
             $ev->setDateDebut($start);
             $ev->setDateFin((clone $start)->modify('+2 hours'));
-            $ev->setOrganisateur($artists[$i % count($artists)]);
-            $ev->setImage($images[$i] ?? null);
+            $ev->setOrganisateur(($i < 6 || $i >= 8) ? $youssefArtist : $artists[$i % count($artists)]);
+            $ev->setImage($images[$i % count($images)]);
 
             if ($i === 2) {
                 $ev->setLayoutType('theatre');

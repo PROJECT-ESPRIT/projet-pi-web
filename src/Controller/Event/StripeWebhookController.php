@@ -2,7 +2,9 @@
 
 namespace App\Controller\Event;
 
+use App\Entity\Evenement;
 use App\Entity\Reservation;
+use App\Entity\User;
 use App\Repository\ReservationRepository;
 use App\Service\EmailService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -82,52 +84,91 @@ class StripeWebhookController extends AbstractController
 
     private function handleCheckoutSessionCompleted(\Stripe\Checkout\Session $session): void
     {
-        $reservationId = $session->metadata->reservation_id ?? null;
+        $metadata = $session->metadata ?? null;
+        $reservationId = $metadata->reservation_id ?? null;
+        $eventId = $metadata->event_id ?? null;
+        $userId = $metadata->user_id ?? null;
+        $seatLabel = trim((string) ($metadata->seat_label ?? ''));
 
         $this->logger->info('Stripe webhook: checkout.session.completed', [
             'session_id' => $session->id ?? null,
             'reservation_id_metadata' => $reservationId,
+            'event_id' => $eventId,
+            'user_id' => $userId,
             'amount_total' => $session->amount_total ?? null,
         ]);
 
-        if (!$reservationId) {
-            $this->logger->warning('Stripe webhook: no reservation_id in session metadata');
+        $reservation = null;
+
+        if ($reservationId) {
+            $reservation = $this->reservationRepository->find((int) $reservationId);
+            if ($reservation instanceof Reservation && $reservation->getStatus() === Reservation::STATUS_PENDING && $reservation->getStripeCheckoutSessionId() === null) {
+                $amountTotal = $session->amount_total ?? 0;
+                $reservation->setStatus(Reservation::STATUS_CONFIRMED);
+                $reservation->setStripeCheckoutSessionId($session->id);
+                $reservation->setAmountPaid((int) $amountTotal);
+                $this->entityManager->flush();
+                $this->logger->info('Stripe webhook: reservation confirmed (legacy)', ['reservation_id' => $reservationId]);
+            } else {
+                $reservation = null;
+            }
+        }
+
+        if (!$reservation && $eventId && $userId) {
+            $evenement = $this->entityManager->find(Evenement::class, (int) $eventId);
+            $user = $this->entityManager->find(User::class, (int) $userId);
+            if (!$evenement instanceof Evenement || !$user instanceof User) {
+                $this->logger->warning('Stripe webhook: event or user not found', ['event_id' => $eventId, 'user_id' => $userId]);
+                return;
+            }
+            $existing = $this->reservationRepository->findOneBy(['evenement' => $evenement, 'participant' => $user]);
+            if ($existing) {
+                $this->logger->info('Stripe webhook: reservation already exists for event+user', ['event_id' => $eventId, 'user_id' => $userId]);
+                return;
+            }
+            if ($evenement->getLayoutType() && $seatLabel !== '') {
+                $seatTaken = $this->reservationRepository->findOneBy(['evenement' => $evenement, 'seatLabel' => $seatLabel]);
+                if ($seatTaken) {
+                    $this->logger->warning('Stripe webhook: seat already taken', ['event_id' => $eventId, 'seat' => $seatLabel]);
+                    return;
+                }
+            }
+            $reservation = new Reservation();
+            $reservation->setEvenement($evenement);
+            $reservation->setParticipant($user);
+            $reservation->setStatus(Reservation::STATUS_CONFIRMED);
+            $reservation->setStripeCheckoutSessionId($session->id);
+            $reservation->setAmountPaid((int) ($session->amount_total ?? 0));
+            if ($seatLabel !== '') {
+                $reservation->setSeatLabel($seatLabel);
+            }
+            $this->entityManager->persist($reservation);
+            $this->entityManager->flush();
+            $this->logger->info('Stripe webhook: reservation created', ['reservation_id' => $reservation->getId(), 'event_id' => $eventId]);
+        }
+
+        if (!$reservation) {
+            if (!$reservationId && !$eventId) {
+                $this->logger->warning('Stripe webhook: no reservation_id or event_id in session metadata');
+            }
             return;
         }
 
-        $reservation = $this->reservationRepository->find((int) $reservationId);
-        if (!$reservation instanceof Reservation) {
-            $this->logger->warning('Stripe webhook: reservation not found', ['reservation_id' => $reservationId]);
-            return;
-        }
-
-        if ($reservation->getStatus() !== Reservation::STATUS_PENDING) {
-            $this->logger->info('Stripe webhook: reservation already processed (status)', [
-                'reservation_id' => $reservationId,
-                'current_status' => $reservation->getStatus(),
+        try {
+            $this->emailService->sendReservationConfirmationDetails($reservation);
+        } catch (\Throwable $e) {
+            $this->logger->error('Stripe webhook: failed to send confirmation email', [
+                'reservation_id' => $reservation->getId(),
+                'error' => $e->getMessage(),
             ]);
-            return;
         }
-        if ($reservation->getStripeCheckoutSessionId() !== null) {
-            $this->logger->info('Stripe webhook: reservation already linked to a session (idempotency)', [
-                'reservation_id' => $reservationId,
+        try {
+            $this->emailService->sendReservationNotificationToOwner($reservation);
+        } catch (\Throwable $e) {
+            $this->logger->error('Stripe webhook: failed to send notification email to owner', [
+                'reservation_id' => $reservation->getId(),
+                'error' => $e->getMessage(),
             ]);
-            return;
         }
-
-        $amountTotal = $session->amount_total ?? 0;
-
-        $reservation->setStatus(Reservation::STATUS_CONFIRMED);
-        $reservation->setStripeCheckoutSessionId($session->id);
-        $reservation->setAmountPaid((int) $amountTotal);
-
-        $this->entityManager->flush();
-
-        $this->logger->info('Stripe webhook: reservation confirmed and email sent', [
-            'reservation_id' => $reservationId,
-            'session_id' => $session->id,
-        ]);
-
-        $this->emailService->sendReservationConfirmationDetails($reservation);
     }
 }

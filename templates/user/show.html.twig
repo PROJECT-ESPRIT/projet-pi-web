@@ -282,7 +282,7 @@
             <h5><i class="fas fa-cog"></i> Gestion</h5>
             <div class="d-grid gap-2">
                 <a href="{{ path('app_user_edit', {id: user.id}) }}" class="btn btn-outline-warning"><i class="fas fa-pen me-1"></i> Modifier</a>
-                <form method="post" action="{{ path('app_user_delete', {id: user.id}) }}" onsubmit="return confirm('Supprimer cet utilisateur ?')">
+                <form method="post" action="{{ path('app_user_delete', {id: user.id}) }}" data-confirm-title="Supprimer cet utilisateur" data-confirm="Cette action est irréversible. Voulez-vous continuer ?">
                     <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ user.id) }}">
                     <button class="btn btn-outline-danger w-100"><i class="fas fa-trash me-1"></i> Supprimer</button>
                 </form>

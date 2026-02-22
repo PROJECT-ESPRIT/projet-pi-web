@@ -94,6 +94,15 @@ class Evenement
     #[ORM\Column]
     private ?\DateTimeImmutable $createdAt = null;
 
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
+    private bool $annule = false;
+
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    private ?string $motifAnnulation = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $dateAnnulation = null;
+
     #[ORM\ManyToOne(inversedBy: 'evenements')]
     #[ORM\JoinColumn(nullable: false)]
     private ?User $organisateur = null;
@@ -269,7 +278,7 @@ class Evenement
     {
         $seats = [];
         foreach ($this->reservations as $r) {
-            if ($r->getSeatLabel()) {
+            if ($r->getSeatLabel() && $r->getStatus() === Reservation::STATUS_CONFIRMED) {
                 $seats[$r->getSeatLabel()] = $r->getParticipant()->getPrenom() . ' ' . $r->getParticipant()->getNom()[0] . '.';
             }
         }
@@ -285,6 +294,39 @@ class Evenement
     {
         $this->createdAt = $createdAt;
 
+        return $this;
+    }
+
+    public function isAnnule(): bool
+    {
+        return $this->annule;
+    }
+
+    public function setAnnule(bool $annule): static
+    {
+        $this->annule = $annule;
+        return $this;
+    }
+
+    public function getMotifAnnulation(): ?string
+    {
+        return $this->motifAnnulation;
+    }
+
+    public function setMotifAnnulation(?string $motifAnnulation): static
+    {
+        $this->motifAnnulation = $motifAnnulation;
+        return $this;
+    }
+
+    public function getDateAnnulation(): ?\DateTimeImmutable
+    {
+        return $this->dateAnnulation;
+    }
+
+    public function setDateAnnulation(?\DateTimeImmutable $dateAnnulation): static
+    {
+        $this->dateAnnulation = $dateAnnulation;
         return $this;
     }
 

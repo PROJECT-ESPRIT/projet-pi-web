@@ -5,112 +5,396 @@
 {% block stylesheets %}
     {{ parent() }}
     <style>
-        /* ===== HERO CAROUSEL ===== */
-        .hero-carousel .carousel-item {
-            min-height: 420px;
+        /* ===== HERO EVENT SLIDER ===== */
+        .event-slider {
             position: relative;
+            border-radius: 24px;
             overflow: hidden;
+            box-shadow: 0 16px 48px rgba(30,15,117,0.18);
         }
-        .hero-carousel .carousel-item::before {
+        .event-slider .carousel-item { min-height: 400px; position: relative; }
+        .event-slider .slide-bg {
+            position: absolute; inset: 0;
+            background-size: cover; background-position: center;
+        }
+        .event-slider .slide-bg::after {
             content: '';
-            position: absolute;
-            inset: 0;
-            z-index: 1;
+            position: absolute; inset: 0;
+            background: linear-gradient(to right, rgba(30,15,117,0.92) 0%, rgba(30,15,117,0.7) 40%, rgba(55,133,216,0.45) 100%);
         }
-        .hero-slide-1::before { background: linear-gradient(135deg, rgba(30,15,117,0.92) 0%, rgba(55,133,216,0.8) 100%); }
-        .hero-slide-2::before { background: linear-gradient(135deg, rgba(28,29,171,0.9) 0%, rgba(191,140,225,0.8) 100%); }
-        .hero-slide-3::before { background: linear-gradient(135deg, rgba(55,133,216,0.9) 0%, rgba(30,15,117,0.85) 100%); }
-
-        .hero-carousel .carousel-caption {
-            position: relative;
-            z-index: 2;
-            left: 0; right: 0; bottom: 0;
-            padding: 4rem 2rem;
-            text-align: left;
-            max-width: 720px;
+        .slide-content {
+            position: relative; z-index: 2;
+            padding: 3rem 2.5rem;
+            display: flex; flex-direction: column; justify-content: center;
+            min-height: 400px; color: #fff;
         }
-        .hero-carousel .carousel-caption h2 {
+        .slide-tag {
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.25);
+            border-radius: 999px;
+            padding: 0.3rem 0.9rem;
+            font-size: 0.78rem; font-weight: 600;
+            width: fit-content; margin-bottom: 0.8rem;
+            backdrop-filter: blur(4px);
+        }
+        .slide-content h2 {
             font-family: 'Sora', sans-serif;
-            font-weight: 700;
-            font-size: 2.4rem;
-            line-height: 1.15;
-            margin-bottom: 1rem;
+            font-weight: 800; font-size: 2.2rem;
+            line-height: 1.15; margin-bottom: 0.6rem;
+            text-shadow: 0 2px 12px rgba(0,0,0,0.2);
         }
-        .hero-carousel .carousel-caption p {
-            font-size: 1.1rem;
-            color: rgba(255,255,255,0.88);
-            max-width: 560px;
+        .slide-content p {
+            font-size: 1rem; color: rgba(255,255,255,0.88);
+            max-width: 500px; margin-bottom: 1.2rem;
         }
-        .hero-carousel .carousel-indicators [data-bs-target] {
-            width: 10px; height: 10px;
-            border-radius: 50%;
-            border: none;
-            opacity: 0.5;
+        .slide-meta {
+            display: flex; gap: 1.2rem; flex-wrap: wrap;
+            margin-bottom: 1.2rem; font-size: 0.88rem;
         }
-        .hero-carousel .carousel-indicators .active { opacity: 1; }
-        .hero-carousel .btn-hero {
-            border-radius: 12px;
-            padding: 0.65rem 1.6rem;
-            font-weight: 600;
-            font-size: 0.95rem;
+        .slide-meta span {
+            display: flex; align-items: center; gap: 0.35rem;
+            background: rgba(255,255,255,0.12);
+            padding: 0.3rem 0.7rem; border-radius: 8px;
+            backdrop-filter: blur(2px);
         }
+        .slide-actions { display: flex; gap: 0.6rem; }
+        .btn-slide {
+            border-radius: 14px; padding: 0.6rem 1.5rem;
+            font-weight: 700; font-size: 0.9rem;
+            transition: all 0.25s;
+        }
+        .btn-slide:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.2); }
+        .event-slider .carousel-indicators { bottom: 16px; }
+        .event-slider .carousel-indicators [data-bs-target] {
+            width: 32px; height: 4px;
+            border-radius: 4px; border: none;
+            opacity: 0.4; transition: all 0.3s;
+        }
+        .event-slider .carousel-indicators .active { opacity: 1; width: 48px; }
+        .event-slider .carousel-control-prev,
+        .event-slider .carousel-control-next {
+            width: 48px; height: 48px;
+            top: 50%; transform: translateY(-50%);
+            background: rgba(255,255,255,0.15);
+            border-radius: 14px; margin: 0 12px;
+            backdrop-filter: blur(4px);
+            opacity: 0; transition: opacity 0.3s;
+            bottom: auto;
+        }
+        .event-slider:hover .carousel-control-prev,
+        .event-slider:hover .carousel-control-next { opacity: 1; }
 
         @media (max-width: 768px) {
-            .hero-carousel .carousel-item { min-height: 340px; }
-            .hero-carousel .carousel-caption { padding: 2.5rem 1.2rem; }
-            .hero-carousel .carousel-caption h2 { font-size: 1.6rem; }
+            .event-slider .carousel-item { min-height: 340px; }
+            .slide-content { padding: 2rem 1.5rem; min-height: 340px; }
+            .slide-content h2 { font-size: 1.5rem; }
         }
 
         /* ===== SECTION HEADERS ===== */
         .section-head {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            display: flex; justify-content: space-between; align-items: center;
             margin-bottom: 1.4rem;
         }
         .section-head h2 {
             font-family: 'Sora', sans-serif;
-            font-weight: 700;
-            font-size: 1.5rem;
-            color: #1E0F75;
-            margin: 0;
+            font-weight: 700; font-size: 1.5rem;
+            color: #1E0F75; margin: 0;
         }
         .section-head .see-all {
-            font-weight: 600;
-            font-size: 0.9rem;
-            color: #3785D8;
+            font-weight: 600; font-size: 0.9rem; color: #3785D8;
             text-decoration: none;
             display: flex; align-items: center; gap: 0.3rem;
             transition: color 0.2s;
         }
         .section-head .see-all:hover { color: #1E0F75; }
 
-        /* ===== EVENT CARDS ===== */
-        .ev-card {
+        /* ===== FILTER BAR ===== */
+        .filter-bar {
             background: #fff;
             border-radius: 16px;
-            overflow: hidden;
-            box-shadow: 0 6px 20px rgba(30,15,117,0.08);
-            border: 1px solid rgba(30,15,117,0.06);
-            transition: transform 0.2s, box-shadow 0.2s;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
+            padding: 0.8rem 1rem;
+            box-shadow: 0 4px 16px rgba(30,15,117,0.06);
+            border: 1px solid rgba(30,15,117,0.08);
+            margin-bottom: 1.5rem;
+            display: flex; align-items: center; gap: 0.6rem;
+            flex-wrap: wrap;
         }
-        .ev-card:hover { transform: translateY(-4px); box-shadow: 0 12px 28px rgba(30,15,117,0.14); }
-        .ev-card-img {
-            height: 170px;
+        .filter-tabs {
+            display: flex; gap: 0.3rem;
+            background: #f4f2fc;
+            border-radius: 12px;
+            padding: 0.25rem;
+        }
+        .filter-tab {
+            padding: 0.45rem 1rem;
+            border-radius: 10px;
+            border: none;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #666;
+            background: transparent;
+            cursor: pointer;
+            transition: all 0.25s;
+            white-space: nowrap;
+        }
+        .filter-tab.active {
+            background: linear-gradient(135deg, #1e0f75 0%, #3785d8 55%, #bf8ce1 100%);
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(30,15,117,0.25);
+        }
+        .filter-tab:not(.active):hover {
+            background: rgba(30,15,117,0.06);
+            color: #1E0F75;
+        }
+        .filter-search {
+            flex: 1; min-width: 180px;
+            position: relative;
+        }
+        .filter-search input {
+            width: 100%; border: 1px solid rgba(30,15,117,0.1);
+            border-radius: 10px; padding: 0.5rem 0.8rem 0.5rem 2.2rem;
+            font-size: 0.85rem; background: #faf9fe;
+            transition: all 0.25s;
+        }
+        .filter-search input:focus {
+            outline: none;
+            border-color: #3785D8;
+            box-shadow: 0 0 0 3px rgba(55,133,216,0.1);
+            background: #fff;
+        }
+        .filter-search i {
+            position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%);
+            color: #999; font-size: 0.8rem;
+        }
+        .filter-sort {
+            border: 1px solid rgba(30,15,117,0.1);
+            border-radius: 10px; padding: 0.5rem 0.75rem;
+            font-size: 0.82rem; background: #faf9fe;
+            cursor: pointer; color: #555;
+        }
+        .filter-sort:focus { outline: none; border-color: #3785D8; }
+        .filter-toggle-adv {
+            width: 38px; height: 38px;
+            border-radius: 10px; border: 1px solid rgba(30,15,117,0.1);
+            background: #faf9fe; color: #666;
             display: flex; align-items: center; justify-content: center;
-            font-size: 2.5rem;
+            cursor: pointer; transition: all 0.25s; flex-shrink: 0;
         }
-        .ev-card-img img { width: 100%; height: 100%; object-fit: cover; }
-        .ev-card-body { padding: 1rem 1.1rem; flex: 1; display: flex; flex-direction: column; }
-        .ev-card-body h3 { font-size: 1rem; font-weight: 700; color: #1E0F75; margin-bottom: 0.3rem; }
-        .ev-card-meta { font-size: 0.8rem; color: #666; margin-bottom: 0.6rem; }
-        .ev-card-meta i { color: var(--ac-mid); width: 16px; text-align: center; margin-right: 0.2rem; }
-        .ev-card-price {
+        .filter-toggle-adv:hover, .filter-toggle-adv.active {
+            background: linear-gradient(135deg, #1e0f75 0%, #3785d8 55%, #bf8ce1 100%);
+            color: #fff; border-color: transparent;
+        }
+        .filter-advanced {
+            background: #fff;
+            border-radius: 0 0 16px 16px;
+            padding: 0.8rem 1rem;
+            box-shadow: 0 4px 16px rgba(30,15,117,0.06);
+            border: 1px solid rgba(30,15,117,0.08);
+            border-top: none;
+            margin-top: -1.5rem; margin-bottom: 1.5rem;
+            animation: slideDown 0.3s ease;
+        }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+        .filter-adv-row {
+            display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: end;
+        }
+        .filter-adv-group { flex: 1; min-width: 140px; }
+        .filter-adv-group label {
+            display: block; font-size: 0.72rem; font-weight: 700;
+            color: #666; margin-bottom: 0.2rem;
+        }
+        .filter-adv-group input {
+            width: 100%; border: 1px solid rgba(30,15,117,0.1);
+            border-radius: 8px; padding: 0.4rem 0.6rem;
+            font-size: 0.82rem; background: #faf9fe;
+        }
+        .filter-adv-group input:focus {
+            outline: none; border-color: #3785D8;
+            box-shadow: 0 0 0 2px rgba(55,133,216,0.1);
+        }
+        .filter-reset-btn {
+            border: 1px solid rgba(220,53,69,0.3);
+            background: rgba(220,53,69,0.05);
+            color: #dc3545; border-radius: 8px;
+            padding: 0.4rem 0.8rem; font-size: 0.78rem;
+            font-weight: 600; cursor: pointer;
+            transition: all 0.2s; white-space: nowrap;
+        }
+        .filter-reset-btn:hover {
+            background: #dc3545; color: #fff;
+        }
+
+        /* ===== EVENT CARDS V2 ===== */
+        .ev-card {
+            background: #fff;
+            border-radius: 18px;
+            overflow: hidden;
+            box-shadow: 0 8px 24px rgba(30,15,117,0.07);
+            border: 1px solid rgba(30,15,117,0.06);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            height: 100%;
+            display: flex; flex-direction: column;
+            position: relative;
+        }
+        .ev-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 20px 40px rgba(30,15,117,0.15);
+            border-color: rgba(55,133,216,0.2);
+        }
+        .ev-card-img {
+            height: 180px;
+            position: relative;
+            overflow: hidden;
+        }
+        .ev-card-img img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            transition: transform 0.4s;
+        }
+        .ev-card:hover .ev-card-img img { transform: scale(1.05); }
+        .ev-card-img .placeholder-art {
+            width: 100%; height: 100%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 3rem;
+            background: linear-gradient(135deg, #f0eaf9 0%, #e3ecf5 100%);
+        }
+        .ev-card-date-badge {
+            position: absolute; top: 12px; left: 12px;
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(8px);
+            border-radius: 12px;
+            padding: 0.4rem 0.6rem;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            line-height: 1;
+        }
+        .ev-card-date-badge .day {
+            display: block;
+            font-size: 1.2rem; font-weight: 800;
+            color: #1E0F75;
+        }
+        .ev-card-date-badge .month {
+            display: block;
+            font-size: 0.65rem; font-weight: 700;
+            color: #3785D8;
+            text-transform: uppercase;
+        }
+        .ev-card-price-tag {
+            position: absolute; top: 12px; right: 12px;
+            padding: 0.3rem 0.7rem;
+            border-radius: 10px;
+            font-size: 0.75rem; font-weight: 700;
+            backdrop-filter: blur(8px);
+        }
+        .ev-card-price-tag.free {
+            background: rgba(25,135,84,0.9); color: #fff;
+        }
+        .ev-card-price-tag.paid {
+            background: rgba(255,193,7,0.95); color: #1E0F75;
+        }
+        .ev-card-body {
+            padding: 1rem 1.2rem 1.1rem;
+            flex: 1;
+            display: flex; flex-direction: column;
+        }
+        .ev-card-body h3 {
+            font-size: 1rem; font-weight: 700;
+            color: #1E0F75; margin-bottom: 0.4rem;
+            line-height: 1.3;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .ev-card-desc {
+            font-size: 0.78rem; color: #777;
+            margin-bottom: 0.6rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            line-height: 1.45;
+        }
+        .ev-card-info {
+            display: flex; flex-direction: column; gap: 0.3rem;
+            margin-bottom: 0.7rem; font-size: 0.8rem; color: #666;
+        }
+        .ev-card-info > div {
+            display: flex; align-items: center; gap: 0.4rem;
+        }
+        .ev-card-info i {
+            color: #3785D8; width: 15px;
+            text-align: center; font-size: 0.75rem;
+        }
+        .ev-card-footer {
             margin-top: auto;
             display: flex; justify-content: space-between; align-items: center;
+            padding-top: 0.7rem;
+            border-top: 1px solid rgba(30,15,117,0.06);
+        }
+        .ev-card-organizer {
+            display: flex; align-items: center; gap: 0.4rem;
+            font-size: 0.75rem; color: #888;
+        }
+        .ev-card-organizer .avatar {
+            width: 24px; height: 24px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #1E0F75, #3785D8);
+            color: #fff;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.6rem; font-weight: 700;
+        }
+        .ev-card-places {
+            display: flex; align-items: center; gap: 0.4rem;
+            font-size: 0.75rem;
+        }
+        .places-bar {
+            width: 50px; height: 4px;
+            background: #eee; border-radius: 4px;
+            overflow: hidden;
+        }
+        .places-bar-fill {
+            height: 100%; border-radius: 4px;
+            transition: width 0.4s;
+        }
+        .places-bar-fill.low { background: linear-gradient(90deg, #198754, #20c997); }
+        .places-bar-fill.medium { background: linear-gradient(90deg, #ffc107, #fd7e14); }
+        .places-bar-fill.high { background: linear-gradient(90deg, #dc3545, #e74c3c); }
+        .ev-card-mine {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #1E0F75, #3785D8, #BF8CE1);
+        }
+        .ev-card-owner-badge {
+            position: absolute; top: 52px; right: 12px;
+            font-size: 0.65rem; font-weight: 700;
+            padding: 0.22rem 0.55rem;
+            border-radius: 8px;
+            backdrop-filter: blur(8px);
+            display: flex; align-items: center; gap: 0.25rem;
+            z-index: 2;
+        }
+        .ev-card-owner-badge.mine-badge {
+            background: rgba(30,15,117,0.88); color: #fff;
+        }
+        .ev-card-owner-badge.other-badge {
+            background: rgba(107,114,128,0.82); color: #fff;
+        }
+
+        /* ===== STAT COUNTERS IN FILTER ===== */
+        .filter-count {
+            display: inline-flex; align-items: center; justify-content: center;
+            background: rgba(30,15,117,0.08);
+            color: #1E0F75;
+            border-radius: 6px;
+            font-size: 0.7rem; font-weight: 700;
+            min-width: 20px; height: 18px;
+            padding: 0 4px; margin-left: 4px;
+        }
+        .filter-tab.active .filter-count {
+            background: rgba(255,255,255,0.25);
+            color: #fff;
         }
 
         /* ===== PRODUCT CARDS ===== */
@@ -193,49 +477,110 @@
             margin-bottom: 0.8rem;
         }
 
+        /* ===== EMPTY STATE ===== */
+        .empty-state {
+            text-align: center; padding: 2.5rem 1rem;
+            color: #999;
+        }
+        .empty-state i { font-size: 2.5rem; margin-bottom: 0.6rem; display: block; color: #ccc; }
+
         /* ===== GUEST OVERRIDES ===== */
         .landing-wrap { max-width: 1180px; margin: 0 auto; }
+
+        /* ===== ANIMATIONS ===== */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .ev-card { animation: fadeInUp 0.5s ease both; }
+        .ev-card:nth-child(1) { animation-delay: 0.05s; }
+        .ev-card:nth-child(2) { animation-delay: 0.1s; }
+        .ev-card:nth-child(3) { animation-delay: 0.15s; }
+        .ev-card:nth-child(4) { animation-delay: 0.2s; }
+        .ev-card:nth-child(5) { animation-delay: 0.25s; }
+        .ev-card:nth-child(6) { animation-delay: 0.3s; }
+
+        .btn-hero {
+            border-radius: 12px;
+            padding: 0.65rem 1.6rem;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
     </style>
 {% endblock %}
 
 {% block body %}
 {% if app.user %}
     {# ================================================================ #}
-    {# FRONTOFFICE LANDING — for Artist / Participant                    #}
+    {# FRONTOFFICE — Authenticated User                                  #}
     {# ================================================================ #}
 
-    {# ---------- HERO CAROUSEL ---------- #}
-    <div id="heroCarousel" class="carousel slide hero-carousel mb-5" data-bs-ride="carousel" data-bs-interval="5000">
+    {# ---------- HERO EVENT SLIDER ---------- #}
+    {% if featuredEvents|length > 0 %}
+    <div id="heroCarousel" class="carousel slide event-slider mb-5" data-bs-ride="carousel" data-bs-interval="5000">
         <div class="carousel-indicators">
-            <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="0" class="active"></button>
-            <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="1"></button>
-            <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="2"></button>
+            {% for event in featuredEvents %}
+                <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="{{ loop.index0 }}"
+                        {% if loop.first %}class="active"{% endif %}></button>
+            {% endfor %}
         </div>
-        <div class="carousel-inner" style="border-radius: 20px; overflow: hidden;">
-            <div class="carousel-item active hero-slide-1">
-                <div class="carousel-caption">
-                    <h2>Bienvenue, {{ app.user.prenom }}</h2>
-                    <p>Découvrez les événements artistiques, réservez vos places et participez à des ateliers créatifs adaptés à tous.</p>
-                    <a href="{{ path('app_evenement_index') }}" class="btn btn-light btn-hero me-2">Explorer les Événements</a>
-                    <a href="{{ path('app_produit_index') }}" class="btn btn-outline-light btn-hero">Voir la Boutique</a>
+        <div class="carousel-inner">
+            {% set gradients = [
+                'linear-gradient(135deg, rgba(30,15,117,0.92) 0%, rgba(55,133,216,0.7) 100%)',
+                'linear-gradient(135deg, rgba(28,29,171,0.9) 0%, rgba(191,140,225,0.7) 100%)',
+                'linear-gradient(135deg, rgba(55,133,216,0.9) 0%, rgba(30,15,117,0.8) 100%)',
+                'linear-gradient(135deg, rgba(30,15,117,0.85) 0%, rgba(232,147,197,0.7) 100%)'
+            ] %}
+            {% for event in featuredEvents %}
+                <div class="carousel-item {% if loop.first %}active{% endif %}">
+                    <div class="slide-bg"
+                         style="{% if event.image %}background-image: url('{{ event.image }}');{% else %}background: {{ gradients[loop.index0] }};{% endif %}">
+                        {% if event.image %}<div style="position:absolute;inset:0;background:linear-gradient(to right, rgba(30,15,117,0.88) 0%, rgba(30,15,117,0.6) 45%, transparent 100%);"></div>{% endif %}
+                    </div>
+                    <div class="slide-content">
+                        {% set slideIsMine = isArtist and event.organisateur and event.organisateur.id == app.user.id %}
+                        <div class="slide-tag">
+                            {% if slideIsMine %}
+                                <i class="fas fa-palette"></i> Mon événement
+                            {% else %}
+                                <i class="fas fa-star"></i>
+                                {% if event.prix %}{{ event.prix }} TND{% else %}Gratuit{% endif %}
+                            {% endif %}
+                        </div>
+                        <h2>{{ event.titre }}</h2>
+                        <p>{{ event.description|length > 120 ? event.description|slice(0, 120) ~ '...' : event.description }}</p>
+                        <div class="slide-meta">
+                            <span><i class="fas fa-calendar-alt"></i> {{ event.dateDebut ? event.dateDebut|date('d M Y') : 'TBD' }}{% if event.dateFin %} — {{ event.dateFin|date('d M Y') }}{% endif %}</span>
+                            <span><i class="fas fa-clock"></i> {{ event.dateDebut ? event.dateDebut|date('H\\hi') : '' }}{% if event.dateFin %} → {{ event.dateFin|date('H\\hi') }}{% endif %}</span>
+                            <span><i class="fas fa-map-marker-alt"></i> {{ event.lieu }}</span>
+                            <span><i class="fas fa-users"></i> {{ event.nbPlaces }} places</span>
+                            {% if not slideIsMine and event.organisateur %}
+                                <span><i class="fas fa-user-tie"></i> {{ event.organisateur.prenom }} {{ event.organisateur.nom }}</span>
+                            {% endif %}
+                            {% if slideIsMine %}
+                                <span><i class="fas fa-ticket-alt"></i> {{ event.reservations|length }} réservations</span>
+                            {% endif %}
+                        </div>
+                        <div class="slide-actions">
+                            {% if slideIsMine %}
+                                <a href="{{ path('app_evenement_show', {id: event.id}) }}" class="btn btn-light btn-slide">
+                                    <i class="fas fa-cog me-1"></i> Gérer l'événement
+                                </a>
+                                <a href="{{ path('app_evenement_edit', {id: event.id}) }}" class="btn btn-outline-light btn-slide">
+                                    <i class="fas fa-pen me-1"></i> Modifier
+                                </a>
+                            {% else %}
+                                <a href="{{ path('app_evenement_show', {id: event.id}) }}" class="btn btn-light btn-slide">
+                                    <i class="fas fa-eye me-1"></i> Voir l'événement
+                                </a>
+                                <a href="{{ path('app_evenement_index') }}" class="btn btn-outline-light btn-slide">
+                                    Explorer tout
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
                 </div>
-            </div>
-            <div class="carousel-item hero-slide-2">
-                <div class="carousel-caption">
-                    <h2>Boutique Solidaire</h2>
-                    <p>Soutenez les artistes en achetant des créations uniques. Chaque achat contribue à l'art inclusif.</p>
-                    <a href="{{ path('app_produit_index') }}" class="btn btn-light btn-hero me-2">Parcourir la Boutique</a>
-                    <a href="{{ path('app_donation_new') }}" class="btn btn-outline-light btn-hero">Faire un Don</a>
-                </div>
-            </div>
-            <div class="carousel-item hero-slide-3">
-                <div class="carousel-caption">
-                    <h2>Rejoignez la Communauté</h2>
-                    <p>Échangez avec d'autres passionnés, partagez vos idées et participez aux discussions du forum.</p>
-                    <a href="{{ path('app_forum_index') }}" class="btn btn-light btn-hero me-2">Accéder au Forum</a>
-                    <a href="{{ path('app_reservation_my') }}" class="btn btn-outline-light btn-hero">Mes Réservations</a>
-                </div>
-            </div>
+            {% endfor %}
         </div>
         <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
             <span class="carousel-control-prev-icon"></span>
@@ -244,48 +589,232 @@
             <span class="carousel-control-next-icon"></span>
         </button>
     </div>
+    {% else %}
+    <div id="heroCarousel" class="carousel slide event-slider mb-5" data-bs-ride="carousel" data-bs-interval="5000">
+        <div class="carousel-inner" style="border-radius: 20px; overflow: hidden;">
+            <div class="carousel-item active">
+                <div class="slide-bg" style="background: linear-gradient(135deg, rgba(30,15,117,0.92) 0%, rgba(55,133,216,0.8) 100%);"></div>
+                <div class="slide-content">
+                    <h2>Bienvenue, {{ app.user.prenom }}</h2>
+                    {% if isArtist %}
+                        <p>Créez vos événements artistiques, gérez vos réservations et suivez vos performances.</p>
+                        <div class="slide-actions">
+                            <a href="{{ path('app_evenement_new') }}" class="btn btn-light btn-slide"><i class="fas fa-plus me-1"></i> Créer un événement</a>
+                            <a href="{{ path('app_evenement_index') }}" class="btn btn-outline-light btn-slide">Explorer</a>
+                        </div>
+                    {% else %}
+                        <p>Découvrez les événements artistiques, réservez vos places et participez à des ateliers créatifs.</p>
+                        <div class="slide-actions">
+                            <a href="{{ path('app_evenement_index') }}" class="btn btn-light btn-slide">Explorer les Événements</a>
+                            <a href="{{ path('app_produit_index') }}" class="btn btn-outline-light btn-slide">Voir la Boutique</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 
-    {# ---------- EVENTS SECTION ---------- #}
+    {# ---------- EVENTS SECTION WITH FILTERS ---------- #}
     <section class="mb-5">
         <div class="section-head">
-            <h2><i class="fas fa-calendar-alt me-2" style="color:var(--ac-mid)"></i>Événements à venir</h2>
-            <a href="{{ path('app_evenement_index') }}" class="see-all">Voir tout <i class="fas fa-arrow-right"></i></a>
+            {% if isArtist %}
+                <h2><i class="fas fa-palette me-2" style="color:var(--ac-mid)"></i>Mes Événements</h2>
+                <div class="d-flex align-items-center gap-2">
+                    <a href="{{ path('app_evenement_new') }}" class="see-all" style="background:linear-gradient(135deg,var(--ac-deep),var(--ac-mid));color:#fff;padding:.35rem .9rem;border-radius:10px;font-size:.82rem;">
+                        <i class="fas fa-plus me-1"></i>Créer
+                    </a>
+                    <a href="{{ path('app_evenement_index') }}" class="see-all">Voir tout <i class="fas fa-arrow-right"></i></a>
+                </div>
+            {% else %}
+                <h2><i class="fas fa-calendar-alt me-2" style="color:var(--ac-mid)"></i>Événements</h2>
+                <a href="{{ path('app_evenement_index') }}" class="see-all">Voir tout <i class="fas fa-arrow-right"></i></a>
+            {% endif %}
         </div>
-        <div class="row g-3">
+
+        {# --- Filter Bar --- #}
+        <div class="filter-bar" id="eventFilterBar" data-user-type="{{ isArtist ? 'artist' : (app.user ? 'participant' : 'guest') }}">
+            <div class="filter-tabs">
+                {% if isArtist %}
+                    <button class="filter-tab active" data-filter="mine" onclick="filterEvents('mine', this)">
+                        <i class="fas fa-paint-brush me-1"></i>Événements que je crée
+                        <span class="filter-count">{{ total_mine|default(0) }}</span>
+                    </button>
+                    <button class="filter-tab" data-filter="others" onclick="filterEvents('others', this)">
+                        <i class="fas fa-users me-1"></i>Autres artistes
+                        <span class="filter-count">{{ total_others|default(0) }}</span>
+                    </button>
+                    <button class="filter-tab" data-filter="all" onclick="filterEvents('all', this)">
+                        <i class="fas fa-globe-americas me-1"></i>Tous
+                        <span class="filter-count">{{ total_all|default(0) }}</span>
+                    </button>
+                {% elseif app.user %}
+                    <button class="filter-tab" data-filter="others" onclick="filterEvents('others', this)">
+                        <i class="fas fa-compass me-1"></i>À découvrir
+                        <span class="filter-count">{{ total_others|default(0) }}</span>
+                    </button>
+                    <button class="filter-tab active" data-filter="all" onclick="filterEvents('all', this)">
+                        <i class="fas fa-globe-americas me-1"></i>Tous
+                        <span class="filter-count">{{ total_all|default(0) }}</span>
+                    </button>
+                {% else %}
+                    <button class="filter-tab active" data-filter="all" onclick="filterEvents('all', this)">
+                        <i class="fas fa-globe-americas me-1"></i>Tous
+                        <span class="filter-count">{{ latestEvents|length }}</span>
+                    </button>
+                {% endif %}
+                <button class="filter-tab" data-filter="free" onclick="filterEvents('free', this)">
+                    <i class="fas fa-gift me-1"></i>Gratuit
+                </button>
+                <button class="filter-tab" data-filter="paid" onclick="filterEvents('paid', this)">
+                    <i class="fas fa-coins me-1"></i>Payant
+                </button>
+            </div>
+            <div class="filter-search">
+                <i class="fas fa-search"></i>
+                <input type="text" id="eventSearchInput" placeholder="Rechercher un événement..." oninput="searchEvents(this.value)">
+            </div>
+            <select class="filter-sort" id="eventSortSelect" onchange="sortEvents(this.value)">
+                <option value="date_asc">Date (proche)</option>
+                <option value="date_desc">Date (lointaine)</option>
+                <option value="price_asc">Prix croissant</option>
+                <option value="price_desc">Prix décroissant</option>
+                <option value="name_asc">Nom A-Z</option>
+            </select>
+            <button class="filter-toggle-adv" onclick="toggleAdvFilters()" title="Filtres avancés">
+                <i class="fas fa-sliders-h"></i>
+            </button>
+        </div>
+        <div class="filter-advanced d-none" id="advancedFilters">
+            <div class="filter-adv-row">
+                <div class="filter-adv-group">
+                    <label><i class="fas fa-calendar me-1"></i>Date début</label>
+                    <input type="date" id="filterDateStart" onchange="applyAllFilters()">
+                </div>
+                <div class="filter-adv-group">
+                    <label><i class="fas fa-calendar-check me-1"></i>Date fin</label>
+                    <input type="date" id="filterDateEnd" onchange="applyAllFilters()">
+                </div>
+                <div class="filter-adv-group">
+                    <label><i class="fas fa-map-marker-alt me-1"></i>Lieu</label>
+                    <input type="text" id="filterLieu" placeholder="Filtrer par lieu..." oninput="applyAllFilters()">
+                </div>
+                <div class="filter-adv-group">
+                    <label><i class="fas fa-coins me-1"></i>Prix max (TND)</label>
+                    <input type="number" id="filterPriceMax" min="0" step="1" placeholder="Max" oninput="applyAllFilters()">
+                </div>
+                <div class="filter-adv-group" style="align-self:end;">
+                    <button class="filter-reset-btn" onclick="resetAdvFilters()">
+                        <i class="fas fa-undo me-1"></i>Réinitialiser
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        {# --- Event Cards Grid --- #}
+        <div class="row g-3" id="eventsGrid">
             {% for event in latestEvents %}
-                <div class="col-sm-6 col-lg-4">
+                {% set reservedCount = event.reservations|length %}
+                {% set fillPct = event.nbPlaces > 0 ? ((reservedCount / event.nbPlaces) * 100)|round : 0 %}
+                {% set isMine = isArtist and event.organisateur and event.organisateur.id == app.user.id %}
+                {% set isRegistered = event.id in (registered_event_ids|default([])) %}
+                <div class="col-sm-6 col-lg-4 event-card-col"
+                     data-title="{{ event.titre|lower }}"
+                     data-lieu="{{ event.lieu|lower }}"
+                     data-date="{{ event.dateDebut ? event.dateDebut|date('Y-m-d') : '' }}"
+                     data-date-end="{{ event.dateFin ? event.dateFin|date('Y-m-d') : '' }}"
+                     data-price="{{ event.prix ?? 0 }}"
+                     data-free="{{ (event.prix is null or event.prix == 0) ? '1' : '0' }}"
+                     data-owner="{{ isMine ? 'mine' : 'others' }}"
+                     data-registered="{{ (app.user and not isArtist and isRegistered) ? '1' : '0' }}">
                     <a href="{{ path('app_evenement_show', {id: event.id}) }}" class="text-decoration-none">
                         <div class="ev-card">
-                            <div class="ev-card-img" style="background: linear-gradient({{ loop.index * 40 }}deg, rgba(30,15,117,0.12), rgba(55,133,216,0.12));">
+                            <div class="ev-card-img">
                                 {% if event.image %}
-                                    <img src="{{ event.image }}" alt="{{ event.titre }}">
+                                    <img src="{{ event.image }}" alt="{{ event.titre }}" loading="lazy">
                                 {% else %}
-                                    🎨
+                                    <div class="placeholder-art" style="background: linear-gradient({{ loop.index * 50 + 120 }}deg, rgba(30,15,117,0.1), rgba(55,133,216,0.15), rgba(191,140,225,0.1));">
+                                        {% set icons = ['🎨', '🎭', '🎵', '🎪', '🎬', '🎤', '🖼️', '✨', '🎻'] %}
+                                        {{ icons[loop.index0 % icons|length] }}
+                                    </div>
                                 {% endif %}
+                                {% if event.dateDebut %}
+                                    <div class="ev-card-date-badge">
+                                        <span class="day">{{ event.dateDebut|date('d') }}</span>
+                                        <span class="month">{{ event.dateDebut|date('M') }}</span>
+                                    </div>
+                                {% endif %}
+                                <div class="ev-card-price-tag {{ event.prix ? 'paid' : 'free' }}">
+                                    {{ event.prix ? event.prix ~ ' TND' : 'Gratuit' }}
+                                </div>
                             </div>
                             <div class="ev-card-body">
                                 <h3>{{ event.titre }}</h3>
-                                <div class="ev-card-meta">
-                                    <div><i class="fas fa-clock"></i> {{ event.dateDebut ? event.dateDebut|date('d/m/Y à H\\hi') : 'Date à confirmer' }}</div>
+                                <div class="ev-card-desc">{{ event.description|length > 80 ? event.description|slice(0, 80) ~ '...' : event.description }}</div>
+                                <div class="ev-card-info">
                                     <div><i class="fas fa-map-marker-alt"></i> {{ event.lieu }}</div>
+                                    <div><i class="fas fa-calendar-alt"></i> {{ event.dateDebut ? event.dateDebut|date('d/m/Y') : 'TBD' }}{% if event.dateFin %} → {{ event.dateFin|date('d/m/Y') }}{% endif %}</div>
+                                    <div><i class="fas fa-clock"></i> {{ event.dateDebut ? event.dateDebut|date('H\\hi') : '' }}{% if event.dateFin %} — {{ event.dateFin|date('H\\hi') }}{% endif %}</div>
+                                    {% if event.ageMin or event.ageMax %}
+                                        <div><i class="fas fa-child"></i>
+                                            {% if event.ageMin and event.ageMax %}
+                                                {{ event.ageMin }} - {{ event.ageMax }} ans
+                                            {% elseif event.ageMin %}
+                                                Dès {{ event.ageMin }} ans
+                                            {% else %}
+                                                Jusqu'à {{ event.ageMax }} ans
+                                            {% endif %}
+                                        </div>
+                                    {% endif %}
                                 </div>
-                                <div class="ev-card-price">
-                                    <span class="badge {{ event.prix ? 'bg-warning text-dark' : 'bg-success' }}">
-                                        {{ event.prix ? event.prix ~ ' TND' : 'Gratuit' }}
-                                    </span>
-                                    <span class="badge bg-light text-dark">
-                                        <i class="fas fa-users"></i> {{ event.nbPlaces }} places
-                                    </span>
+                                <div class="ev-card-footer">
+                                    {% if isMine %}
+                                        <div class="ev-card-organizer">
+                                            <div class="avatar" style="background:linear-gradient(135deg, #059669, #10b981);"><i class="fas fa-chart-line" style="font-size:.5rem;"></i></div>
+                                            <span>{{ reservedCount }} résa</span>
+                                        </div>
+                                    {% elseif event.organisateur %}
+                                        <div class="ev-card-organizer">
+                                            <div class="avatar">{{ event.organisateur.prenom|first }}{{ event.organisateur.nom|first }}</div>
+                                            <span>{{ event.organisateur.prenom }}</span>
+                                        </div>
+                                    {% else %}
+                                        <div></div>
+                                    {% endif %}
+                                    <div class="ev-card-places">
+                                        <div class="places-bar">
+                                            <div class="places-bar-fill {% if fillPct < 50 %}low{% elseif fillPct < 80 %}medium{% else %}high{% endif %}"
+                                                 style="width: {{ fillPct }}%"></div>
+                                        </div>
+                                        <span class="text-muted">{{ event.nbPlaces - reservedCount }} / {{ event.nbPlaces }}</span>
+                                    </div>
                                 </div>
                             </div>
+                            {% if isMine %}
+                                <div class="ev-card-mine" title="Mon événement"></div>
+                                <div class="ev-card-owner-badge mine-badge">
+                                    <i class="fas fa-palette"></i> Mon événement
+                                </div>
+                            {% elseif isArtist %}
+                                <div class="ev-card-owner-badge other-badge">
+                                    <i class="fas fa-eye"></i> Consultation
+                                </div>
+                            {% endif %}
                         </div>
                     </a>
                 </div>
             {% else %}
                 <div class="col-12">
-                    <div class="text-center text-muted py-4">Aucun événement disponible pour le moment.</div>
+                    <div class="empty-state">
+                        <i class="fas fa-calendar-times"></i>
+                        <p>Aucun événement disponible pour le moment.</p>
+                    </div>
                 </div>
             {% endfor %}
+        </div>
+        <div class="empty-state d-none" id="noResultsMsg">
+            <i class="fas fa-search"></i>
+            <p>Aucun événement ne correspond à votre recherche.</p>
         </div>
     </section>
 
@@ -429,15 +958,64 @@
     {# GUEST LANDING — public homepage                                   #}
     {# ================================================================ #}
     <div class="landing-wrap">
-        {# ---------- HERO ---------- #}
+        {# ---------- HERO SLIDER (GUEST) ---------- #}
+        {% if featuredEvents|length > 0 %}
+        <div id="guestCarousel" class="carousel slide event-slider mb-4" data-bs-ride="carousel" data-bs-interval="5000">
+            <div class="carousel-indicators">
+                {% for event in featuredEvents %}
+                    <button type="button" data-bs-target="#guestCarousel" data-bs-slide-to="{{ loop.index0 }}"
+                            {% if loop.first %}class="active"{% endif %}></button>
+                {% endfor %}
+            </div>
+            <div class="carousel-inner">
+                {% set gradients = [
+                    'linear-gradient(135deg, rgba(30,15,117,0.92) 0%, rgba(55,133,216,0.7) 100%)',
+                    'linear-gradient(135deg, rgba(28,29,171,0.9) 0%, rgba(191,140,225,0.7) 100%)',
+                    'linear-gradient(135deg, rgba(55,133,216,0.9) 0%, rgba(30,15,117,0.8) 100%)',
+                    'linear-gradient(135deg, rgba(30,15,117,0.85) 0%, rgba(232,147,197,0.7) 100%)'
+                ] %}
+                {% for event in featuredEvents %}
+                    <div class="carousel-item {% if loop.first %}active{% endif %}">
+                        <div class="slide-bg"
+                             style="{% if event.image %}background-image: url('{{ event.image }}');{% else %}background: {{ gradients[loop.index0] }};{% endif %}">
+                            {% if event.image %}<div style="position:absolute;inset:0;background:linear-gradient(to right, rgba(30,15,117,0.88) 0%, rgba(30,15,117,0.6) 45%, transparent 100%);"></div>{% endif %}
+                        </div>
+                        <div class="slide-content">
+                            <div class="slide-tag">
+                                <i class="fas fa-star"></i>
+                                {% if event.prix %}{{ event.prix }} TND{% else %}Gratuit{% endif %}
+                            </div>
+                            <h2>{{ event.titre }}</h2>
+                            <p>{{ event.description|length > 120 ? event.description|slice(0, 120) ~ '...' : event.description }}</p>
+                            <div class="slide-meta">
+                                <span><i class="fas fa-calendar-alt"></i> {{ event.dateDebut ? event.dateDebut|date('d M Y') : 'TBD' }}{% if event.dateFin %} — {{ event.dateFin|date('d M Y') }}{% endif %}</span>
+                                <span><i class="fas fa-map-marker-alt"></i> {{ event.lieu }}</span>
+                                <span><i class="fas fa-users"></i> {{ event.nbPlaces }} places</span>
+                            </div>
+                            <div class="slide-actions">
+                                <a href="{{ path('app_evenement_show', {id: event.id}) }}" class="btn btn-light btn-slide">Voir l'événement</a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            <button class="carousel-control-prev" type="button" data-bs-target="#guestCarousel" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon"></span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#guestCarousel" data-bs-slide="next">
+                <span class="carousel-control-next-icon"></span>
+            </button>
+        </div>
+        {% else %}
         <section class="cta-banner mb-4" style="padding: 3rem 2rem;">
             <h2 class="mb-2" style="font-size: 2rem;">Une plateforme plus simple, plus claire, plus inclusive.</h2>
             <p style="color:rgba(255,255,255,0.88); max-width: 620px;">
                 Découvrez les événements artistiques, la boutique solidaire, le forum et la charité en quelques clics.
             </p>
-            <a href="{{ path('register') }}" class="btn btn-light btn-hero me-2 mt-2">Inscription</a>
-            <a href="{{ path('login') }}" class="btn btn-outline-light btn-hero mt-2">Connexion</a>
+            <a href="{{ path('app_evenement_index') }}" class="btn btn-light btn-hero me-2 mt-2">Découvrir les événements</a>
+            <small style="opacity:0.9;">Utilisez <strong>Connexion</strong> ou <strong>Inscription</strong> dans la barre ci-dessus pour réserver.</small>
         </section>
+        {% endif %}
 
         {# ---------- EVENTS PREVIEW ---------- #}
         <section class="mb-4">
@@ -447,25 +1025,53 @@
             </div>
             <div class="row g-3">
                 {% for event in latestEvents|slice(0, 3) %}
+                    {% set reservedCount = event.reservations|length %}
+                    {% set fillPct = event.nbPlaces > 0 ? ((reservedCount / event.nbPlaces) * 100)|round : 0 %}
                     <div class="col-md-4">
                         <div class="ev-card">
-                            <div class="ev-card-img" style="background: linear-gradient({{ loop.index * 40 }}deg, rgba(30,15,117,0.12), rgba(55,133,216,0.12));">
+                            <div class="ev-card-img">
                                 {% if event.image %}
-                                    <img src="{{ event.image }}" alt="{{ event.titre }}">
+                                    <img src="{{ event.image }}" alt="{{ event.titre }}" loading="lazy">
                                 {% else %}
-                                    🎨
+                                    <div class="placeholder-art" style="background: linear-gradient({{ loop.index * 50 + 120 }}deg, rgba(30,15,117,0.1), rgba(55,133,216,0.15), rgba(191,140,225,0.1));">
+                                        {% set icons = ['🎨', '🎭', '🎵'] %}
+                                        {{ icons[loop.index0 % icons|length] }}
+                                    </div>
                                 {% endif %}
+                                {% if event.dateDebut %}
+                                    <div class="ev-card-date-badge">
+                                        <span class="day">{{ event.dateDebut|date('d') }}</span>
+                                        <span class="month">{{ event.dateDebut|date('M') }}</span>
+                                    </div>
+                                {% endif %}
+                                <div class="ev-card-price-tag {{ event.prix ? 'paid' : 'free' }}">
+                                    {{ event.prix ? event.prix ~ ' TND' : 'Gratuit' }}
+                                </div>
                             </div>
                             <div class="ev-card-body">
                                 <h3>{{ event.titre }}</h3>
-                                <div class="ev-card-meta">
-                                    <div><i class="fas fa-clock"></i> {{ event.dateDebut ? event.dateDebut|date('d/m/Y') : '' }}</div>
+                                <div class="ev-card-desc">{{ event.description|length > 80 ? event.description|slice(0, 80) ~ '...' : event.description }}</div>
+                                <div class="ev-card-info">
                                     <div><i class="fas fa-map-marker-alt"></i> {{ event.lieu }}</div>
+                                    <div><i class="fas fa-calendar-alt"></i> {{ event.dateDebut ? event.dateDebut|date('d/m/Y') : '' }}{% if event.dateFin %} → {{ event.dateFin|date('d/m/Y') }}{% endif %}</div>
+                                    <div><i class="fas fa-clock"></i> {{ event.dateDebut ? event.dateDebut|date('H\\hi') : '' }}{% if event.dateFin %} — {{ event.dateFin|date('H\\hi') }}{% endif %}</div>
                                 </div>
-                                <div class="ev-card-price">
-                                    <span class="badge {{ event.prix ? 'bg-warning text-dark' : 'bg-success' }}">
-                                        {{ event.prix ? event.prix ~ ' TND' : 'Gratuit' }}
-                                    </span>
+                                <div class="ev-card-footer">
+                                    {% if event.organisateur %}
+                                        <div class="ev-card-organizer">
+                                            <div class="avatar">{{ event.organisateur.prenom|first }}{{ event.organisateur.nom|first }}</div>
+                                            <span>{{ event.organisateur.prenom }}</span>
+                                        </div>
+                                    {% else %}
+                                        <div></div>
+                                    {% endif %}
+                                    <div class="ev-card-places">
+                                        <div class="places-bar">
+                                            <div class="places-bar-fill {% if fillPct < 50 %}low{% elseif fillPct < 80 %}medium{% else %}high{% endif %}"
+                                                 style="width: {{ fillPct }}%"></div>
+                                        </div>
+                                        <span class="text-muted">{{ event.nbPlaces }} places</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -557,4 +1163,135 @@
         </section>
     </div>
 {% endif %}
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+    (function() {
+        var activeFilter = '{{ isArtist ? "mine" : "all" }}';
+        var userType = (document.getElementById('eventFilterBar') || {}).dataset.userType || 'guest';
+        var searchTerm = '';
+        var sortMode = 'date_asc';
+
+        window.filterEvents = function(filter, btn) {
+            activeFilter = filter;
+            document.querySelectorAll('.filter-tab').forEach(function(t) { t.classList.remove('active'); });
+            btn.classList.add('active');
+            applyAllFilters();
+        };
+
+        window.searchEvents = function(value) {
+            searchTerm = value.toLowerCase().trim();
+            applyAllFilters();
+        };
+
+        window.sortEvents = function(value) {
+            sortMode = value;
+            applyAllFilters();
+        };
+
+        window.toggleAdvFilters = function() {
+            var panel = document.getElementById('advancedFilters');
+            var btn = document.querySelector('.filter-toggle-adv');
+            panel.classList.toggle('d-none');
+            btn.classList.toggle('active');
+        };
+
+        window.resetAdvFilters = function() {
+            document.getElementById('filterDateStart').value = '';
+            document.getElementById('filterDateEnd').value = '';
+            document.getElementById('filterLieu').value = '';
+            document.getElementById('filterPriceMax').value = '';
+            applyAllFilters();
+        };
+
+        window.applyAllFilters = function() {
+            var grid = document.getElementById('eventsGrid');
+            if (!grid) return;
+            var cards = Array.from(grid.querySelectorAll('.event-card-col'));
+            var noResults = document.getElementById('noResultsMsg');
+            var visible = 0;
+
+            var advDateStart = (document.getElementById('filterDateStart') || {}).value || '';
+            var advDateEnd = (document.getElementById('filterDateEnd') || {}).value || '';
+            var advLieu = ((document.getElementById('filterLieu') || {}).value || '').toLowerCase().trim();
+            var advPriceMax = parseFloat((document.getElementById('filterPriceMax') || {}).value || '');
+
+            var filtered = cards.filter(function(card) {
+                var show = true;
+
+                if (activeFilter === 'mine') show = card.dataset.owner === 'mine';
+                else if (activeFilter === 'others') show = userType === 'participant' ? (card.dataset.registered === '0') : (card.dataset.owner === 'others');
+                else if (activeFilter === 'free') show = card.dataset.free === '1';
+                else if (activeFilter === 'paid') show = card.dataset.free === '0';
+
+                if (show && searchTerm) {
+                    var title = card.dataset.title || '';
+                    var lieu = card.dataset.lieu || '';
+                    show = title.indexOf(searchTerm) !== -1 || lieu.indexOf(searchTerm) !== -1;
+                }
+
+                if (show && advDateStart) {
+                    show = (card.dataset.date || '') >= advDateStart;
+                }
+                if (show && advDateEnd) {
+                    show = (card.dataset.date || '') <= advDateEnd;
+                }
+                if (show && advLieu) {
+                    show = (card.dataset.lieu || '').indexOf(advLieu) !== -1;
+                }
+                if (show && !isNaN(advPriceMax)) {
+                    show = parseFloat(card.dataset.price || '0') <= advPriceMax;
+                }
+
+                return show;
+            });
+
+            filtered.sort(function(a, b) {
+                switch (sortMode) {
+                    case 'date_asc': return (a.dataset.date || '').localeCompare(b.dataset.date || '');
+                    case 'date_desc': return (b.dataset.date || '').localeCompare(a.dataset.date || '');
+                    case 'price_asc': return parseFloat(a.dataset.price) - parseFloat(b.dataset.price);
+                    case 'price_desc': return parseFloat(b.dataset.price) - parseFloat(a.dataset.price);
+                    case 'name_asc': return (a.dataset.title || '').localeCompare(b.dataset.title || '');
+                    default: return 0;
+                }
+            });
+
+            cards.forEach(function(c) { c.style.display = 'none'; c.style.order = ''; });
+            filtered.forEach(function(c, i) {
+                c.style.display = '';
+                c.style.order = i;
+                visible++;
+            });
+
+            grid.style.display = visible > 0 ? '' : 'none';
+            if (noResults) noResults.classList.toggle('d-none', visible > 0);
+        };
+
+        // Apply default filter on load (for artists defaults to 'mine')
+        if (activeFilter !== 'all') {
+            document.addEventListener('DOMContentLoaded', function() { applyAllFilters(); });
+        }
+
+        // Global button loading state — preserves size
+        document.addEventListener('submit', function(e) {
+            var form = e.target;
+            var btn = form.querySelector('button[type="submit"], .btn-reserve');
+            if (!btn) return;
+            var label = btn.querySelector('.btn-label');
+            var spinner = btn.querySelector('.btn-spinner');
+            if (label && spinner) {
+                var w = btn.offsetWidth;
+                var h = btn.offsetHeight;
+                btn.style.minWidth = w + 'px';
+                btn.style.minHeight = h + 'px';
+                label.style.display = 'none';
+                spinner.style.display = 'inline-flex';
+                btn.disabled = true;
+            }
+        });
+    })();
+    </script>
 {% endblock %}

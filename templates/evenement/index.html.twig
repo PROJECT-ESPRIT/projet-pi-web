@@ -3,38 +3,44 @@
 {% block title %}Événements{% endblock %}
 
 {% block body %}
+{% if is_granted('ROLE_ADMIN') %}
+{# ===================== ADMIN VIEW ===================== #}
+<style>
+    .bo-table .ev-places-bar { display:inline-flex; align-items:center; gap:.4rem; }
+    .bo-table .ev-places-track { width:45px; height:5px; border-radius:3px; background:rgba(30,15,117,.06); overflow:hidden; }
+    .bo-table .ev-places-fill { height:100%; border-radius:3px; }
+</style>
+
 <div class="bo-page-header">
     <h1>
         <i class="fas fa-calendar-alt"></i> Événements
-        <span class="badge bg-primary bg-opacity-75">{{ total }}</span>
+        <span class="badge">{{ total }}</span>
     </h1>
     <div class="bo-actions">
-        {% if is_granted('ROLE_ARTISTE') or is_granted('ROLE_ADMIN') %}
-            <a href="{{ path('app_evenement_new') }}" class="btn btn-primary"><i class="fas fa-plus me-1"></i> Nouveau</a>
-        {% endif %}
+        <a href="{{ path('app_evenement_new') }}" class="btn btn-primary"><i class="fas fa-plus me-1"></i> Nouveau</a>
     </div>
 </div>
 
 <form method="get" action="{{ path('app_evenement_index') }}" class="bo-filter-bar">
     <div class="row g-2 align-items-end">
         <div class="col-12 col-md-3">
-            <label>Recherche</label>
+            <label><i class="fas fa-search me-1"></i>Recherche</label>
             <input type="text" name="q" class="form-control" value="{{ filter_input.q|default('') }}" placeholder="Titre, lieu, organisateur…">
         </div>
         <div class="col-6 col-md-2">
-            <label>Lieu</label>
+            <label><i class="fas fa-map-marker-alt me-1"></i>Lieu</label>
             <input type="text" name="lieu" class="form-control" value="{{ filter_input.lieu|default('') }}" placeholder="Ville / lieu">
         </div>
         <div class="col-6 col-md-2">
-            <label>Date début</label>
+            <label><i class="fas fa-calendar me-1"></i>Date début</label>
             <input type="date" name="date_start" class="form-control" value="{{ filter_input.date_start|default('') }}">
         </div>
         <div class="col-6 col-md-2">
-            <label>Date fin</label>
+            <label><i class="fas fa-calendar-check me-1"></i>Date fin</label>
             <input type="date" name="date_end" class="form-control" value="{{ filter_input.date_end|default('') }}">
         </div>
         <div class="col-6 col-md-3">
-            <label>Tri</label>
+            <label><i class="fas fa-sort me-1"></i>Tri</label>
             <select name="sort" class="form-select">
                 <option value="date_asc" {{ filter_input.sort == 'date_asc' ? 'selected' }}>Date ↑</option>
                 <option value="date_desc" {{ filter_input.sort == 'date_desc' ? 'selected' }}>Date ↓</option>
@@ -45,72 +51,93 @@
             </select>
         </div>
         <div class="col-6 col-md-1">
-            <label>Prix min</label>
+            <label><i class="fas fa-coins me-1"></i>Min</label>
             <input type="number" step="0.01" name="prix_min" class="form-control" value="{{ filter_input.prix_min|default('') }}" placeholder="0">
         </div>
         <div class="col-6 col-md-1">
-            <label>Prix max</label>
+            <label><i class="fas fa-coins me-1"></i>Max</label>
             <input type="number" step="0.01" name="prix_max" class="form-control" value="{{ filter_input.prix_max|default('') }}" placeholder="∞">
         </div>
         <div class="col-12 col-md-4 col-lg-3 d-flex gap-2">
-            <button class="btn btn-primary flex-grow-1"><i class="fas fa-search me-1"></i> Filtrer</button>
-            <a class="btn btn-outline-secondary" href="{{ path('app_evenement_index') }}">Réinitialiser</a>
+            <button type="submit" class="btn btn-primary flex-grow-1">
+                <span class="btn-label"><i class="fas fa-search me-1"></i> Filtrer</span>
+                <span class="btn-spinner" style="display:none;"><i class="fas fa-spinner fa-spin me-1"></i></span>
+            </button>
+            <a class="btn btn-outline-secondary" href="{{ path('app_evenement_index') }}"><i class="fas fa-undo me-1"></i>Reset</a>
         </div>
     </div>
 </form>
 
-{% if is_granted('ROLE_ADMIN') %}
-{# ===================== ADMIN TABLE VIEW ===================== #}
 <div class="bo-table-card">
     {% if evenements is not empty %}
         <div class="table-responsive">
             <table class="table bo-table">
                 <thead>
                     <tr>
-                        <th>#</th>
-                        <th>Événement</th>
-                        <th>Date</th>
-                        <th>Lieu</th>
-                        <th>Places</th>
-                        <th>Prix</th>
-                        <th>Organisateur</th>
-                        <th class="text-end">Actions</th>
+                        <th>#</th><th>Événement</th><th>Date</th><th>Statut</th><th>Lieu</th><th>Places</th><th>Prix</th><th>Organisateur</th><th class="text-end">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                 {% for ev in evenements %}
-                    <tr>
-                        <td class="text-muted">{{ ev.id }}</td>
+                    {% set nowTs = "now"|date('U') %}
+                    {% set evStartTs = ev.dateDebut ? ev.dateDebut|date('U') : 0 %}
+                    {% set isPassedAdmin = ev.dateDebut and evStartTs < nowTs %}
+                    {% set fillPct = ev.nbPlaces > 0 ? ((ev.reservations|length / ev.nbPlaces) * 100)|round : 0 %}
+                    {% if isPassedAdmin %}
+                        {% set statusBadge = 'Passé' %}{% set statusClass = 'bg-secondary' %}
+                    {% else %}
+                        {% set today = "now"|date('Y-m-d') %}{% set tomorrow = "now"|date_modify('+1 day')|date('Y-m-d') %}
+                        {% set evDay = ev.dateDebut|date('Y-m-d') %}{% set evWeek = ev.dateDebut|date('Y-W') %}{% set nowWeek = "now"|date('Y-W') %}
+                        {% if evDay == today %}{% set statusBadge = 'Aujourd\'hui' %}{% set statusClass = 'bg-success' %}
+                        {% elseif evDay == tomorrow %}{% set statusBadge = 'Demain' %}{% set statusClass = 'bg-primary' %}
+                        {% elseif evWeek == nowWeek %}{% set statusBadge = 'Cette semaine' %}{% set statusClass = 'bg-info' %}
+                        {% else %}{% set daysLeft = ((evStartTs - nowTs) / 86400)|round %}{% set statusBadge = daysLeft > 0 ? ('J-' ~ daysLeft) : '—' %}{% set statusClass = 'bg-light text-dark' %}{% endif %}
+                    {% endif %}
+                    <tr style="{{ isPassedAdmin ? 'opacity:.7;' : '' }}">
+                        <td class="text-muted" style="font-size:.78rem;">{{ ev.id }}</td>
                         <td>
-                            <div class="fw-semibold">{{ ev.titre }}</div>
-                            <small class="text-muted">{{ ev.description|length > 60 ? ev.description|slice(0, 60) ~ '…' : ev.description }}</small>
+                            <div class="fw-semibold" style="color:var(--ac-deep);">{{ ev.titre }}</div>
+                            <small class="text-muted" style="font-size:.72rem;">{{ ev.description|length > 55 ? ev.description|slice(0, 55) ~ '…' : ev.description }}</small>
                         </td>
                         <td style="white-space:nowrap;">
-                            <div>{{ ev.dateDebut ? ev.dateDebut|date('d/m/Y') : '—' }}</div>
-                            <small class="text-muted">{{ ev.dateDebut ? ev.dateDebut|date('H:i') : '' }}{{ ev.dateFin ? ' → ' ~ ev.dateFin|date('H:i') : '' }}</small>
+                            <div style="font-weight:600;">{{ ev.dateDebut ? ev.dateDebut|date('d/m/Y') : '—' }}</div>
+                            <small class="text-muted" style="font-size:.72rem;">{{ ev.dateDebut ? ev.dateDebut|date('H:i') : '' }}{{ ev.dateFin ? ' → ' ~ ev.dateFin|date('H:i') : '' }}</small>
                         </td>
-                        <td>{{ ev.lieu }}</td>
+                        <td><span class="badge {{ statusClass }}">{{ statusBadge }}</span></td>
+                        <td style="font-size:.82rem;">{{ ev.lieu }}</td>
                         <td>
-                            <span class="badge bg-secondary bg-opacity-75">{{ ev.reservations|length }} / {{ ev.nbPlaces }}</span>
+                            <div class="ev-places-bar">
+                                <div class="ev-places-track">
+                                    <div class="ev-places-fill" style="width:{{ fillPct }}%; background:{% if fillPct < 50 %}linear-gradient(90deg,#059669,#34d399){% elseif fillPct < 80 %}linear-gradient(90deg,#d97706,#fbbf24){% else %}linear-gradient(90deg,#dc2626,#f87171){% endif %};"></div>
+                                </div>
+                                <span style="font-size:.75rem; font-weight:600; color:#6b7280;">{{ ev.reservations|length }}/{{ ev.nbPlaces }}</span>
+                            </div>
                         </td>
                         <td>
                             {% if ev.prix %}
-                                <span class="fw-semibold">{{ ev.prix }} TND</span>
+                                <span style="font-weight:700; color:var(--ac-deep);">{{ ev.prix }} TND</span>
                             {% else %}
-                                <span class="badge bg-success bg-opacity-75">Gratuit</span>
+                                <span class="badge bg-success">Gratuit</span>
                             {% endif %}
                         </td>
                         <td>
-                            {{ ev.organisateur.prenom }} {{ ev.organisateur.nom|first }}.
+                            <div style="display:flex; align-items:center; gap:.4rem;">
+                                <span style="width:24px; height:24px; border-radius:8px; background:linear-gradient(135deg,var(--ac-deep),var(--ac-blue)); color:#fff; display:inline-flex; align-items:center; justify-content:center; font-size:.6rem; font-weight:700;">{{ ev.organisateur.prenom|first }}{{ ev.organisateur.nom|first }}</span>
+                                <span style="font-size:.82rem;">{{ ev.organisateur.prenom }} {{ ev.organisateur.nom|first }}.</span>
+                            </div>
                         </td>
                         <td class="text-end">
                             <div class="d-flex gap-1 justify-content-end">
                                 <a href="{{ path('app_evenement_show', {id: ev.id}) }}" class="btn-action btn-view" title="Voir"><i class="fas fa-eye"></i></a>
                                 <a href="{{ path('app_evenement_edit', {id: ev.id}) }}" class="btn-action btn-edit" title="Éditer"><i class="fas fa-pen"></i></a>
-                                <form method="post" action="{{ path('app_evenement_delete', {id: ev.id}) }}" class="d-inline" onsubmit="return confirm('Supprimer cet événement ?')">
+                                {% if ev.reservations|length > 0 %}
+                                <a href="{{ path('app_evenement_cancel', {id: ev.id}) }}" class="btn-action btn-edit" title="Annuler l'événement"><i class="fas fa-ban"></i></a>
+                                {% else %}
+                                <form method="post" action="{{ path('app_evenement_delete', {id: ev.id}) }}" class="d-inline" data-confirm-title="Supprimer cet événement" data-confirm="Cette action est irréversible. Voulez-vous continuer ?">
                                     <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ ev.id) }}">
                                     <button class="btn-action btn-del" title="Supprimer"><i class="fas fa-trash"></i></button>
                                 </form>
+                                {% endif %}
                             </div>
                         </td>
                     </tr>
@@ -118,84 +145,517 @@
                 </tbody>
             </table>
         </div>
-
         {% if total_pages > 1 %}
             {% set qp = filter_input|default({}) %}
             <div class="bo-pagination">
                 <div class="page-info">Page {{ page }} sur {{ total_pages }} — {{ total }} résultat{{ total > 1 ? 's' }}</div>
-                <nav>
-                    <ul class="pagination">
-                        <li class="page-item {{ page == 1 ? 'disabled' }}">
-                            <a class="page-link" href="{{ path('app_evenement_index', qp|merge({page: page - 1})) }}"><i class="fas fa-chevron-left"></i></a>
-                        </li>
-                        {% for p in 1..total_pages %}
-                            <li class="page-item {{ p == page ? 'active' }}">
-                                <a class="page-link" href="{{ path('app_evenement_index', qp|merge({page: p})) }}">{{ p }}</a>
-                            </li>
-                        {% endfor %}
-                        <li class="page-item {{ page == total_pages ? 'disabled' }}">
-                            <a class="page-link" href="{{ path('app_evenement_index', qp|merge({page: page + 1})) }}"><i class="fas fa-chevron-right"></i></a>
-                        </li>
-                    </ul>
-                </nav>
+                <nav><ul class="pagination">
+                    <li class="page-item {{ page == 1 ? 'disabled' }}"><a class="page-link" href="{{ path('app_evenement_index', qp|merge({page: page - 1})) }}"><i class="fas fa-chevron-left"></i></a></li>
+                    {% for p in 1..total_pages %}<li class="page-item {{ p == page ? 'active' }}"><a class="page-link" href="{{ path('app_evenement_index', qp|merge({page: p})) }}">{{ p }}</a></li>{% endfor %}
+                    <li class="page-item {{ page == total_pages ? 'disabled' }}"><a class="page-link" href="{{ path('app_evenement_index', qp|merge({page: page + 1})) }}"><i class="fas fa-chevron-right"></i></a></li>
+                </ul></nav>
             </div>
         {% endif %}
     {% else %}
-        <div class="bo-empty">
-            <i class="fas fa-calendar-times"></i>
-            <p>Aucun événement trouvé</p>
-        </div>
+        <div class="bo-empty"><i class="fas fa-calendar-times"></i><p>Aucun événement trouvé</p></div>
     {% endif %}
 </div>
 
 {% else %}
-{# ===================== FRONTOFFICE CARD VIEW ===================== #}
-<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-    {% for ev in evenements %}
-        <div class="col">
-            <div class="card h-100 shadow-sm" style="border:none; border-radius:14px; overflow:hidden;">
-                {% if ev.image %}
-                    <img src="{{ ev.image }}" class="card-img-top" alt="{{ ev.titre }}" style="height:180px; object-fit:cover;">
-                {% else %}
-                    <div class="card-img-top d-flex align-items-center justify-content-center" style="height:180px; background:linear-gradient(135deg,var(--ac-sky),var(--ac-lavender));">
-                        <i class="fas fa-palette" style="font-size:2.5rem; color:#fff; opacity:.7;"></i>
-                    </div>
-                {% endif %}
-                <div class="card-body">
-                    <h6 class="card-title fw-bold mb-1">{{ ev.titre }}</h6>
-                    <p class="text-muted small mb-2">{{ ev.description|length > 80 ? ev.description|slice(0, 80) ~ '…' : ev.description }}</p>
-                    <div class="d-flex flex-wrap gap-1 mb-2">
-                        <span class="badge bg-light text-dark"><i class="fas fa-map-marker-alt me-1 text-muted"></i>{{ ev.lieu }}</span>
-                        <span class="badge bg-light text-dark"><i class="fas fa-clock me-1 text-muted"></i>{{ ev.dateDebut ? ev.dateDebut|date('d/m/Y H:i') : '—' }}</span>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-center">
-                        <span class="fw-bold" style="color:var(--ac-mid);">{{ ev.prix ? ev.prix ~ ' TND' : 'Gratuit' }}</span>
-                        <span class="small text-muted">{{ ev.reservations|length }}/{{ ev.nbPlaces }} places</span>
-                    </div>
-                </div>
-                <div class="card-footer bg-white border-0 pt-0 pb-3 px-3">
-                    <a href="{{ path('app_evenement_show', {id: ev.id}) }}" class="btn btn-sm w-100" style="background:var(--ac-mid); color:#fff; border-radius:10px; font-weight:600;">
-                        Voir détails
+{# ===================== FRONTOFFICE — same cards as home ===================== #}
+<style>
+    .fo-ev-header {
+        display: flex; justify-content: space-between; align-items: center;
+        margin-bottom: 1rem; padding-bottom: .5rem;
+        border-bottom: 2px solid rgba(30,15,117,.06);
+    }
+    .fo-ev-header h1 {
+        margin: 0; font-family: 'Sora', sans-serif;
+        font-size: 1.5rem; font-weight: 700; color: var(--ac-deep);
+        display: flex; align-items: center; gap: .5rem;
+    }
+    .fo-ev-header .badge { font-size: .72rem; border-radius: 8px; }
+
+    /* ===== FILTER BAR — same as home ===== */
+    .filter-bar {
+        background: #fff;
+        border-radius: 16px;
+        padding: 0.8rem 1rem;
+        box-shadow: 0 4px 16px rgba(30,15,117,0.06);
+        border: 1px solid rgba(30,15,117,0.08);
+        margin-bottom: 1.5rem;
+        display: flex; align-items: center; gap: 0.6rem;
+        flex-wrap: wrap;
+    }
+    .filter-tabs {
+        display: flex; gap: 0.3rem;
+        background: #f4f2fc;
+        border-radius: 12px;
+        padding: 0.25rem;
+    }
+    .filter-tab {
+        padding: 0.45rem 1rem;
+        border-radius: 10px;
+        border: none;
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: #666;
+        background: transparent;
+        cursor: pointer;
+        transition: all 0.25s;
+        white-space: nowrap;
+        text-decoration: none;
+        display: inline-flex; align-items: center;
+    }
+    .filter-tab.active {
+        background: linear-gradient(135deg, #1e0f75 0%, #3785d8 55%, #bf8ce1 100%);
+        color: #fff;
+        box-shadow: 0 4px 12px rgba(30,15,117,0.25);
+    }
+    .filter-tab:not(.active):hover {
+        background: rgba(30,15,117,0.06);
+        color: #1E0F75;
+    }
+    .filter-search {
+        flex: 1; min-width: 180px;
+        position: relative;
+    }
+    .filter-search input {
+        width: 100%; border: 1px solid rgba(30,15,117,0.1);
+        border-radius: 10px; padding: 0.5rem 0.8rem 0.5rem 2.2rem;
+        font-size: 0.85rem; background: #faf9fe;
+        transition: all 0.25s;
+    }
+    .filter-search input:focus {
+        outline: none;
+        border-color: #3785D8;
+        box-shadow: 0 0 0 3px rgba(55,133,216,0.1);
+        background: #fff;
+    }
+    .filter-search i {
+        position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%);
+        color: #999; font-size: 0.8rem;
+    }
+    .filter-sort {
+        border: 1px solid rgba(30,15,117,0.1);
+        border-radius: 10px; padding: 0.5rem 0.75rem;
+        font-size: 0.82rem; background: #faf9fe;
+        cursor: pointer; color: #555;
+    }
+    .filter-sort:focus { outline: none; border-color: #3785D8; }
+    .filter-toggle-adv {
+        width: 38px; height: 38px;
+        border-radius: 10px; border: 1px solid rgba(30,15,117,0.1);
+        background: #faf9fe; color: #666;
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer; transition: all 0.25s; flex-shrink: 0;
+    }
+    .filter-toggle-adv:hover, .filter-toggle-adv.active {
+        background: linear-gradient(135deg, #1e0f75 0%, #3785d8 55%, #bf8ce1 100%);
+        color: #fff; border-color: transparent;
+    }
+    .filter-btn-submit {
+        border-radius: 10px; font-weight: 700; font-size: 0.82rem;
+        padding: 0.5rem 1rem; min-width: 90px; border: none;
+        background: linear-gradient(135deg, #1e0f75 0%, #3785d8 55%, #bf8ce1 100%);
+        color: #fff; cursor: pointer; transition: all 0.2s;
+    }
+    .filter-btn-submit:hover { filter: brightness(0.95); transform: translateY(-1px); }
+    .filter-count {
+        display: inline-flex; align-items: center; justify-content: center;
+        background: rgba(30,15,117,0.08); color: #1E0F75;
+        border-radius: 6px; font-size: 0.7rem; font-weight: 700;
+        min-width: 20px; height: 18px; padding: 0 4px; margin-left: 4px;
+    }
+    .filter-tab.active .filter-count {
+        background: rgba(255,255,255,0.25); color: #fff;
+    }
+    .filter-advanced {
+        background: #fff;
+        border-radius: 0 0 16px 16px;
+        padding: 0.8rem 1rem;
+        box-shadow: 0 4px 16px rgba(30,15,117,0.06);
+        border: 1px solid rgba(30,15,117,0.08);
+        border-top: none;
+        margin-top: -1.5rem; margin-bottom: 1.5rem;
+        animation: slideDown 0.3s ease;
+    }
+    @keyframes slideDown { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+    .filter-adv-row {
+        display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: end;
+    }
+    .filter-adv-group { flex: 1; min-width: 140px; }
+    .filter-adv-group label {
+        display: block; font-size: 0.72rem; font-weight: 700;
+        color: #666; margin-bottom: 0.2rem;
+    }
+    .filter-adv-group input {
+        width: 100%; border: 1px solid rgba(30,15,117,0.1);
+        border-radius: 8px; padding: 0.4rem 0.6rem;
+        font-size: 0.82rem; background: #faf9fe;
+    }
+    .filter-adv-group input:focus {
+        outline: none; border-color: #3785D8;
+        box-shadow: 0 0 0 2px rgba(55,133,216,0.1);
+    }
+    .filter-reset-btn {
+        border: 1px solid rgba(220,53,69,0.3);
+        background: rgba(220,53,69,0.05);
+        color: #dc3545; border-radius: 8px;
+        padding: 0.4rem 0.8rem; font-size: 0.78rem;
+        font-weight: 600; cursor: pointer;
+        transition: all 0.2s; white-space: nowrap;
+        text-decoration: none; display: inline-block;
+    }
+    .filter-reset-btn:hover {
+        background: #dc3545; color: #fff;
+    }
+
+    /* Event cards — same as home */
+    .ev-card {
+        background: #fff; border-radius: 18px; overflow: hidden;
+        box-shadow: 0 8px 24px rgba(30,15,117,.07);
+        border: 1px solid rgba(30,15,117,.06);
+        transition: all .3s cubic-bezier(.4,0,.2,1);
+        height: 100%; display: flex; flex-direction: column; position: relative;
+    }
+    .ev-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 20px 40px rgba(30,15,117,.15);
+        border-color: rgba(55,133,216,.2);
+    }
+    .ev-card.ev-past { opacity: .85; }
+    .ev-card.ev-past .ev-card-img img,
+    .ev-card.ev-past .ev-card-img .placeholder-art { filter: grayscale(60%); }
+    .ev-card-owner-badge {
+        position: absolute; top: 52px; right: 12px; z-index: 2;
+        font-size: .65rem; font-weight: 700; padding: .22rem .55rem;
+        border-radius: 8px; backdrop-filter: blur(8px);
+        display: flex; align-items: center; gap: .25rem;
+    }
+    .ev-card-owner-badge.mine-badge {
+        background: rgba(30,15,117,.88); color: #fff;
+    }
+    .ev-card-owner-badge.registered-badge {
+        background: rgba(55,133,216,.9); color: #fff;
+    }
+    .ev-card-img { height: 180px; position: relative; overflow: hidden; }
+    .ev-card-img img { width: 100%; height: 100%; object-fit: cover; transition: transform .4s; }
+    .ev-card:hover .ev-card-img img { transform: scale(1.05); }
+    .ev-card-img .placeholder-art {
+        width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+        font-size: 3rem; background: linear-gradient(135deg, #f0eaf9, #e3ecf5);
+    }
+    .ev-card-date-badge {
+        position: absolute; top: 12px; left: 12px;
+        background: rgba(255,255,255,.95); backdrop-filter: blur(8px);
+        border-radius: 12px; padding: .4rem .6rem; text-align: center;
+        box-shadow: 0 4px 12px rgba(0,0,0,.1); line-height: 1;
+    }
+    .ev-card-date-badge .day { display: block; font-size: 1.2rem; font-weight: 800; color: #1E0F75; }
+    .ev-card-date-badge .month { display: block; font-size: .65rem; font-weight: 700; color: #3785D8; text-transform: uppercase; }
+    .ev-card-price-tag {
+        position: absolute; top: 12px; right: 12px;
+        padding: .3rem .7rem; border-radius: 10px;
+        font-size: .75rem; font-weight: 700; backdrop-filter: blur(8px);
+    }
+    .ev-card-price-tag.free { background: rgba(25,135,84,.9); color: #fff; }
+    .ev-card-price-tag.paid { background: rgba(255,193,7,.95); color: #1E0F75; }
+    .ev-card-timing-badge {
+        position: absolute; bottom: 8px; left: 12px;
+        font-size: .65rem; font-weight: 700; padding: .22rem .55rem;
+        border-radius: 8px; backdrop-filter: blur(8px); z-index: 2;
+    }
+    .ev-badge-today { background: linear-gradient(135deg,#059669,#10b981); color: #fff; }
+    .ev-badge-tomorrow { background: linear-gradient(135deg,#2563eb,#3b82f6); color: #fff; }
+    .ev-badge-week { background: linear-gradient(135deg,#7c3aed,#8b5cf6); color: #fff; }
+    .ev-badge-days { background: linear-gradient(135deg,var(--ac-mid),var(--ac-lavender)); color: #fff; }
+    .ev-badge-past { background: rgba(55,65,81,.85); color: #fff; }
+    .ev-card-body { padding: 1rem 1.2rem 1.1rem; flex: 1; display: flex; flex-direction: column; }
+    .ev-card-body h3 {
+        font-size: 1rem; font-weight: 700; color: #1E0F75; margin-bottom: .35rem;
+        line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .ev-card-desc {
+        font-size: .78rem; color: #777; margin-bottom: .5rem;
+        display: -webkit-box; -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical; overflow: hidden; line-height: 1.45;
+    }
+    .ev-card-info { display: flex; flex-direction: column; gap: .25rem; margin-bottom: .6rem; font-size: .8rem; color: #666; }
+    .ev-card-info > div { display: flex; align-items: center; gap: .4rem; }
+    .ev-card-info i { color: #3785D8; width: 15px; text-align: center; font-size: .75rem; }
+    .ev-card-footer {
+        margin-top: auto; display: flex; justify-content: space-between; align-items: center;
+        padding-top: .65rem; border-top: 1px solid rgba(30,15,117,.06);
+    }
+    .ev-card-organizer { display: flex; align-items: center; gap: .4rem; font-size: .75rem; color: #888; }
+    .ev-card-organizer .avatar {
+        width: 24px; height: 24px; border-radius: 8px;
+        background: linear-gradient(135deg, #1E0F75, #3785D8); color: #fff;
+        display: flex; align-items: center; justify-content: center;
+        font-size: .6rem; font-weight: 700;
+    }
+    .ev-card-places { display: flex; align-items: center; gap: .4rem; font-size: .75rem; }
+    .places-bar { width: 50px; height: 4px; background: #eee; border-radius: 4px; overflow: hidden; }
+    .places-bar-fill { height: 100%; border-radius: 4px; transition: width .4s; }
+    .places-bar-fill.low { background: linear-gradient(90deg, #198754, #20c997); }
+    .places-bar-fill.medium { background: linear-gradient(90deg, #ffc107, #fd7e14); }
+    .places-bar-fill.high { background: linear-gradient(90deg, #dc3545, #e74c3c); }
+    .ev-card-owner-line {
+        position: absolute; bottom: 0; left: 0; right: 0; height: 3px;
+        background: linear-gradient(90deg, #1E0F75, #3785D8, #BF8CE1);
+    }
+
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+    .ev-card { animation: fadeInUp .4s ease both; }
+
+    .fo-pagination .pagination { gap: 0.6rem; list-style: none; padding-left: 0; }
+    .fo-pagination .page-link {
+        border-radius: 12px; color: #374151; font-weight: 600; font-size: .9rem;
+        padding: .5rem .85rem; border: 1.5px solid rgba(30,15,117,.1); background: #fff;
+        transition: all .2s ease; text-decoration: none; display: block; min-width: 2.5rem; text-align: center;
+    }
+    .fo-pagination .page-item:not(.disabled) .page-link:hover { background: rgba(55,133,216,.08); border-color: rgba(55,133,216,.25); color: #1e3a5f; }
+    .fo-pagination .page-item.active .page-link {
+        background: var(--ac-mid); border-color: var(--ac-mid); color: #fff;
+        box-shadow: 0 3px 12px rgba(55,133,216,.3);
+    }
+    .fo-pagination .page-item.disabled .page-link { color: #d1d5db; border-color: #e5e7eb; background: #f9fafb; cursor: not-allowed; }
+
+    .fo-empty {
+        background: #fff; border: 1px solid rgba(30,15,117,.06);
+        border-radius: 18px; box-shadow: 0 8px 24px rgba(30,15,117,.06);
+        text-align: center; padding: 3rem 1.5rem; color: #6b7280;
+    }
+    .fo-empty i { font-size: 2.5rem; color: rgba(191,140,225,.4); margin-bottom: .7rem; display: block; }
+</style>
+
+<div class="fo-ev-header">
+    <h1>
+        <i class="fas fa-calendar-alt" style="color:var(--ac-mid);"></i> Événements
+        <span class="badge bg-primary bg-opacity-75">{{ total }}</span>
+    </h1>
+    <div class="d-flex gap-2">
+        {% if is_granted('ROLE_ARTISTE') %}
+            <a href="{{ path('app_evenement_new') }}" class="btn btn-primary" style="border-radius:12px; font-weight:700; font-size:.85rem;">
+                <i class="fas fa-plus me-1"></i> Créer
+            </a>
+        {% endif %}
+    </div>
+</div>
+
+{# ---- Filter Bar — same as home ---- #}
+{% set hasAdvFilters = filter_input.lieu|default('') or filter_input.date_start|default('') or filter_input.date_end|default('') or filter_input.prix_min|default('') or filter_input.prix_max|default('') %}
+{% set qp = { q: filter_input.q|default(''), lieu: filter_input.lieu|default(''), date_start: filter_input.date_start|default(''), date_end: filter_input.date_end|default(''), sort: filter_input.sort|default('date_asc'), scope: scope|default('all'), prix_min: filter_input.prix_min|default(''), prix_max: filter_input.prix_max|default('') } %}
+{% set isFreeActive = filter_input.prix_max|default('') == '0' and (filter_input.prix_min|default('')) == '' %}
+{% set isPaidActive = (filter_input.prix_min|default('')) != '' and (filter_input.prix_max|default('')) == '' %}
+<form method="get" action="{{ path('app_evenement_index') }}" id="eventFilterForm">
+    <input type="hidden" name="scope" value="{{ scope|default('all') }}">
+    <div class="filter-bar" id="eventFilterBar">
+        <div class="filter-tabs">
+            {% if app.user and not is_granted('ROLE_ADMIN') %}
+                {% if is_artist|default(false) %}
+                    <a href="{{ path('app_evenement_index', qp|merge({ scope: 'mine', page: 1, prix_min: '', prix_max: '' })) }}" class="filter-tab {{ scope|default('all') == 'mine' ? 'active' : '' }}">
+                        <i class="fas fa-paint-brush me-1"></i>Événements que je crée
+                        <span class="filter-count">{{ total_mine|default(0) }}</span>
                     </a>
-                    {% if app.user and (app.user == ev.organisateur) %}
-                        <a href="{{ path('app_evenement_edit', {id: ev.id}) }}" class="btn btn-sm btn-outline-secondary w-100 mt-1" style="border-radius:10px;">Modifier</a>
-                    {% endif %}
-                </div>
+                    <a href="{{ path('app_evenement_index', qp|merge({ scope: 'others', page: 1, prix_min: '', prix_max: '' })) }}" class="filter-tab {{ scope|default('all') == 'others' ? 'active' : '' }}">
+                        <i class="fas fa-users me-1"></i>Autres artistes
+                        <span class="filter-count">{{ total_others|default(0) }}</span>
+                    </a>
+                    <a href="{{ path('app_evenement_index', qp|merge({ scope: 'all', page: 1, prix_min: '', prix_max: '' })) }}" class="filter-tab {{ scope|default('all') == 'all' ? 'active' : '' }}">
+                        <i class="fas fa-globe-americas me-1"></i>Tous
+                        <span class="filter-count">{{ total_all|default(total) }}</span>
+                    </a>
+                {% else %}
+                    <a href="{{ path('app_evenement_index', qp|merge({ scope: 'others', page: 1, prix_min: '', prix_max: '' })) }}" class="filter-tab {{ scope|default('all') == 'others' ? 'active' : '' }}">
+                        <i class="fas fa-compass me-1"></i>À découvrir
+                        <span class="filter-count">{{ total_others|default(0) }}</span>
+                    </a>
+                    <a href="{{ path('app_evenement_index', qp|merge({ scope: 'all', page: 1, prix_min: '', prix_max: '' })) }}" class="filter-tab {{ scope|default('all') == 'all' ? 'active' : '' }}">
+                        <i class="fas fa-globe-americas me-1"></i>Tous
+                        <span class="filter-count">{{ total_all|default(total) }}</span>
+                    </a>
+                {% endif %}
+            {% else %}
+                <a href="{{ path('app_evenement_index', qp|merge({ scope: 'all', page: 1, prix_min: '', prix_max: '' })) }}" class="filter-tab {{ scope|default('all') == 'all' ? 'active' : '' }}">
+                    <i class="fas fa-globe-americas me-1"></i>Tous
+                    <span class="filter-count">{{ total }}</span>
+                </a>
+            {% endif %}
+            <a href="{{ path('app_evenement_index', qp|merge({ scope: scope|default('all'), page: 1, prix_min: '', prix_max: '0' })) }}" class="filter-tab {{ isFreeActive ? 'active' : '' }}">
+                <i class="fas fa-gift me-1"></i>Gratuit
+            </a>
+            <a href="{{ path('app_evenement_index', qp|merge({ scope: scope|default('all'), page: 1, prix_min: '0.01', prix_max: '' })) }}" class="filter-tab {{ isPaidActive ? 'active' : '' }}">
+                <i class="fas fa-coins me-1"></i>Payant
+            </a>
+        </div>
+        <div class="filter-search">
+            <i class="fas fa-search"></i>
+            <input type="text" name="q" value="{{ filter_input.q|default('') }}" placeholder="Rechercher un événement...">
+        </div>
+        <select name="sort" class="filter-sort">
+            <option value="date_asc" {{ filter_input.sort == 'date_asc' ? 'selected' : '' }}>Date (proche)</option>
+            <option value="date_desc" {{ filter_input.sort == 'date_desc' ? 'selected' : '' }}>Date (lointaine)</option>
+            <option value="prix_asc" {{ filter_input.sort == 'prix_asc' ? 'selected' : '' }}>Prix croissant</option>
+            <option value="prix_desc" {{ filter_input.sort == 'prix_desc' ? 'selected' : '' }}>Prix décroissant</option>
+            <option value="titre_asc" {{ filter_input.sort == 'titre_asc' ? 'selected' : '' }}>Nom A-Z</option>
+            <option value="titre_desc" {{ filter_input.sort == 'titre_desc' ? 'selected' : '' }}>Nom Z-A</option>
+            <option value="created_desc" {{ filter_input.sort == 'created_desc' ? 'selected' : '' }}>Récents</option>
+        </select>
+        <button type="submit" class="filter-btn-submit">
+            <span class="btn-label"><i class="fas fa-search me-1"></i> Filtrer</span>
+            <span class="btn-spinner" style="display:none;"><i class="fas fa-spinner fa-spin"></i></span>
+        </button>
+        <button type="button" class="filter-toggle-adv {{ hasAdvFilters ? 'active' : '' }}" onclick="this.classList.toggle('active');document.getElementById('eventAdvFilters').classList.toggle('d-none');" title="Filtres avancés">
+            <i class="fas fa-sliders-h"></i>
+        </button>
+    </div>
+    <div class="filter-advanced {{ not hasAdvFilters ? 'd-none' : '' }}" id="eventAdvFilters">
+        <div class="filter-adv-row">
+            <div class="filter-adv-group">
+                <label><i class="fas fa-calendar me-1"></i>Date début</label>
+                <input type="date" name="date_start" value="{{ filter_input.date_start|default('') }}">
+            </div>
+            <div class="filter-adv-group">
+                <label><i class="fas fa-calendar-check me-1"></i>Date fin</label>
+                <input type="date" name="date_end" value="{{ filter_input.date_end|default('') }}">
+            </div>
+            <div class="filter-adv-group">
+                <label><i class="fas fa-map-marker-alt me-1"></i>Lieu</label>
+                <input type="text" name="lieu" value="{{ filter_input.lieu|default('') }}" placeholder="Filtrer par lieu...">
+            </div>
+            <div class="filter-adv-group">
+                <label><i class="fas fa-coins me-1"></i>Prix max (TND)</label>
+                <input type="number" name="prix_max" min="0" step="0.01" value="{{ filter_input.prix_max|default('') }}" placeholder="Max">
+            </div>
+            <div class="filter-adv-group">
+                <label><i class="fas fa-coins me-1"></i>Prix min (TND)</label>
+                <input type="number" name="prix_min" min="0" step="0.01" value="{{ filter_input.prix_min|default('') }}" placeholder="0">
+            </div>
+            <div class="filter-adv-group" style="align-self:end;">
+                <a href="{{ path('app_evenement_index', { scope: scope|default('all') }) }}" class="filter-reset-btn">
+                    <i class="fas fa-undo me-1"></i>Réinitialiser
+                </a>
             </div>
         </div>
-    {% else %}
-        <div class="col-12">
-            <div class="text-center py-5 text-muted">
-                <i class="fas fa-calendar-times" style="font-size:2rem;"></i>
-                <p class="mt-2">Aucun événement trouvé</p>
-            </div>
+    </div>
+</form>
+
+{# ---- Event Cards Grid ---- #}
+{% if evenements is not empty %}
+<div class="row g-3">
+    {% set icons = ['🎨', '🎭', '🎵', '🎪', '🎬', '🎤', '🖼️', '✨', '🎻'] %}
+    {% for ev in evenements %}
+        {% set nowTs = "now"|date('U') %}
+        {% set evStartTs = ev.dateDebut ? ev.dateDebut|date('U') : 0 %}
+        {% set isPassed = ev.dateDebut and evStartTs < nowTs %}
+        {% set reservedCount = ev.reservations|length %}
+        {% set fillPct = ev.nbPlaces > 0 ? ((reservedCount / ev.nbPlaces) * 100)|round : 0 %}
+        {% set isMine = app.user and ev.organisateur and app.user.id == ev.organisateur.id %}
+
+        {% if not isPassed %}
+            {% set today = "now"|date('Y-m-d') %}
+            {% set tomorrow = "now"|date_modify('+1 day')|date('Y-m-d') %}
+            {% set evDay = ev.dateDebut ? ev.dateDebut|date('Y-m-d') : '' %}
+            {% set evWeek = ev.dateDebut ? ev.dateDebut|date('Y-W') : '' %}
+            {% set nowWeek = "now"|date('Y-W') %}
+            {% if evDay == today %}
+                {% set timingLabel = "Aujourd'hui" %}{% set timingClass = 'ev-badge-today' %}
+            {% elseif evDay == tomorrow %}
+                {% set timingLabel = 'Demain' %}{% set timingClass = 'ev-badge-tomorrow' %}
+            {% elseif evWeek == nowWeek %}
+                {% set timingLabel = 'Cette semaine' %}{% set timingClass = 'ev-badge-week' %}
+            {% else %}
+                {% set daysLeft = ((evStartTs - nowTs) / 86400)|round %}
+                {% set timingLabel = daysLeft > 0 ? ('J-' ~ daysLeft) : '' %}
+                {% set timingClass = 'ev-badge-days' %}
+            {% endif %}
+        {% else %}
+            {% set timingLabel = 'Passé' %}{% set timingClass = 'ev-badge-past' %}
+        {% endif %}
+
+        <div class="col-sm-6 col-lg-4" style="animation-delay:{{ loop.index0 * 0.05 }}s;">
+            <a href="{{ path('app_evenement_show', {id: ev.id}) }}" class="text-decoration-none">
+                <div class="ev-card {{ isPassed ? 'ev-past' : '' }}">
+                    <div class="ev-card-img">
+                        {% if ev.image %}
+                            <img src="{{ ev.image }}" alt="{{ ev.titre }}" loading="lazy">
+                        {% else %}
+                            <div class="placeholder-art" style="background:linear-gradient({{ loop.index * 50 + 120 }}deg, rgba(30,15,117,.1), rgba(55,133,216,.15), rgba(191,140,225,.1));">
+                                {{ icons[loop.index0 % icons|length] }}
+                            </div>
+                        {% endif %}
+                        {% if ev.dateDebut %}
+                            <div class="ev-card-date-badge">
+                                <span class="day">{{ ev.dateDebut|date('d') }}</span>
+                                <span class="month">{{ ev.dateDebut|date('M') }}</span>
+                            </div>
+                        {% endif %}
+                        <div class="ev-card-price-tag {{ ev.prix ? 'paid' : 'free' }}">
+                            {{ ev.prix ? ev.prix ~ ' TND' : 'Gratuit' }}
+                        </div>
+                        {% if timingLabel %}
+                            <div class="ev-card-timing-badge {{ timingClass }}">
+                                {% if isPassed %}<i class="fas fa-clock me-1"></i>{% endif %}{{ timingLabel }}
+                            </div>
+                        {% endif %}
+                        {% if isMine %}
+                            <div class="ev-card-owner-badge mine-badge">
+                                <i class="fas fa-palette"></i> Mon événement
+                            </div>
+                        {% elseif registered_event_ids is defined and ev.id in registered_event_ids %}
+                            <div class="ev-card-owner-badge registered-badge">
+                                <i class="fas fa-ticket-alt"></i> Inscrit
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="ev-card-body">
+                        <h3>{{ ev.titre }}</h3>
+                        <div class="ev-card-desc">{{ ev.description|length > 80 ? ev.description|slice(0, 80) ~ '...' : ev.description }}</div>
+                        <div class="ev-card-info">
+                            <div><i class="fas fa-map-marker-alt"></i> {{ ev.lieu }}</div>
+                            <div><i class="fas fa-calendar-alt"></i> {{ ev.dateDebut ? ev.dateDebut|date('d/m/Y') : 'TBD' }}{% if ev.dateFin %} → {{ ev.dateFin|date('d/m/Y') }}{% endif %}</div>
+                            <div><i class="fas fa-clock"></i> {{ ev.dateDebut ? ev.dateDebut|date('H\\hi') : '' }}{% if ev.dateFin %} — {{ ev.dateFin|date('H\\hi') }}{% endif %}</div>
+                            {% if ev.ageMin or ev.ageMax %}
+                                <div><i class="fas fa-child"></i>
+                                    {% if ev.ageMin and ev.ageMax %}{{ ev.ageMin }} - {{ ev.ageMax }} ans
+                                    {% elseif ev.ageMin %}Dès {{ ev.ageMin }} ans
+                                    {% else %}Jusqu'à {{ ev.ageMax }} ans{% endif %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="ev-card-footer">
+                            {% if ev.organisateur %}
+                                <div class="ev-card-organizer">
+                                    <div class="avatar">{{ ev.organisateur.prenom|first }}{{ ev.organisateur.nom|first }}</div>
+                                    <span>{{ ev.organisateur.prenom }}</span>
+                                </div>
+                            {% else %}
+                                <div></div>
+                            {% endif %}
+                            <div class="ev-card-places">
+                                <div class="places-bar">
+                                    <div class="places-bar-fill {% if fillPct < 50 %}low{% elseif fillPct < 80 %}medium{% else %}high{% endif %}"
+                                         style="width:{{ fillPct }}%;"></div>
+                                </div>
+                                <span class="text-muted">{{ ev.nbPlaces - reservedCount }}/{{ ev.nbPlaces }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    {% if isMine %}
+                        <div class="ev-card-owner-line"></div>
+                    {% endif %}
+                </div>
+            </a>
         </div>
     {% endfor %}
 </div>
 
 {% if total_pages > 1 %}
     {% set qp = filter_input|default({}) %}
-    <nav class="mt-4">
+    <nav class="mt-4 fo-pagination">
         <ul class="pagination justify-content-center">
             <li class="page-item {{ page == 1 ? 'disabled' }}">
                 <a class="page-link" href="{{ path('app_evenement_index', qp|merge({page: page - 1})) }}"><i class="fas fa-chevron-left"></i></a>
@@ -211,5 +671,14 @@
         </ul>
     </nav>
 {% endif %}
+
+{% else %}
+    <div class="fo-empty">
+        <i class="fas fa-calendar-times"></i>
+        <p class="mb-1" style="font-size:.95rem; font-weight:600;">Aucun événement trouvé</p>
+        <p class="mb-0" style="font-size:.82rem;">Essayez de modifier vos filtres ou <a href="{{ path('app_evenement_index') }}" style="color:var(--ac-mid); font-weight:700;">réinitialisez la recherche</a>.</p>
+    </div>
+{% endif %}
+
 {% endif %}
 {% endblock %}

@@ -52,4 +52,51 @@ class DonationRepository extends ServiceEntityRepository
 
         return $qb->getQuery()->getResult();
     }
+
+    public function countThisMonth(): int
+    {
+        return (int) $this->createQueryBuilder('d')
+            ->select('COUNT(d.id)')
+            ->where('d.dateDon >= :start')
+            ->setParameter('start', new \DateTimeImmutable('first day of this month midnight'))
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    public function getMonthlyDonations(int $months = 6): array
+    {
+        $conn = $this->getEntityManager()->getConnection();
+        $rows = $conn->executeQuery("
+            SELECT DATE_FORMAT(date_don, '%Y-%m') AS m, COUNT(*) AS c
+            FROM donation
+            WHERE date_don >= DATE_SUB(CURRENT_DATE, INTERVAL :months MONTH)
+            GROUP BY m ORDER BY m
+        ", ['months' => $months])->fetchAllAssociative();
+
+        $data = [];
+        $period = new \DateTimeImmutable("-{$months} months");
+        for ($i = 0; $i < $months; $i++) {
+            $d = $period->modify("+{$i} months");
+            $key = $d->format('Y-m');
+            $data[$key] = ['month' => $d->format('M Y'), 'count' => 0];
+        }
+        foreach ($rows as $r) {
+            if (isset($data[$r['m']])) {
+                $data[$r['m']]['count'] = (int) $r['c'];
+            }
+        }
+
+        return array_values($data);
+    }
+
+    public function countByType(): array
+    {
+        return $this->createQueryBuilder('d')
+            ->select('t.libelle AS typeName, COUNT(d.id) AS count')
+            ->leftJoin('d.type', 't')
+            ->groupBy('t.id')
+            ->orderBy('count', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
 }

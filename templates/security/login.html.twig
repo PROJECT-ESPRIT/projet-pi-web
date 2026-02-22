@@ -47,7 +47,10 @@
 
             <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
 
-            <button type="submit" class="btn-auth mt-1">Se connecter</button>
+            <button type="submit" class="btn-auth mt-1">
+                <span class="btn-label">Se connecter</span>
+                <span class="btn-spinner" style="display:none;" aria-hidden="true"><i class="fas fa-spinner fa-spin"></i></span>
+            </button>
         </form>
 
         {% if error %}
