@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin:0; padding:0; background:#f4f5f7; font-family:'Segoe UI',Roboto,Arial,sans-serif;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f5f7; padding:40px 0;">
+        <tr>
+            <td align="center">
+                <table width="560" cellpadding="0" cellspacing="0" style="background:#fff; border-radius:16px; overflow:hidden; box-shadow:0 4px 24px rgba(0,0,0,.06);">
+                    <tr>
+                        <td style="background:linear-gradient(135deg,#1e0f75,#6d28d9); padding:28px 40px; text-align:center;">
+                            <h1 style="margin:0; color:#fff; font-size:20px; font-weight:700;">Art Connect</h1>
+                            <p style="margin:6px 0 0; color:rgba(255,255,255,.8); font-size:14px;">Nouvelle réservation</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding:28px 40px;">
+                            <p style="margin:0 0 16px; color:#1f2937; font-size:16px;">
+                                Une nouvelle personne s’est inscrite à votre événement <strong>{{ event_title }}</strong>.
+                            </p>
+                            <table width="100%" cellpadding="0" cellspacing="0" style="background:#f9fafb; border-radius:12px; border:1px solid #e5e7eb;">
+                                <tr>
+                                    <td style="padding:18px 24px;">
+                                        <table width="100%" cellpadding="0" cellspacing="0">
+                                            <tr>
+                                                <td style="padding:6px 0; font-size:13px; color:#6b7280; font-weight:600; width:140px;">Nom</td>
+                                                <td style="padding:6px 0; font-size:14px; color:#1f2937; font-weight:600;">{{ participant_name }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding:6px 0; font-size:13px; color:#6b7280; font-weight:600; border-top:1px solid #e5e7eb;">Email</td>
+                                                <td style="padding:6px 0; font-size:14px; color:#1f2937; border-top:1px solid #e5e7eb;"><a href="mailto:{{ participant_email }}" style="color:#1c1dab; text-decoration:none;">{{ participant_email }}</a></td>
+                                            </tr>
+                                            {% if participant_phone is defined and participant_phone %}
+                                            <tr>
+                                                <td style="padding:6px 0; font-size:13px; color:#6b7280; font-weight:600; border-top:1px solid #e5e7eb;">Téléphone</td>
+                                                <td style="padding:6px 0; font-size:14px; color:#1f2937; border-top:1px solid #e5e7eb;">{{ participant_phone }}</td>
+                                            </tr>
+                                            {% endif %}
+                                            {% if seat_label is defined and seat_label %}
+                                            <tr>
+                                                <td style="padding:6px 0; font-size:13px; color:#6b7280; font-weight:600; border-top:1px solid #e5e7eb;">Place / Siège</td>
+                                                <td style="padding:6px 0; font-size:14px; color:#1f2937; font-weight:600; border-top:1px solid #e5e7eb;">{{ seat_label }}</td>
+                                            </tr>
+                                            {% endif %}
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                            <p style="margin:20px 0 0; color:#9ca3af; font-size:12px; line-height:1.5;">
+                                Vous pouvez gérer vos réservations depuis votre espace organisateur sur Art Connect.
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="background:#f9fafb; padding:20px 40px; text-align:center; border-top:1px solid #e5e7eb;">
+                            <p style="margin:0; color:#9ca3af; font-size:12px;">
+                                &copy; {{ 'now'|date('Y') }} Art Connect — Tous droits réservés
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

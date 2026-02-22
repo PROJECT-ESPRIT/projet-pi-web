@@ -1,0 +1,137 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Réservations reçues{% endblock %}
+
+{% block body %}
+<div class="bo-page-header">
+    <h1>
+        <i class="fas fa-ticket-alt"></i> Réservations reçues
+        <span class="badge bg-primary bg-opacity-75">{{ total }}</span>
+    </h1>
+    <div class="bo-actions">
+        <a href="{{ path('app_artist_event_stats') }}" class="btn btn-outline-primary">
+            <i class="fas fa-chart-line me-1"></i> Stats
+        </a>
+    </div>
+</div>
+
+<form method="get" action="{{ path('app_reservation_artist_owner') }}" class="bo-filter-bar">
+    <div class="row g-2 align-items-end">
+        <div class="col-12 col-md-4">
+            <label>Recherche</label>
+            <input type="text" name="q" class="form-control" value="{{ filter_input.q|default('') }}" placeholder="Événement, lieu, participant…">
+        </div>
+        <div class="col-6 col-md-2">
+            <label>Date début</label>
+            <input type="date" name="date_start" class="form-control" value="{{ filter_input.date_start|default('') }}">
+        </div>
+        <div class="col-6 col-md-2">
+            <label>Date fin</label>
+            <input type="date" name="date_end" class="form-control" value="{{ filter_input.date_end|default('') }}">
+        </div>
+        <div class="col-6 col-md-2">
+            <label>Statut</label>
+            <select name="status" class="form-select">
+                <option value="" {{ filter_input.status|default('') == '' ? 'selected' : '' }}>Tous</option>
+                <option value="CONFIRMED" {{ filter_input.status|default('') == 'CONFIRMED' ? 'selected' : '' }}>Confirmé</option>
+                <option value="PENDING" {{ filter_input.status|default('') == 'PENDING' ? 'selected' : '' }}>En attente</option>
+                <option value="CANCELLED" {{ filter_input.status|default('') == 'CANCELLED' ? 'selected' : '' }}>Annulé</option>
+            </select>
+        </div>
+        <div class="col-6 col-md-2">
+            <label>Tri</label>
+            <select name="sort" class="form-select">
+                <option value="date_desc" {{ filter_input.sort|default('date_desc') == 'date_desc' ? 'selected' : '' }}>Réservation récent</option>
+                <option value="date_asc" {{ filter_input.sort|default('date_desc') == 'date_asc' ? 'selected' : '' }}>Réservation ancien</option>
+                <option value="event_date_desc" {{ filter_input.sort|default('date_desc') == 'event_date_desc' ? 'selected' : '' }}>Événement récent</option>
+                <option value="event_date_asc" {{ filter_input.sort|default('date_desc') == 'event_date_asc' ? 'selected' : '' }}>Événement ancien</option>
+            </select>
+        </div>
+        <div class="col-12 col-md-4 d-flex gap-2">
+            <input type="hidden" name="page" value="1">
+            <button class="btn btn-primary flex-grow-1"><i class="fas fa-search me-1"></i> Filtrer</button>
+            <a href="{{ path('app_reservation_artist_owner') }}" class="btn btn-outline-secondary">Réinitialiser</a>
+        </div>
+    </div>
+</form>
+
+<div class="bo-table-card">
+    {% if reservations is not empty %}
+        <div class="table-responsive">
+            <table class="table bo-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Événement</th>
+                        <th>Participant</th>
+                        <th>Place</th>
+                        <th>Date résa</th>
+                        <th>Statut</th>
+                        <th class="text-end">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in reservations %}
+                        <tr>
+                            <td class="text-muted">{{ r.id }}</td>
+                            <td>
+                                <div class="fw-semibold">{{ r.evenement.titre }}</div>
+                                <small class="text-muted">{{ r.evenement.lieu }}</small>
+                            </td>
+                            <td>
+                                <div class="fw-semibold">{{ r.participant.prenom }} {{ r.participant.nom }}</div>
+                                <small class="text-muted">{{ r.participant.email }}</small>
+                            </td>
+                            <td>{{ r.seatLabel ?: '—' }}</td>
+                            <td>{{ r.dateReservation ? r.dateReservation|date('d/m/Y H:i') : '—' }}</td>
+                            <td>
+                                {% if r.status == 'CONFIRMED' %}
+                                    <span class="badge bg-success bg-opacity-75">Confirmé</span>
+                                {% elseif r.status == 'CANCELLED' %}
+                                    <span class="badge bg-danger bg-opacity-75">Annulé</span>
+                                {% elseif r.status == 'PENDING' %}
+                                    <span class="badge bg-warning text-dark">En attente</span>
+                                {% else %}
+                                    <span class="badge bg-secondary bg-opacity-75">{{ r.status }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                <a href="{{ path('app_evenement_show', {id: r.evenement.id}) }}" class="btn-action btn-view" title="Voir l'événement">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if total_pages > 1 %}
+            {% set qp = filter_input|default({}) %}
+            <div class="bo-pagination">
+                <div class="page-info">Page {{ page }} sur {{ total_pages }} — {{ total }} résultat{{ total > 1 ? 's' }}</div>
+                <nav>
+                    <ul class="pagination">
+                        <li class="page-item {{ page == 1 ? 'disabled' }}">
+                            <a class="page-link" href="{{ path('app_reservation_artist_owner', qp|merge({page: page - 1})) }}"><i class="fas fa-chevron-left"></i></a>
+                        </li>
+                        {% for p in 1..total_pages %}
+                            <li class="page-item {{ p == page ? 'active' }}">
+                                <a class="page-link" href="{{ path('app_reservation_artist_owner', qp|merge({page: p})) }}">{{ p }}</a>
+                            </li>
+                        {% endfor %}
+                        <li class="page-item {{ page == total_pages ? 'disabled' }}">
+                            <a class="page-link" href="{{ path('app_reservation_artist_owner', qp|merge({page: page + 1})) }}"><i class="fas fa-chevron-right"></i></a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        {% endif %}
+    {% else %}
+        <div class="bo-empty">
+            <i class="fas fa-ticket-alt"></i>
+            <p>Aucune réservation reçue pour vos événements</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

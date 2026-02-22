@@ -68,16 +68,20 @@ class RegistrationController extends AbstractController
                 )
             );
 
+            // Send verification email before persisting so it is sent in the same request with correct token
+            try {
+                $emailService->sendEmailVerification($user);
+            } catch (\Throwable $e) {
+                $this->addFlash('warning', 'Erreur d\'envoi : ' . $e->getMessage());
+                return $this->render('registration/register.html.twig', [
+                    'registrationForm' => $form,
+                ]);
+            }
+
             $entityManager->persist($user);
             $entityManager->flush();
 
-            try {
-                $emailService->sendEmailVerification($user);
-                $this->addFlash('success', 'Un email de vérification a été envoyé à ' . $email);
-            } catch (\Exception $e) {
-                $this->addFlash('warning', 'Erreur d\'envoi : ' . $e->getMessage());
-            }
-
+            $this->addFlash('success', 'Un email de vérification a été envoyé à ' . $email);
             return $this->redirectToRoute('app_registration_confirmation', ['email' => $email]);
         }
 

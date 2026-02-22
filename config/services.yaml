@@ -6,6 +6,7 @@ parameters:
     mailer_from: '%env(default:mailer_from_default:MAILER_FROM)%'
     email_verification_ttl_hours: '%env(int:EMAIL_VERIFICATION_TTL_HOURS)%'
     password_reset_ttl_minutes: '%env(int:PASSWORD_RESET_TTL_MINUTES)%'
+    stripe_publishable_key: '%env(default::STRIPE_PUBLISHABLE_KEY)%'
 
 services:
     # Configuration par défaut

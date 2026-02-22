@@ -61,6 +61,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $emailVerificationSentAt = null;
 
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $dateNaissance = null;
+
+    #[ORM\Column(length: 500, nullable: true)]
+    private ?string $profileImageUrl = null;
+
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable();
@@ -180,6 +186,42 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->telephone = $telephone;
 
         return $this;
+    }
+
+    public function getDateNaissance(): ?\DateTimeImmutable
+    {
+        return $this->dateNaissance;
+    }
+
+    public function setDateNaissance(?\DateTimeImmutable $dateNaissance): static
+    {
+        $this->dateNaissance = $dateNaissance;
+
+        return $this;
+    }
+
+    public function getProfileImageUrl(): ?string
+    {
+        return $this->profileImageUrl;
+    }
+
+    public function setProfileImageUrl(?string $profileImageUrl): static
+    {
+        $this->profileImageUrl = $profileImageUrl;
+
+        return $this;
+    }
+
+    /**
+     * Returns the user's age in years (today's date minus birth date), or null if date of birth is not set.
+     */
+    public function getAge(): ?int
+    {
+        if ($this->dateNaissance === null) {
+            return null;
+        }
+        $today = new \DateTimeImmutable('today');
+        return (int) $today->diff($this->dateNaissance)->y;
     }
 
     public function getCreatedAt(): ?\DateTimeImmutable

@@ -3,6 +3,22 @@
 {% block title %}Événements{% endblock %}
 
 {% block body %}
+<style>
+    .ev-card-wrap { position:relative; border-radius:14px; overflow:hidden; transition:transform .2s, box-shadow .2s; }
+    .ev-card-wrap:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(0,0,0,.12); }
+    .ev-card-wrap.ev-past { opacity:.92; }
+    .ev-card-wrap.ev-past .card { background:linear-gradient(180deg, #f5f5f5 0%, #e8e8e8 100%); }
+    .ev-card-wrap.ev-past .card-img-top,
+    .ev-card-wrap.ev-past .card-img-top + div { filter:grayscale(65%); }
+    .ev-card-wrap.ev-past .card-body { color:#6b7280; }
+    .ev-card-wrap.ev-past .card-title { color:#4b5563; }
+    .ev-badge-past { position:absolute; top:12px; left:12px; z-index:2; background:rgba(55,65,81,.9); color:#fff; font-size:.7rem; font-weight:700; padding:.35rem .6rem; border-radius:8px; text-transform:uppercase; letter-spacing:.04em; }
+    .ev-badge-date { position:absolute; top:12px; right:12px; z-index:2; font-size:.7rem; font-weight:700; padding:.35rem .6rem; border-radius:8px; }
+    .ev-badge-today { background:linear-gradient(135deg,#059669,#10b981); color:#fff; box-shadow:0 2px 8px rgba(5,150,105,.4); }
+    .ev-badge-tomorrow { background:linear-gradient(135deg,#2563eb,#3b82f6); color:#fff; box-shadow:0 2px 8px rgba(37,99,235,.4); }
+    .ev-badge-week { background:linear-gradient(135deg,#7c3aed,#8b5cf6); color:#fff; box-shadow:0 2px 8px rgba(124,58,237,.4); }
+    .ev-badge-days { background:linear-gradient(135deg,var(--ac-mid),var(--ac-lavender)); color:#fff; box-shadow:0 2px 8px rgba(30,15,117,.3); }
+</style>
 <div class="bo-page-header">
     <h1>
         <i class="fas fa-calendar-alt"></i> Événements
@@ -53,7 +69,10 @@
             <input type="number" step="0.01" name="prix_max" class="form-control" value="{{ filter_input.prix_max|default('') }}" placeholder="∞">
         </div>
         <div class="col-12 col-md-4 col-lg-3 d-flex gap-2">
-            <button class="btn btn-primary flex-grow-1"><i class="fas fa-search me-1"></i> Filtrer</button>
+            <button type="submit" class="btn btn-primary flex-grow-1">
+            <span class="btn-label"><i class="fas fa-search me-1"></i> Filtrer</span>
+            <span class="btn-spinner" style="display:none;" aria-hidden="true"><i class="fas fa-spinner fa-spin me-1"></i></span>
+        </button>
             <a class="btn btn-outline-secondary" href="{{ path('app_evenement_index') }}">Réinitialiser</a>
         </div>
     </div>
@@ -70,6 +89,7 @@
                         <th>#</th>
                         <th>Événement</th>
                         <th>Date</th>
+                        <th>Statut</th>
                         <th>Lieu</th>
                         <th>Places</th>
                         <th>Prix</th>
@@ -79,7 +99,34 @@
                 </thead>
                 <tbody>
                 {% for ev in evenements %}
-                    <tr>
+                    {% set nowTs = "now"|date('U') %}
+                    {% set evStartTs = ev.dateDebut ? ev.dateDebut|date('U') : 0 %}
+                    {% set isPassedAdmin = ev.dateDebut and evStartTs < nowTs %}
+                    {% if isPassedAdmin %}
+                        {% set statusBadge = 'Passé' %}
+                        {% set statusClass = 'bg-secondary' %}
+                    {% else %}
+                        {% set today = "now"|date('Y-m-d') %}
+                        {% set tomorrow = "now"|date_modify('+1 day')|date('Y-m-d') %}
+                        {% set evDay = ev.dateDebut|date('Y-m-d') %}
+                        {% set evWeek = ev.dateDebut|date('Y-W') %}
+                        {% set nowWeek = "now"|date('Y-W') %}
+                        {% if evDay == today %}
+                            {% set statusBadge = 'Aujourd\'hui' %}
+                            {% set statusClass = 'bg-success' %}
+                        {% elseif evDay == tomorrow %}
+                            {% set statusBadge = 'Demain' %}
+                            {% set statusClass = 'bg-primary' %}
+                        {% elseif evWeek == nowWeek %}
+                            {% set statusBadge = 'Cette semaine' %}
+                            {% set statusClass = 'bg-info' %}
+                        {% else %}
+                            {% set daysLeft = ((evStartTs - nowTs) / 86400)|round %}
+                            {% set statusBadge = daysLeft > 0 ? ('J-' ~ daysLeft) : '—' %}
+                            {% set statusClass = 'bg-light text-dark' %}
+                        {% endif %}
+                    {% endif %}
+                    <tr class="{{ isPassedAdmin ? 'table-secondary' : '' }}" style="{{ isPassedAdmin ? 'opacity:.88;' : '' }}">
                         <td class="text-muted">{{ ev.id }}</td>
                         <td>
                             <div class="fw-semibold">{{ ev.titre }}</div>
@@ -89,6 +136,7 @@
                             <div>{{ ev.dateDebut ? ev.dateDebut|date('d/m/Y') : '—' }}</div>
                             <small class="text-muted">{{ ev.dateDebut ? ev.dateDebut|date('H:i') : '' }}{{ ev.dateFin ? ' → ' ~ ev.dateFin|date('H:i') : '' }}</small>
                         </td>
+                        <td><span class="badge {{ statusClass }}" style="font-size:.7rem;">{{ statusBadge }}</span></td>
                         <td>{{ ev.lieu }}</td>
                         <td>
                             <span class="badge bg-secondary bg-opacity-75">{{ ev.reservations|length }} / {{ ev.nbPlaces }}</span>
@@ -152,34 +200,68 @@
 {# ===================== FRONTOFFICE CARD VIEW ===================== #}
 <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
     {% for ev in evenements %}
+        {% set nowTs = "now"|date('U') %}
+        {% set evStartTs = ev.dateDebut ? ev.dateDebut|date('U') : 0 %}
+        {% set isPassed = ev.dateDebut and evStartTs < nowTs %}
+        {% if isPassed %}
+            {% set dateBadgeLabel = 'Passé' %}
+            {% set dateBadgeClass = '' %}
+        {% else %}
+            {% set today = "now"|date('Y-m-d') %}
+            {% set tomorrow = "now"|date_modify('+1 day')|date('Y-m-d') %}
+            {% set evDay = ev.dateDebut|date('Y-m-d') %}
+            {% set evWeek = ev.dateDebut|date('Y-W') %}
+            {% set nowWeek = "now"|date('Y-W') %}
+            {% if evDay == today %}
+                {% set dateBadgeLabel = 'Aujourd\'hui' %}
+                {% set dateBadgeClass = 'ev-badge-today' %}
+            {% elseif evDay == tomorrow %}
+                {% set dateBadgeLabel = 'Demain' %}
+                {% set dateBadgeClass = 'ev-badge-tomorrow' %}
+            {% elseif evWeek == nowWeek %}
+                {% set dateBadgeLabel = 'Cette semaine' %}
+                {% set dateBadgeClass = 'ev-badge-week' %}
+            {% else %}
+                {% set daysLeft = ((evStartTs - nowTs) / 86400)|round %}
+                {% set dateBadgeLabel = daysLeft == 1 ? 'Demain' : (daysLeft < 7 ? daysLeft ~ ' jours' : 'J-' ~ daysLeft) %}
+                {% set dateBadgeClass = 'ev-badge-days' %}
+            {% endif %}
+        {% endif %}
         <div class="col">
-            <div class="card h-100 shadow-sm" style="border:none; border-radius:14px; overflow:hidden;">
-                {% if ev.image %}
-                    <img src="{{ ev.image }}" class="card-img-top" alt="{{ ev.titre }}" style="height:180px; object-fit:cover;">
+            <div class="ev-card-wrap {{ isPassed ? 'ev-past' : '' }}">
+                {% if isPassed %}
+                    <span class="ev-badge-past"><i class="fas fa-clock me-1"></i> Événement passé</span>
                 {% else %}
-                    <div class="card-img-top d-flex align-items-center justify-content-center" style="height:180px; background:linear-gradient(135deg,var(--ac-sky),var(--ac-lavender));">
-                        <i class="fas fa-palette" style="font-size:2.5rem; color:#fff; opacity:.7;"></i>
-                    </div>
+                    <span class="ev-badge-date {{ dateBadgeClass }}">{{ dateBadgeLabel }}</span>
                 {% endif %}
-                <div class="card-body">
-                    <h6 class="card-title fw-bold mb-1">{{ ev.titre }}</h6>
-                    <p class="text-muted small mb-2">{{ ev.description|length > 80 ? ev.description|slice(0, 80) ~ '…' : ev.description }}</p>
-                    <div class="d-flex flex-wrap gap-1 mb-2">
-                        <span class="badge bg-light text-dark"><i class="fas fa-map-marker-alt me-1 text-muted"></i>{{ ev.lieu }}</span>
-                        <span class="badge bg-light text-dark"><i class="fas fa-clock me-1 text-muted"></i>{{ ev.dateDebut ? ev.dateDebut|date('d/m/Y H:i') : '—' }}</span>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-center">
-                        <span class="fw-bold" style="color:var(--ac-mid);">{{ ev.prix ? ev.prix ~ ' TND' : 'Gratuit' }}</span>
-                        <span class="small text-muted">{{ ev.reservations|length }}/{{ ev.nbPlaces }} places</span>
-                    </div>
-                </div>
-                <div class="card-footer bg-white border-0 pt-0 pb-3 px-3">
-                    <a href="{{ path('app_evenement_show', {id: ev.id}) }}" class="btn btn-sm w-100" style="background:var(--ac-mid); color:#fff; border-radius:10px; font-weight:600;">
-                        Voir détails
-                    </a>
-                    {% if app.user and (app.user == ev.organisateur) %}
-                        <a href="{{ path('app_evenement_edit', {id: ev.id}) }}" class="btn btn-sm btn-outline-secondary w-100 mt-1" style="border-radius:10px;">Modifier</a>
+                <div class="card h-100 shadow-sm" style="border:none; border-radius:14px; overflow:hidden;">
+                    {% if ev.image %}
+                        <img src="{{ ev.image }}" class="card-img-top" alt="{{ ev.titre }}" style="height:180px; object-fit:cover;">
+                    {% else %}
+                        <div class="card-img-top d-flex align-items-center justify-content-center" style="height:180px; background:linear-gradient(135deg,var(--ac-sky),var(--ac-lavender));">
+                            <i class="fas fa-palette" style="font-size:2.5rem; color:#fff; opacity:.7;"></i>
+                        </div>
                     {% endif %}
+                    <div class="card-body">
+                        <h6 class="card-title fw-bold mb-1">{{ ev.titre }}</h6>
+                        <p class="text-muted small mb-2">{{ ev.description|length > 80 ? ev.description|slice(0, 80) ~ '…' : ev.description }}</p>
+                        <div class="d-flex flex-wrap gap-1 mb-2">
+                            <span class="badge bg-light text-dark"><i class="fas fa-map-marker-alt me-1 text-muted"></i>{{ ev.lieu }}</span>
+                            <span class="badge bg-light text-dark"><i class="fas fa-clock me-1 text-muted"></i>{{ ev.dateDebut ? ev.dateDebut|date('d/m/Y H:i') : '—' }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="fw-bold" style="color:var(--ac-mid);">{{ ev.prix ? ev.prix ~ ' TND' : 'Gratuit' }}</span>
+                            <span class="small text-muted">{{ ev.reservations|length }}/{{ ev.nbPlaces }} places</span>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-white border-0 pt-0 pb-3 px-3">
+                        <a href="{{ path('app_evenement_show', {id: ev.id}) }}" class="btn btn-sm w-100" style="background:var(--ac-mid); color:#fff; border-radius:10px; font-weight:600;">
+                            Voir détails
+                        </a>
+                        {% if app.user and (app.user == ev.organisateur) %}
+                            <a href="{{ path('app_evenement_edit', {id: ev.id}) }}" class="btn btn-sm btn-outline-secondary w-100 mt-1" style="border-radius:10px;">Modifier</a>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>

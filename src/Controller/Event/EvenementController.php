@@ -3,6 +3,7 @@
 namespace App\Controller\Event;
 
 use App\Entity\Evenement;
+use App\Entity\User;
 use App\Form\Event\EvenementType;
 use App\Repository\EvenementRepository;
 use App\Repository\ReservationRepository;
@@ -26,7 +27,7 @@ class EvenementController extends AbstractController
             'date_end' => (string) $request->query->get('date_end', ''),
             'prix_min' => (string) $request->query->get('prix_min', ''),
             'prix_max' => (string) $request->query->get('prix_max', ''),
-            'sort' => (string) $request->query->get('sort', 'date_asc'),
+            'sort' => (string) $request->query->get('sort', 'date_asc'), // upcoming first by default
         ];
 
         $filters = [
@@ -90,17 +91,23 @@ class EvenementController extends AbstractController
     public function show(Evenement $evenement, ReservationRepository $reservationRepository): Response
     {
         $hasReserved = false;
-        if ($this->getUser()) {
-            $reservation = $reservationRepository->findOneBy([
+        $userReservation = null;
+        $user = $this->getUser();
+        if ($user) {
+            $userReservation = $reservationRepository->findOneBy([
                 'evenement' => $evenement,
-                'participant' => $this->getUser()
+                'participant' => $user,
             ]);
-            $hasReserved = $reservation !== null;
+            $hasReserved = $userReservation !== null;
         }
+
+        $ageRestrictionMessage = $this->getAgeRestrictionMessage($evenement, $user);
 
         return $this->render('evenement/show.html.twig', [
             'evenement' => $evenement,
             'hasReserved' => $hasReserved,
+            'userReservation' => $userReservation,
+            'age_restriction_message' => $ageRestrictionMessage,
         ]);
     }
 
@@ -149,6 +156,34 @@ class EvenementController extends AbstractController
         return $this->redirectToRoute('app_evenement_index', [], Response::HTTP_SEE_OTHER);
     }
 
+    #[Route('/artist/stats', name: 'app_artist_event_stats', methods: ['GET'])]
+    #[IsGranted('ROLE_ARTISTE')]
+    public function artistStats(EvenementRepository $evenementRepository, ReservationRepository $reservationRepository): Response
+    {
+        $artist = $this->getUser();
+        $overview = $evenementRepository->getArtistStatsOverview($artist);
+        $topEvents = $evenementRepository->getTopEventsForArtist($artist, 5);
+
+        $now = new \DateTimeImmutable();
+        $monthStart = $now->modify('first day of this month')->setTime(0, 0, 0);
+        $monthEnd = $now->modify('last day of this month')->setTime(23, 59, 59);
+
+        $eventsThisMonth = 0;
+        foreach ($evenementRepository->findBy(['organisateur' => $artist]) as $event) {
+            $createdAt = $event->getCreatedAt();
+            if ($createdAt !== null && $createdAt >= $monthStart && $createdAt <= $monthEnd) {
+                $eventsThisMonth++;
+            }
+        }
+
+        return $this->render('evenement/artist_stats.html.twig', [
+            'overview' => $overview,
+            'events_this_month' => $eventsThisMonth,
+            'reservations_total' => $reservationRepository->countForOwnerEvents($artist),
+            'top_events' => $topEvents,
+        ]);
+    }
+
     private function parseDate(?string $value, bool $endOfDay = false): ?\DateTimeImmutable
     {
         if ($value === null || $value === '') {
@@ -178,5 +213,32 @@ class EvenementController extends AbstractController
         }
 
         return (float) $value;
+    }
+
+    /**
+     * Returns a message if the user is not allowed to reserve due to age (event ageMin/ageMax).
+     * Returns null if no restriction or user is allowed.
+     */
+    private function getAgeRestrictionMessage(Evenement $evenement, ?User $user): ?string
+    {
+        $ageMin = $evenement->getAgeMin();
+        $ageMax = $evenement->getAgeMax();
+        if ($ageMin === null && $ageMax === null) {
+            return null;
+        }
+        if ($user === null) {
+            return null;
+        }
+        $age = $user->getAge();
+        if ($age === null) {
+            return 'Pour réserver cet événement, veuillez renseigner votre date de naissance dans votre profil.';
+        }
+        if ($ageMin !== null && $age < $ageMin) {
+            return sprintf('Cet événement est réservé aux personnes de %d ans et plus. Vous avez %d ans.', $ageMin, $age);
+        }
+        if ($ageMax !== null && $age > $ageMax) {
+            return sprintf('Cet événement est réservé aux personnes de %d ans et moins. Vous avez %d ans.', $ageMax, $age);
+        }
+        return null;
     }
 }

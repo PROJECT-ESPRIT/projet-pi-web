@@ -2,6 +2,147 @@
 
 {% block title %}{{ pageTitle }}{% endblock %}
 
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .fo-resv-shell { display: flex; flex-direction: column; gap: .75rem; }
+        .fo-resv-header { display: flex; justify-content: space-between; align-items: center; gap: .8rem; flex-wrap: wrap; }
+        .fo-resv-title { font-family: 'Sora', sans-serif; font-weight: 700; font-size: 1.45rem; color: var(--ac-deep); margin: 0; display: flex; align-items: center; gap: .55rem; }
+        .fo-resv-title .badge { font-size: .72rem; padding: .38em .68em; }
+        .fo-resv-header .btn { border-radius: 10px; font-weight: 600; }
+
+        .fo-resv-filter { margin-bottom: 0; }
+
+        .fo-resv-grid { --bs-gutter-x: .75rem; --bs-gutter-y: .75rem; }
+        .fo-resv-grid .col { display: flex; }
+        .fo-resv-card {
+            width: 100%;
+            background: linear-gradient(155deg, rgba(255, 255, 255, 1) 0%, rgba(173, 198, 229, .12) 100%);
+            border: 1px solid #e9ecef;
+            border-radius: 14px;
+            box-shadow: 0 3px 12px rgba(30, 15, 117, .07);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .fo-resv-card-header {
+            background: linear-gradient(120deg, rgba(173, 198, 229, .38), rgba(191, 140, 225, .26));
+            color: #1f2937;
+            border-bottom: 1px solid rgba(30, 15, 117, .08);
+            padding: .62rem .72rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: .75rem;
+        }
+        .fo-resv-card-title { font-weight: 800; font-size: .88rem; line-height: 1.25; margin: 0; color: var(--ac-deep); }
+        .fo-resv-card-title a { color: inherit; text-decoration: none; }
+        .fo-resv-card-title a:hover { text-decoration: underline; }
+        .fo-resv-status {
+            font-size: .68rem;
+            font-weight: 700;
+            border-radius: 999px;
+            padding: .24rem .52rem;
+            border: 1px solid transparent;
+            white-space: nowrap;
+        }
+        .fo-resv-status.is-confirmed { background: rgba(34, 197, 94, .15); color: #166534; border-color: rgba(34, 197, 94, .25); }
+        .fo-resv-status.is-pending { background: rgba(245, 158, 11, .18); color: #9a6700; border-color: rgba(245, 158, 11, .3); }
+        .fo-resv-status.is-cancelled { background: rgba(239, 68, 68, .15); color: #b91c1c; border-color: rgba(239, 68, 68, .28); }
+        .fo-resv-status.is-default { background: rgba(107, 114, 128, .12); color: #4b5563; border-color: rgba(107, 114, 128, .24); }
+
+        .fo-resv-media {
+            height: 102px;
+            width: 100%;
+            overflow: hidden;
+            border-bottom: 1px solid rgba(30, 15, 117, .08);
+            background: linear-gradient(135deg, rgba(173, 198, 229, .45), rgba(191, 140, 225, .32));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .fo-resv-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .fo-resv-media .placeholder-icon { color: #fff; font-size: 1.4rem; opacity: .85; }
+
+        .fo-resv-card-body { padding: .62rem; display: grid; gap: .45rem; }
+        .fo-resv-meta {
+            display: flex;
+            align-items: flex-start;
+            gap: .48rem;
+            font-size: .78rem;
+            color: #374151;
+            background: rgba(255, 255, 255, .66);
+            border: 1px solid rgba(55, 133, 216, .1);
+            border-radius: 7px;
+            padding: .3rem .42rem;
+        }
+        .fo-resv-meta i { color: var(--ac-blue); margin-top: .1rem; width: 16px; text-align: center; }
+        .fo-resv-meta .label { color: #6b7280; font-weight: 600; margin-right: .25rem; }
+        .fo-resv-meta-grid {
+            display: grid;
+            gap: .42rem;
+            grid-template-columns: 1fr;
+        }
+        .fo-resv-topics { display: flex; flex-wrap: wrap; gap: .45rem; }
+        .fo-resv-topic {
+            display: inline-flex;
+            align-items: center;
+            gap: .35rem;
+            border-radius: 999px;
+            padding: .2rem .45rem;
+            background: rgba(255, 255, 255, .86);
+            border: 1px solid rgba(30, 15, 117, .12);
+            color: #374151;
+            font-size: .66rem;
+            font-weight: 700;
+        }
+        .fo-resv-topic i { color: var(--ac-mid); }
+        .fo-resv-desc {
+            font-size: .72rem;
+            color: #5b6472;
+            line-height: 1.45;
+            margin: 0;
+            background: rgba(191, 140, 225, .08);
+            border-radius: 9px;
+            padding: .3rem .42rem;
+            border: 1px solid rgba(191, 140, 225, .2);
+        }
+        .fo-resv-seat { background: rgba(55, 133, 216, .12); color: var(--ac-mid); border-radius: 999px; font-size: .65rem; padding: .12rem .4rem; font-weight: 700; }
+
+        .fo-resv-card-actions { margin-top: .25rem; display: flex; flex-wrap: wrap; gap: .45rem; }
+        .fo-resv-card-actions .btn { border-radius: 9px; font-weight: 700; font-size: .7rem; padding: .2rem .5rem; }
+        .fo-resv-card-actions .btn-primary {
+            border: none;
+            background: linear-gradient(135deg, var(--ac-blue), var(--ac-mid));
+            box-shadow: 0 6px 16px rgba(28, 29, 171, .2);
+        }
+        .fo-resv-card-actions .btn-primary:hover { filter: brightness(.98); }
+        .fo-resv-card-actions .btn-outline-danger {
+            background: rgba(255, 255, 255, .88);
+            border-width: 1.5px;
+        }
+
+        @media (min-width: 992px) {
+            .fo-resv-meta-grid { grid-template-columns: 1fr 1fr; }
+        }
+
+        .fo-resv-empty {
+            background: #fff;
+            border: 1px solid #e9ecef;
+            border-radius: 14px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, .04);
+            text-align: center;
+            padding: 2.1rem 1rem;
+            color: #6b7280;
+        }
+        .fo-resv-empty i { font-size: 2rem; color: var(--ac-lavender); margin-bottom: .55rem; }
+        .fo-resv-empty a { font-weight: 700; text-decoration: none; }
+
+        .fo-resv-pagination .page-item.active .page-link { background: var(--ac-mid); border-color: var(--ac-mid); color: #fff; }
+        .fo-resv-pagination .page-link { border-radius: 8px; color: #374151; }
+    </style>
+{% endblock %}
+
 {% block body %}
 {% if isAdmin %}
 {# ===================== ADMIN: same UI as events ===================== #}
@@ -156,31 +297,42 @@
 </div>
 
 {% else %}
-{# ===================== PARTICIPANT: card view ===================== #}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1><i class="fas fa-ticket-alt me-2"></i>{{ pageTitle }}</h1>
-    <a href="{{ path('app_evenement_index') }}" class="btn btn-primary">
-        <i class="fas fa-plus me-1"></i> Nouvelle réservation
-    </a>
-</div>
+<section class="fo-resv-shell">
+    <div class="fo-resv-header">
+        <h1 class="fo-resv-title">
+            <i class="fas fa-ticket-alt"></i>{{ pageTitle }}
+            <span class="badge bg-primary bg-opacity-75">{{ total }}</span>
+        </h1>
+        <a href="{{ path('app_evenement_index') }}" class="btn btn-primary">
+            <i class="fas fa-plus me-1"></i> Nouvelle réservation
+        </a>
+    </div>
 
-<form method="get" action="{{ path('app_reservation_my') }}" class="card mb-4">
-    <div class="card-body">
-        <div class="row g-3 align-items-end">
-            <div class="col-12 col-md-4">
-                <label class="form-label">Recherche</label>
+    <form method="get" action="{{ path('app_reservation_my') }}" class="bo-filter-bar fo-resv-filter">
+        <div class="row g-2 align-items-end">
+            <div class="col-12 col-lg-4">
+                <label>Recherche</label>
                 <input type="text" name="q" class="form-control" value="{{ filter_input.q|default('') }}" placeholder="Événement, lieu…">
             </div>
-            <div class="col-6 col-md-2">
-                <label class="form-label">Date début</label>
+            <div class="col-6 col-md-3 col-lg-2">
+                <label>Date début</label>
                 <input type="date" name="date_start" class="form-control" value="{{ filter_input.date_start|default('') }}">
             </div>
-            <div class="col-6 col-md-2">
-                <label class="form-label">Date fin</label>
+            <div class="col-6 col-md-3 col-lg-2">
+                <label>Date fin</label>
                 <input type="date" name="date_end" class="form-control" value="{{ filter_input.date_end|default('') }}">
             </div>
-            <div class="col-6 col-md-2">
-                <label class="form-label">Tri</label>
+            <div class="col-6 col-md-3 col-lg-2">
+                <label>Statut</label>
+                <select name="status" class="form-select">
+                    <option value="" {{ filter_input.status|default('') == '' ? 'selected' : '' }}>Tous</option>
+                    <option value="CONFIRMED" {{ filter_input.status|default('') == 'CONFIRMED' ? 'selected' : '' }}>Confirmé</option>
+                    <option value="PENDING" {{ filter_input.status|default('') == 'PENDING' ? 'selected' : '' }}>En attente</option>
+                    <option value="CANCELLED" {{ filter_input.status|default('') == 'CANCELLED' ? 'selected' : '' }}>Annulé</option>
+                </select>
+            </div>
+            <div class="col-6 col-md-3 col-lg-2">
+                <label>Tri</label>
                 <select name="sort" class="form-select">
                     <option value="date_desc" {{ filter_input.sort|default('date_desc') == 'date_desc' ? 'selected' : '' }}>Récent → ancien</option>
                     <option value="date_asc" {{ filter_input.sort|default('date_desc') == 'date_asc' ? 'selected' : '' }}>Ancien → récent</option>
@@ -188,69 +340,135 @@
                     <option value="event_date_asc" {{ filter_input.sort|default('date_desc') == 'event_date_asc' ? 'selected' : '' }}>Événement ancien</option>
                 </select>
             </div>
-            <div class="col-12 col-md-2 d-flex gap-2">
-                <button class="btn btn-primary flex-grow-1">Filtrer</button>
-                <a class="btn btn-outline-secondary" href="{{ path('app_reservation_my') }}">Réinit.</a>
+            <div class="col-12 col-lg-4 d-flex gap-2">
+                <input type="hidden" name="page" value="1">
+                <button class="btn btn-primary flex-grow-1"><i class="fas fa-search me-1"></i> Filtrer</button>
+                <a class="btn btn-outline-secondary" href="{{ path('app_reservation_my') }}">Réinitialiser</a>
             </div>
         </div>
-    </div>
-</form>
+    </form>
 
-{% if reservations is empty %}
-    <div class="alert alert-info">
-        Vous n'avez aucune réservation. <a href="{{ path('app_evenement_index') }}">Voir les événements disponibles</a>.
-    </div>
-{% else %}
-    <div class="row">
-        {% for reservation in reservations %}
-            <div class="col-md-6 mb-4">
-                <div class="card h-100 shadow-sm" style="border-radius:14px; overflow:hidden;">
-                    <div class="card-header d-flex justify-content-between align-items-center" style="background:linear-gradient(135deg,var(--ac-deep),var(--ac-mid)); color:#fff;">
-                        <span class="fw-semibold">{{ reservation.evenement.titre }}</span>
-                        <span class="badge bg-light text-dark">Confirmée</span>
-                    </div>
-                    <div class="card-body">
-                        <p class="card-text mb-2">
-                            <strong>Date :</strong> {{ reservation.evenement.dateDebut|date('d/m/Y H:i') }}<br>
-                            <strong>Lieu :</strong> {{ reservation.evenement.lieu }}<br>
-                            {% if reservation.seatLabel %}<strong>Place :</strong> <span class="badge bg-info">{{ reservation.seatLabel }}</span><br>{% endif %}
-                            <strong>Réservé le :</strong> {{ reservation.dateReservation|date('d/m/Y H:i') }}
-                        </p>
-                        <div class="d-flex gap-2 flex-wrap">
-                            <a href="{{ path('app_evenement_show', {id: reservation.evenement.id}) }}" class="btn btn-sm btn-outline-primary">
-                                <i class="fas fa-eye me-1"></i> Voir l'événement
-                            </a>
-                            <form method="post" action="{{ path('app_reservation_cancel', {id: reservation.id}) }}" class="d-inline" onsubmit="return confirm('Annuler cette réservation ?');">
-                                <input type="hidden" name="_token" value="{{ csrf_token('cancel' ~ reservation.id) }}">
-                                <button type="submit" class="btn btn-sm btn-outline-danger">
-                                    <i class="fas fa-times me-1"></i> Annuler
-                                </button>
-                            </form>
+    {% if reservations is empty %}
+        <div class="fo-resv-empty">
+            <i class="fas fa-ticket-alt"></i>
+            <p class="mb-2">Vous n'avez aucune réservation pour le moment.</p>
+            <a href="{{ path('app_evenement_index') }}">Découvrir les événements disponibles</a>
+        </div>
+    {% else %}
+        <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 fo-resv-grid">
+            {% for reservation in reservations %}
+                {% set statusClass = 'is-default' %}
+                {% set statusLabel = reservation.status %}
+                {% set statusIcon = 'fa-info-circle' %}
+                {% if reservation.status == 'CONFIRMED' %}
+                    {% set statusClass = 'is-confirmed' %}
+                    {% set statusLabel = 'Confirmée' %}
+                    {% set statusIcon = 'fa-check-circle' %}
+                {% elseif reservation.status == 'PENDING' %}
+                    {% set statusClass = 'is-pending' %}
+                    {% set statusLabel = 'En attente' %}
+                    {% set statusIcon = 'fa-clock' %}
+                {% elseif reservation.status == 'CANCELLED' %}
+                    {% set statusClass = 'is-cancelled' %}
+                    {% set statusLabel = 'Annulée' %}
+                    {% set statusIcon = 'fa-times-circle' %}
+                {% endif %}
+                <div class="col">
+                    <article class="fo-resv-card">
+                        <div class="fo-resv-card-header">
+                            <h2 class="fo-resv-card-title">
+                                <a href="{{ path('app_evenement_show', {id: reservation.evenement.id}) }}">
+                                    {{ reservation.evenement.titre|length > 52 ? reservation.evenement.titre|slice(0, 52) ~ '…' : reservation.evenement.titre }}
+                                </a>
+                            </h2>
+                            <span class="fo-resv-status {{ statusClass }}"><i class="fas {{ statusIcon }} me-1"></i>{{ statusLabel }}</span>
                         </div>
-                    </div>
+                        <div class="fo-resv-media">
+                            {% if reservation.evenement.image %}
+                                <img src="{{ reservation.evenement.image }}" alt="{{ reservation.evenement.titre }}">
+                            {% else %}
+                                <i class="fas fa-image placeholder-icon"></i>
+                            {% endif %}
+                        </div>
+                        <div class="fo-resv-card-body">
+                            <div class="fo-resv-topics">
+                                <span class="fo-resv-topic"><i class="fas fa-coins"></i>{{ reservation.evenement.prix ? reservation.evenement.prix ~ ' TND' : 'Gratuit' }}</span>
+                                <span class="fo-resv-topic"><i class="fas fa-hashtag"></i>Réservation #{{ reservation.id }}</span>
+                            </div>
+                            {% if reservation.evenement.description %}
+                                <p class="fo-resv-desc">
+                                    {{ reservation.evenement.description|length > 90 ? reservation.evenement.description|slice(0, 90) ~ '…' : reservation.evenement.description }}
+                                </p>
+                            {% endif %}
+                            <div class="fo-resv-meta-grid">
+                                <div class="fo-resv-meta">
+                                    <i class="fas fa-calendar-alt"></i>
+                                    <div><span class="label">Date :</span>{{ reservation.evenement.dateDebut ? reservation.evenement.dateDebut|date('d/m/Y H:i') : '—' }}</div>
+                                </div>
+                                <div class="fo-resv-meta">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    <div><span class="label">Lieu :</span>{{ reservation.evenement.lieu ?: '—' }}</div>
+                                </div>
+                                <div class="fo-resv-meta">
+                                    <i class="fas fa-ticket-alt"></i>
+                                    <div>
+                                        <span class="label">Place :</span>
+                                        {% if reservation.seatLabel %}
+                                            <span class="fo-resv-seat">{{ reservation.seatLabel }}</span>
+                                        {% else %}
+                                            Non assignée
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="fo-resv-meta">
+                                    <i class="fas fa-history"></i>
+                                    <div><span class="label">Réservé le :</span>{{ reservation.dateReservation ? reservation.dateReservation|date('d/m/Y H:i') : '—' }}</div>
+                                </div>
+                            </div>
+                            <div class="fo-resv-card-actions">
+                                <a href="{{ path('app_evenement_show', {id: reservation.evenement.id}) }}" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-eye me-1"></i> Voir l'événement
+                                </a>
+                                {% if reservation.status == 'PENDING' and reservation.evenement.prix and reservation.evenement.prix > 0 %}
+                                    <form method="post" action="{{ path('app_reservation_pay', {id: reservation.id}) }}" class="d-inline">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('pay' ~ reservation.id) }}">
+                                        <button type="submit" class="btn btn-sm btn-success">
+                                            <i class="fas fa-credit-card me-1"></i> Payer
+                                        </button>
+                                    </form>
+                                {% endif %}
+                                <form method="post" action="{{ path('app_reservation_cancel', {id: reservation.id}) }}" class="d-inline" onsubmit="return confirm('Annuler cette réservation ?');">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('cancel' ~ reservation.id) }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                        <i class="fas fa-times me-1"></i> Annuler
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </article>
                 </div>
-            </div>
-        {% endfor %}
-    </div>
+            {% endfor %}
+        </div>
 
-    {% if total_pages > 1 %}
-        {% set qp = filter_input|default({}) %}
-        <nav class="mt-4">
-            <ul class="pagination justify-content-center">
-                <li class="page-item {{ page == 1 ? 'disabled' }}">
-                    <a class="page-link" href="{{ path('app_reservation_my', qp|merge({page: page - 1})) }}"><i class="fas fa-chevron-left"></i></a>
-                </li>
-                {% for p in 1..total_pages %}
-                    <li class="page-item {{ p == page ? 'active' }}">
-                        <a class="page-link" href="{{ path('app_reservation_my', qp|merge({page: p})) }}">{{ p }}</a>
+        {% if total > 10 and total_pages > 1 %}
+            {% set qp = filter_input|default({}) %}
+            <nav class="mt-4 fo-resv-pagination">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item {{ page == 1 ? 'disabled' }}">
+                        <a class="page-link" href="{{ path('app_reservation_my', qp|merge({page: page - 1})) }}"><i class="fas fa-chevron-left"></i></a>
                     </li>
-                {% endfor %}
-                <li class="page-item {{ page == total_pages ? 'disabled' }}">
-                    <a class="page-link" href="{{ path('app_reservation_my', qp|merge({page: page + 1})) }}"><i class="fas fa-chevron-right"></i></a>
-                </li>
-            </ul>
-        </nav>
+                    {% for p in 1..total_pages %}
+                        <li class="page-item {{ p == page ? 'active' }}">
+                            <a class="page-link" href="{{ path('app_reservation_my', qp|merge({page: p})) }}">{{ p }}</a>
+                        </li>
+                    {% endfor %}
+                    <li class="page-item {{ page == total_pages ? 'disabled' }}">
+                        <a class="page-link" href="{{ path('app_reservation_my', qp|merge({page: page + 1})) }}"><i class="fas fa-chevron-right"></i></a>
+                    </li>
+                </ul>
+            </nav>
+        {% endif %}
     {% endif %}
-{% endif %}
+</section>
 {% endif %}
 {% endblock %}

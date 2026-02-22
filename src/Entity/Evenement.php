@@ -269,7 +269,7 @@ class Evenement
     {
         $seats = [];
         foreach ($this->reservations as $r) {
-            if ($r->getSeatLabel()) {
+            if ($r->getSeatLabel() && $r->getStatus() === Reservation::STATUS_CONFIRMED) {
                 $seats[$r->getSeatLabel()] = $r->getParticipant()->getPrenom() . ' ' . $r->getParticipant()->getNom()[0] . '.';
             }
         }

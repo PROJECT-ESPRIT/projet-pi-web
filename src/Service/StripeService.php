@@ -2,7 +2,8 @@
 
 namespace App\Service;
 
-use App\Entity\Reservation;
+use App\Entity\Evenement;
+use App\Entity\User;
 use Stripe\StripeClient;
 
 class StripeService
@@ -18,16 +19,33 @@ class StripeService
     }
 
     /**
-     * Creates a Stripe Checkout Session for a paid reservation.
+     * Ensures the configured key is the secret key (sk_...), not the publishable key (pk_).
+     */
+    private function assertSecretKey(): void
+    {
+        $key = $this->stripeSecretKey;
+        if ($key === '' || str_starts_with($key, 'pk_')) {
+            throw new \InvalidArgumentException(
+                'Stripe secret key is missing or invalid. In .env set STRIPE_SECRET_KEY to your SECRET key (starts with sk_test_ or sk_live_), not the publishable key (pk_).'
+            );
+        }
+    }
+
+    /**
+     * Creates a Stripe Checkout Session for a paid event.
+     * When reservationId is provided, the webhook will confirm that existing PENDING reservation.
      * Returns the session URL to redirect the user to.
      */
-    public function createCheckoutSessionForReservation(
-        Reservation $reservation,
+    public function createCheckoutSessionForEvent(
+        Evenement $evenement,
+        User $user,
+        ?string $seatLabel,
         string $successUrl,
         string $cancelUrl,
+        ?int $reservationId = null,
     ): string {
+        $this->assertSecretKey();
         $stripe = new StripeClient($this->stripeSecretKey);
-        $evenement = $reservation->getEvenement();
         $prix = $evenement->getPrix();
         if ($prix === null || $prix <= 0) {
             throw new \InvalidArgumentException('Event must have a positive price for Stripe Checkout.');
@@ -36,6 +54,15 @@ class StripeService
         $amount = (int) round($prix * self::AMOUNT_MULTIPLIER);
         if ($amount < 1) {
             $amount = 1;
+        }
+
+        $metadata = [
+            'event_id' => (string) $evenement->getId(),
+            'user_id' => (string) $user->getId(),
+            'seat_label' => $seatLabel ?? '',
+        ];
+        if ($reservationId !== null) {
+            $metadata['reservation_id'] = (string) $reservationId;
         }
 
         $session = $stripe->checkout->sessions->create([
@@ -53,7 +80,6 @@ class StripeService
                             ),
                             'metadata' => [
                                 'event_id' => (string) $evenement->getId(),
-                                'reservation_id' => (string) $reservation->getId(),
                             ],
                         ],
                         'unit_amount' => $amount,
@@ -62,16 +88,17 @@ class StripeService
                 ],
             ],
             'mode' => 'payment',
-            'success_url' => $successUrl,
+            'success_url' => $this->appendCheckoutSessionIdPlaceholder($successUrl),
             'cancel_url' => $cancelUrl,
-            'metadata' => [
-                'reservation_id' => (string) $reservation->getId(),
-                'event_id' => (string) $evenement->getId(),
-                'user_id' => (string) $reservation->getParticipant()->getId(),
-                'seat_label' => $reservation->getSeatLabel() ?? '',
-            ],
+            'metadata' => $metadata,
         ]);
 
         return $session->url;
+    }
+
+    private function appendCheckoutSessionIdPlaceholder(string $successUrl): string
+    {
+        $separator = str_contains($successUrl, '?') ? '&' : '?';
+        return $successUrl . $separator . 'session_id={CHECKOUT_SESSION_ID}';
     }
 }

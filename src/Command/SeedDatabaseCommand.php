@@ -116,8 +116,8 @@ class SeedDatabaseCommand extends Command
 
     private function createUsers(SymfonyStyle $io): array
     {
-        $admin = $this->makeUser('admin@artconnect.tn', 'Admin', 'Super', ['ROLE_ADMIN']);
-        $io->text(' + admin@artconnect.tn (ADMIN)');
+        $admin = $this->makeUser('admin@art.com', 'Admin', 'Super', ['ROLE_ADMIN']);
+        $io->text(' + admin@art.com (ADMIN)');
 
         $artistData = [
             ['leila.art@mail.tn', 'Ben Salah', 'Leila'],

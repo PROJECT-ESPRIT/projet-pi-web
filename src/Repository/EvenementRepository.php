@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\Evenement;
+use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\ORM\Tools\Pagination\Paginator;
@@ -214,5 +215,61 @@ class EvenementRepository extends ServiceEntityRepository
         }
 
         return array_values($results);
+    }
+
+    public function getArtistStatsOverview(User $artist): array
+    {
+        $now = new \DateTime();
+        $events = $this->findBy(['organisateur' => $artist]);
+        $total = count($events);
+        $upcoming = 0;
+        $past = 0;
+        $full = 0;
+        $totalReservations = 0;
+
+        foreach ($events as $event) {
+            $reservationsCount = $event->getReservations()->count();
+            $totalReservations += $reservationsCount;
+
+            if ($event->getDateDebut() !== null && $event->getDateDebut() >= $now) {
+                $upcoming++;
+            } else {
+                $past++;
+            }
+
+            if (($event->getNbPlaces() ?? 0) > 0 && $reservationsCount >= $event->getNbPlaces()) {
+                $full++;
+            }
+        }
+
+        return [
+            'total' => $total,
+            'upcoming' => $upcoming,
+            'past' => $past,
+            'full' => $full,
+            'totalReservations' => $totalReservations,
+        ];
+    }
+
+    public function getTopEventsForArtist(User $artist, int $limit = 5): array
+    {
+        $events = $this->createQueryBuilder('e')
+            ->leftJoin('e.reservations', 'r')
+            ->addSelect('COUNT(r.id) as resCount')
+            ->andWhere('e.organisateur = :artist')
+            ->setParameter('artist', $artist)
+            ->groupBy('e.id')
+            ->orderBy('resCount', 'DESC')
+            ->addOrderBy('e.id', 'DESC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+
+        $result = [];
+        foreach ($events as $row) {
+            $result[] = ['event' => $row[0], 'reservations' => (int) ($row['resCount'] ?? 0)];
+        }
+
+        return $result;
     }
 }

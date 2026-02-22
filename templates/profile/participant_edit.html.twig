@@ -1,0 +1,40 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier mon profil — Art Connect{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    {% include 'profile/_styles.html.twig' %}
+{% endblock %}
+
+{% block body %}
+{% set roleLabel = profile_role_label|default('Participant') %}
+{% set backRoute = profile_back_route|default('participant_profile') %}
+
+<section class="fo-profile-shell fo-profile-form">
+    <div class="fo-profile-header">
+        <div>
+            <h1 class="fo-profile-title"><i class="fas fa-user-edit"></i> Modifier mon profil {{ roleLabel|lower }}</h1>
+            <p class="fo-profile-subtitle">Votre date de naissance est modifiable une seule fois.</p>
+        </div>
+    </div>
+
+    <div class="bo-filter-bar">
+        {{ form_start(form, { attr: { class: 'row g-2 align-items-end' } }) }}
+            <div class="col-12 col-lg-6">{{ form_row(form.prenom) }}</div>
+            <div class="col-12 col-lg-6">{{ form_row(form.nom) }}</div>
+            <div class="col-12 col-lg-6">{{ form_row(form.telephone) }}</div>
+            <div class="col-12 col-lg-6">{{ form_row(form.dateNaissance) }}</div>
+            <div class="col-12">{{ form_row(form.email) }}</div>
+            <div class="col-12">{{ form_row(form.profileImageUrl) }}</div>
+
+            <div class="col-12 d-flex flex-wrap gap-2 pt-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-check me-1"></i> Enregistrer
+                </button>
+                <a href="{{ path(backRoute) }}" class="btn btn-outline-secondary">Annuler</a>
+            </div>
+        {{ form_end(form) }}
+    </div>
+</section>
+{% endblock %}

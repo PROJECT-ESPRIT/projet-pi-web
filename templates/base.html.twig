@@ -187,7 +187,9 @@
                 background: linear-gradient(135deg, var(--ac-lavender), var(--ac-blue));
                 display: flex; align-items: center; justify-content: center;
                 font-weight: 700; font-size: 0.8rem; color: #fff;
+                overflow: hidden;
             }
+            .fo-user-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
             .fo-user-name { font-weight: 600; font-size: 0.85rem; }
             .fo-user-role { font-size: 0.65rem; text-transform: uppercase; opacity: 0.7; letter-spacing: 0.5px; }
 
@@ -341,6 +343,8 @@
                                 </a>
                                 <ul class="dropdown-menu">
                                     <li><a class="dropdown-item" href="{{ path('app_evenement_new') }}"><i class="fas fa-plus-circle"></i> Créer un Événement</a></li>
+                                    <li><a class="dropdown-item" href="{{ path('app_reservation_artist_owner') }}"><i class="fas fa-ticket-alt"></i> Réservations reçues</a></li>
+                                    <li><a class="dropdown-item" href="{{ path('app_artist_event_stats') }}"><i class="fas fa-chart-line"></i> Stats événements</a></li>
                                     <li><a class="dropdown-item" href="{{ path('app_produit_admin_index') }}"><i class="fas fa-box"></i> Mes Produits</a></li>
                                     <li><a class="dropdown-item" href="{{ path('app_commande_index') }}"><i class="fas fa-shopping-cart"></i> Commandes reçues</a></li>
                                 </ul>
@@ -352,7 +356,11 @@
                         <li class="nav-item dropdown">
                             <a class="fo-user-badge dropdown-toggle" href="#" data-bs-toggle="dropdown" data-bs-auto-close="outside">
                                 <div class="fo-user-avatar">
-                                    {{ app.user.prenom|first|upper }}{{ app.user.nom|first|upper }}
+                                    {% if app.user.profileImageUrl %}
+                                        <img src="{{ app.user.profileImageUrl }}" alt="Avatar">
+                                    {% else %}
+                                        {{ app.user.prenom|first|upper }}{{ app.user.nom|first|upper }}
+                                    {% endif %}
                                 </div>
                                 <div class="d-none d-lg-block">
                                     <div class="fo-user-name">{{ app.user.prenom }} {{ app.user.nom }}</div>
@@ -367,7 +375,12 @@
                                         <i class="fas fa-user"></i> Mon Profil
                                     </a>
                                 </li>
-                                <li><a class="dropdown-item" href="{{ path('app_reservation_my') }}"><i class="fas fa-ticket-alt"></i> Mes Réservations</a></li>
+                                {% if not is_granted('ROLE_ARTISTE') %}
+                                    <li><a class="dropdown-item" href="{{ path('app_reservation_my') }}"><i class="fas fa-ticket-alt"></i> Mes Réservations</a></li>
+                                {% else %}
+                                    <li><a class="dropdown-item" href="{{ path('app_reservation_artist_owner') }}"><i class="fas fa-ticket-alt"></i> Réservations reçues</a></li>
+                                    <li><a class="dropdown-item" href="{{ path('app_artist_event_stats') }}"><i class="fas fa-chart-line"></i> Stats événements</a></li>
+                                {% endif %}
                                 <li><a class="dropdown-item" href="{{ path('app_commande_my') }}"><i class="fas fa-shopping-bag"></i> Mes Commandes</a></li>
                                 <li><a class="dropdown-item" href="{{ path('app_donation_my') }}"><i class="fas fa-heart"></i> Mes Dons</a></li>
                                 <li><hr class="dropdown-divider"></li>
@@ -534,7 +547,12 @@
                     <div class="col-6 col-lg-2">
                         <h6 class="fo-footer-title">Mon Compte</h6>
                         <ul class="fo-footer-links">
-                            <li><a href="{{ path('app_reservation_my') }}">Réservations</a></li>
+                            {% if not is_granted('ROLE_ARTISTE') %}
+                                <li><a href="{{ path('app_reservation_my') }}">Réservations</a></li>
+                            {% else %}
+                                <li><a href="{{ path('app_reservation_artist_owner') }}">Réservations reçues</a></li>
+                                <li><a href="{{ path('app_artist_event_stats') }}">Stats événements</a></li>
+                            {% endif %}
                             <li><a href="{{ path('app_commande_my') }}">Commandes</a></li>
                             <li><a href="{{ path('app_donation_my') }}">Mes Dons</a></li>
                             <li><a href="{{ path('app_donation_new') }}">Faire un Don</a></li>
@@ -716,8 +734,34 @@
                     setTimeout(function(){t.remove();},300);
                 },5000+i*200);
             });
+            // Spinner on form submit: disable all submit buttons and previous/back links, show spinner
+            document.querySelectorAll('form').forEach(function(form){
+                form.addEventListener('submit',function(){
+                    form.classList.add('form-loading');
+                    form.querySelectorAll('button, input[type="submit"]').forEach(function(btn){
+                        var t = (btn.getAttribute('type') || 'submit').toLowerCase();
+                        if (t === 'button' || t === 'reset') return;
+                        btn.disabled = true;
+                        btn.setAttribute('aria-busy', 'true');
+                        var label = btn.querySelector('.btn-label');
+                        var spinner = btn.querySelector('.btn-spinner');
+                        if (label) label.style.display = 'none';
+                        if (spinner) spinner.style.display = 'inline-block';
+                    });
+                    form.querySelectorAll('a').forEach(function(link){
+                        link.setAttribute('aria-disabled', 'true');
+                        link.setAttribute('tabindex', '-1');
+                    });
+                });
+            });
         });
     </script>
+    <style>
+        button[type="submit"]:disabled, input[type="submit"]:disabled,
+        button:disabled:not([type="button"]):not([type="reset"]) { cursor: wait !important; opacity: 0.85; pointer-events: none; user-select: none; }
+        .btn-spinner { margin-right: 0.35rem; }
+        form.form-loading a { pointer-events: none; cursor: wait; opacity: 0.7; user-select: none; }
+    </style>
 
     </body>
 </html>
