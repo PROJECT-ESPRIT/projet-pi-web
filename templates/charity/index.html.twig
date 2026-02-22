@@ -1,0 +1,247 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Causes{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .cause-comments {
+            max-height: 230px;
+            overflow-y: auto;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 0.5rem;
+            padding: 0.65rem;
+            background: #fafbff;
+        }
+
+        .cause-comment-item + .cause-comment-item {
+            margin-top: 0.6rem;
+            padding-top: 0.6rem;
+            border-top: 1px solid rgba(0, 0, 0, 0.08);
+        }
+
+        .cause-comment-photo {
+            max-width: 120px;
+            height: auto;
+            border-radius: 0.4rem;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            margin: 0.3rem 0;
+        }
+
+        .cause-goal {
+            margin-top: 0.35rem;
+        }
+
+        .cause-goal .progress {
+            height: 10px;
+            background-color: #e9ecef;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Causes</h1>
+        <div class="d-flex gap-2">
+            {% if is_granted('ROLE_ADMIN') %}
+                <a href="{{ path('app_admin_charity_index') }}" class="btn btn-outline-secondary">Vue admin</a>
+            {% endif %}
+            {% if app.user %}
+                <a href="{{ path('app_charity_new') }}" class="btn btn-outline-primary">Créer une cause</a>
+                <a href="{{ path('app_donation_new') }}" class="btn btn-primary">Faire un don</a>
+            {% else %}
+                <a href="{{ path('login', {'return_to': app.request.requestUri}) }}" class="btn btn-outline-primary">Créer une cause</a>
+                <a href="{{ path('login', {'return_to': app.request.requestUri}) }}" class="btn btn-primary">Faire un don</a>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if charities is empty %}
+        <div class="alert alert-info">Aucune cause disponible pour le moment.</div>
+    {% else %}
+        <h2 class="h5 mb-3">Toutes les causes de la plateforme</h2>
+        <div class="row">
+            {% for row in charities %}
+                {% set charity = row.charity %}
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div id="cause-{{ charity.id }}" class="card h-100">
+                        {% if charity.picture %}
+                            {% set picturePath = charity.picture starts with('http') ? charity.picture : asset(charity.picture) %}
+                            <img src="{{ picturePath }}" class="card-img-top" alt="{{ charity.title }}" style="height: 220px; object-fit: cover;">
+                        {% endif %}
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h5 class="card-title mb-0">{{ charity.title }}</h5>
+                                {% if charity.status == constant('App\\Entity\\Charity::STATUS_REJECTED') %}
+                                    <span class="badge bg-danger">REJECTED</span>
+                                {% else %}
+                                    <span class="badge bg-success">ACTIVE</span>
+                                {% endif %}
+                            </div>
+                            <p class="card-text mb-1">
+                                <strong>Dons:</strong> {{ row.donation_count }}
+                            </p>
+                            <p class="card-text mb-2">{{ charity.description }}</p>
+                            {% set objective = charity.minimumAmount %}
+                            {% set totalAmount = row.total_amount|default(0) %}
+                            <div class="card-text mb-0">
+                                <strong>Objectif:</strong>
+                                {{ objective is not null ? objective|number_format(2, '.', ' ') : 'Aucun' }}
+                            </div>
+                            {% if objective is not null and objective > 0 %}
+                                {% set progressRaw = (totalAmount / objective) * 100 %}
+                                {% set progressWidth = progressRaw > 100 ? 100 : progressRaw %}
+                                <div class="cause-goal">
+                                    <div class="progress" role="progressbar" aria-label="Progression objectif" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ progressWidth|round(0, 'floor') }}">
+                                        <div class="progress-bar {{ progressRaw > 100 ? 'bg-success' : 'bg-danger' }}" style="width: {{ progressWidth|number_format(2, '.', '') }}%;"></div>
+                                    </div>
+                                    <div class="small mt-1">
+                                        {{ totalAmount|number_format(2, '.', ' ') }} / {{ objective|number_format(2, '.', ' ') }}
+                                        ({{ progressRaw|number_format(0, '.', ' ') }}%)
+                                        {% if progressRaw >= 100 %}
+                                            <span class="badge bg-success ms-1">Objectif atteint</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endif %}
+
+                            {% set comments = donations_by_charity[charity.id]|default([]) %}
+                            <hr>
+                            <div class="d-flex flex-wrap gap-2">
+                                <button
+                                    class="btn btn-sm btn-outline-secondary"
+                                    type="button"
+                                    data-bs-toggle="collapse"
+                                    data-bs-target="#thread-{{ charity.id }}"
+                                    aria-expanded="false"
+                                    aria-controls="thread-{{ charity.id }}"
+                                >
+                                    + Voir le fil des dons
+                                </button>
+                                {% if app.user and charity.createdBy and app.user.id != charity.createdBy.id %}
+                                    <button
+                                        class="btn btn-sm btn-primary"
+                                        type="button"
+                                        data-bs-toggle="collapse"
+                                        data-bs-target="#donate-{{ charity.id }}"
+                                        aria-expanded="false"
+                                        aria-controls="donate-{{ charity.id }}"
+                                    >
+                                        Donner
+                                    </button>
+                                {% elseif app.user and charity.createdBy and app.user.id == charity.createdBy.id %}
+                                    <span class="badge bg-light text-dark border align-self-center">Propriétaire: don non autorisé</span>
+                                {% else %}
+                                    <a class="btn btn-sm btn-primary" href="{{ path('login', {'return_to': app.request.requestUri}) }}">Donner</a>
+                                {% endif %}
+                            </div>
+
+                            <div class="collapse mt-3" id="thread-{{ charity.id }}">
+                                <h6 class="mb-2">Fil des dons</h6>
+                                <div class="cause-comments">
+                                    {% for donation in comments %}
+                                        <div class="cause-comment-item">
+                                            <div class="d-flex justify-content-between small text-muted">
+                                                <span>
+                                                    {% if donation.donateur is null %}
+                                                        Anonyme
+                                                    {% elseif donation.anonymous and not is_granted('ROLE_ADMIN') %}
+                                                        Anonyme
+                                                    {% else %}
+                                                        {{ donation.donateur.prenom }} {{ donation.donateur.nom }}
+                                                        {% if donation.anonymous %}
+                                                            <span class="badge bg-secondary ms-1">anonyme public</span>
+                                                        {% endif %}
+                                                    {% endif %}
+                                                </span>
+                                                <span>{{ donation.dateDon|date('d/m/Y H:i') }}</span>
+                                            </div>
+                                            {% if donation.amount is not null %}
+                                                <div class="small"><strong>Montant:</strong> {{ donation.amount|number_format(2, '.', ' ') }}</div>
+                                            {% endif %}
+                                            {% if donation.photo %}
+                                                <img src="{{ asset(donation.photo) }}" alt="Photo du don" class="cause-comment-photo">
+                                            {% endif %}
+                                            <p class="small mb-0">{{ donation.description }}</p>
+                                        </div>
+                                    {% else %}
+                                        <p class="small text-muted mb-0">Aucun don pour cette cause pour le moment.</p>
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                            {% if app.user and charity.createdBy and app.user.id != charity.createdBy.id %}
+                                <div class="collapse mt-3" id="donate-{{ charity.id }}">
+                                    <h6 class="mb-2">Nouveau don</h6>
+                                    <form method="post" action="{{ path('app_donation_comment', {'id': charity.id}) }}" enctype="multipart/form-data">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('comment_donation_' ~ charity.id) }}">
+                                        <input type="hidden" name="page" value="{{ page }}">
+                                        <div class="mb-2">
+                                            <label class="form-label mb-1">Votre commentaire de don</label>
+                                            <textarea name="comment" rows="2" class="form-control form-control-sm" required></textarea>
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label mb-1">Montant (optionnel)</label>
+                                            <input type="number" min="0" step="0.01" name="amount" class="form-control form-control-sm">
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label mb-1">Photo (optionnel)</label>
+                                            <input type="file" name="photo_file" accept="image/*" class="form-control form-control-sm">
+                                        </div>
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" id="anonymous-{{ charity.id }}" name="is_anonymous" value="1">
+                                            <label class="form-check-label small" for="anonymous-{{ charity.id }}">Don anonyme</label>
+                                        </div>
+                                        <div class="d-flex gap-2">
+                                            <button type="submit" class="btn btn-sm btn-primary">Confirmer le don</button>
+                                            <button
+                                                type="button"
+                                                class="btn btn-sm btn-outline-secondary"
+                                                onclick="const f=this.closest('form'); if (f) f.reset(); const c=document.getElementById('donate-{{ charity.id }}'); if (c && window.bootstrap) { bootstrap.Collapse.getOrCreateInstance(c, {toggle:false}).hide(); }"
+                                            >
+                                                Annuler
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            {% endif %}
+                        </div>
+                        {% if is_granted('ROLE_ADMIN') %}
+                            <div class="card-footer bg-white">
+                                {% if charity.status == constant('App\\Entity\\Charity::STATUS_REJECTED') %}
+                                    <form method="post" action="{{ path('app_charity_restore', {'id': charity.id}) }}">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('restore_charity_' ~ charity.id) }}">
+                                        <button class="btn btn-sm btn-outline-success">Réactiver</button>
+                                    </form>
+                                {% else %}
+                                    <form method="post" action="{{ path('app_charity_reject', {'id': charity.id}) }}" onsubmit="return confirm('Rejeter cette cause ?');">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('reject_charity_' ~ charity.id) }}">
+                                        <button class="btn btn-sm btn-outline-danger">Rejeter</button>
+                                    </form>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {% if total_pages > 1 %}
+        <nav class="mt-4" aria-label="Pagination causes">
+            <ul class="pagination justify-content-center">
+                <li class="page-item {{ page <= 1 ? 'disabled' : '' }}">
+                    <a class="page-link" href="{{ path('app_charity_index', {'page': page - 1}) }}">Précédent</a>
+                </li>
+                {% for i in 1..total_pages %}
+                    <li class="page-item {{ page == i ? 'active' : '' }}">
+                        <a class="page-link" href="{{ path('app_charity_index', {'page': i}) }}">{{ i }}</a>
+                    </li>
+                {% endfor %}
+                <li class="page-item {{ page >= total_pages ? 'disabled' : '' }}">
+                    <a class="page-link" href="{{ path('app_charity_index', {'page': page + 1}) }}">Suivant</a>
+                </li>
+            </ul>
+        </nav>
+    {% endif %}
+{% endblock %}

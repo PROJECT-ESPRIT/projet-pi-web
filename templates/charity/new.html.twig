@@ -1,0 +1,14 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Créer une Cause{% endblock %}
+
+{% block body %}
+    <h1>Créer une Cause</h1>
+    <p class="text-muted">Cette cause sera visible immédiatement. Un administrateur peut la rejeter ensuite.</p>
+
+    {{ form_start(form, {'attr': {'novalidate': 'novalidate'}}) }}
+        {{ form_widget(form) }}
+        <button class="btn btn-success mt-3">Créer</button>
+        <a href="{{ path('app_charity_index') }}" class="btn btn-outline-secondary mt-3">Retour</a>
+    {{ form_end(form) }}
+{% endblock %}

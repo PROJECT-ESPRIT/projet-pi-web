@@ -23,6 +23,8 @@
                 <option value="dateDon" {{ sort == 'dateDon' ? 'selected' : '' }}>Date</option>
                 <option value="donateur" {{ sort == 'donateur' ? 'selected' : '' }}>Donateur</option>
                 <option value="type" {{ sort == 'type' ? 'selected' : '' }}>Type</option>
+                <option value="charity" {{ sort == 'charity' ? 'selected' : '' }}>Cause</option>
+                <option value="amount" {{ sort == 'amount' ? 'selected' : '' }}>Montant</option>
             </select>
         </div>
         <div class="col-md-3">
@@ -43,7 +45,10 @@
             <tr>
                 <th>Date</th>
                 <th>Donateur</th>
+                <th>Cause</th>
                 <th>Type</th>
+                <th>Montant</th>
+                <th>Photo</th>
                 <th>Description</th>
             </tr>
         </thead>
@@ -51,13 +56,31 @@
         {% for donation in donations %}
             <tr>
                 <td>{{ donation.dateDon|date('d/m/Y H:i') }}</td>
-                <td>{{ donation.donateur.prenom }} {{ donation.donateur.nom }}</td>
+                <td>
+                    {% if donation.donateur %}
+                        {{ donation.donateur.prenom }} {{ donation.donateur.nom }}
+                        {% if donation.anonymous %}
+                            <span class="badge bg-secondary ms-1">anonyme public</span>
+                        {% endif %}
+                    {% else %}
+                        Anonyme
+                    {% endif %}
+                </td>
+                <td>{{ donation.charity ? donation.charity.title : '-' }}</td>
                 <td><span class="badge bg-info">{{ donation.type.libelle }}</span></td>
+                <td>{{ donation.amount is not null ? donation.amount|number_format(2, '.', ' ') : '-' }}</td>
+                <td>
+                    {% if donation.photo %}
+                        <a href="{{ asset(donation.photo) }}" target="_blank" rel="noopener">Voir</a>
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
                 <td>{{ donation.description }}</td>
             </tr>
         {% else %}
             <tr>
-                <td colspan="4">Aucun don enregistré.</td>
+                <td colspan="7">Aucun don enregistré.</td>
             </tr>
         {% endfor %}
         </tbody>

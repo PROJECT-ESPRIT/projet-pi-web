@@ -1,0 +1,105 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Admin - Causes{% endblock %}
+
+{% block body %}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Gestion des causes</h1>
+        <a href="{{ path('app_charity_index') }}" class="btn btn-outline-secondary">Vue publique</a>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label">Statut</label>
+                    <select name="status" class="form-select">
+                        <option value="ALL" {{ filters.status == 'ALL' ? 'selected' : '' }}>Tous</option>
+                        <option value="ACTIVE" {{ filters.status == 'ACTIVE' ? 'selected' : '' }}>ACTIVE</option>
+                        <option value="REJECTED" {{ filters.status == 'REJECTED' ? 'selected' : '' }}>REJECTED</option>
+                    </select>
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label">Créateur</label>
+                    <input
+                        type="text"
+                        name="creator"
+                        value="{{ filters.creator }}"
+                        class="form-control"
+                        placeholder="Nom, prénom ou email"
+                    >
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Min dons</label>
+                    <input
+                        type="number"
+                        min="0"
+                        name="min_donations"
+                        value="{{ filters.min_donations }}"
+                        class="form-control"
+                    >
+                </div>
+                <div class="col-md-2 d-flex gap-2">
+                    <button class="btn btn-primary">Filtrer</button>
+                    <a href="{{ path('app_admin_charity_index') }}" class="btn btn-outline-secondary">Reset</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>ID</th>
+                    <th>Titre</th>
+                    <th>Description</th>
+                    <th>Créateur</th>
+                    <th>Statut</th>
+                    <th>Dons</th>
+                    <th>Objectif</th>
+                    <th>Créée le</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in rows %}
+                    {% set charity = row.charity %}
+                    <tr>
+                        <td>#{{ charity.id }}</td>
+                        <td>{{ charity.title }}</td>
+                        <td>{{ charity.description|length > 80 ? charity.description|slice(0, 80) ~ '…' : charity.description }}</td>
+                        <td>{{ charity.createdBy.prenom }} {{ charity.createdBy.nom }}</td>
+                        <td>
+                            {% if charity.status == constant('App\\Entity\\Charity::STATUS_REJECTED') %}
+                                <span class="badge bg-danger">REJECTED</span>
+                            {% else %}
+                                <span class="badge bg-success">ACTIVE</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ row.donation_count }}</td>
+                        <td>{{ charity.minimumAmount is not null ? charity.minimumAmount|number_format(2, '.', ' ') : '-' }}</td>
+                        <td>{{ charity.createdAt|date('d/m/Y H:i') }}</td>
+                        <td>
+                            {% if charity.status == constant('App\\Entity\\Charity::STATUS_REJECTED') %}
+                                <form method="post" action="{{ path('app_charity_restore', {'id': charity.id}) }}">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('restore_charity_' ~ charity.id) }}">
+                                    <button class="btn btn-sm btn-outline-success">Réactiver</button>
+                                </form>
+                            {% else %}
+                                <form method="post" action="{{ path('app_charity_reject', {'id': charity.id}) }}" onsubmit="return confirm('Rejeter cette cause ?');">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('reject_charity_' ~ charity.id) }}">
+                                    <button class="btn btn-sm btn-outline-danger">Rejeter</button>
+                                </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="9" class="text-center">Aucune cause trouvée.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

@@ -59,6 +59,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->evenements = new ArrayCollection();
         $this->reservations = new ArrayCollection();
         $this->donations = new ArrayCollection();
+        $this->charities = new ArrayCollection();
         $this->commandes = new ArrayCollection();
         $this->forumReponses = new ArrayCollection();
     }
@@ -207,6 +208,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(mappedBy: 'donateur', targetEntity: Donation::class)]
     private Collection $donations;
 
+    /**
+     * @var Collection<int, Charity>
+     */
+    #[ORM\OneToMany(mappedBy: 'createdBy', targetEntity: Charity::class)]
+    private Collection $charities;
+
     #[ORM\OneToMany(mappedBy: 'user', targetEntity: Commande::class)]
     private Collection $commandes;
 
@@ -300,6 +307,35 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
             // set the owning side to null (unless already changed)
             if ($donation->getDonateur() === $this) {
                 $donation->setDonateur(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Charity>
+     */
+    public function getCharities(): Collection
+    {
+        return $this->charities;
+    }
+
+    public function addCharity(Charity $charity): static
+    {
+        if (!$this->charities->contains($charity)) {
+            $this->charities->add($charity);
+            $charity->setCreatedBy($this);
+        }
+
+        return $this;
+    }
+
+    public function removeCharity(Charity $charity): static
+    {
+        if ($this->charities->removeElement($charity)) {
+            if ($charity->getCreatedBy() === $this) {
+                $charity->setCreatedBy(null);
             }
         }
 

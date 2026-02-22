@@ -4,7 +4,6 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\Form\RegistrationFormType;
-use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -20,8 +19,14 @@ class RegistrationController extends AbstractController
         UserPasswordHasherInterface $userPasswordHasher,
         EntityManagerInterface $entityManager
     ): Response {
+        $returnTo = $this->getSafeReturnTo($request);
+
         // Redirect if already logged in
         if ($this->getUser()) {
+            if ($returnTo !== null) {
+                return $this->redirect($returnTo);
+            }
+
             return $this->redirectToRoute('home');
         }
 
@@ -53,11 +58,34 @@ class RegistrationController extends AbstractController
 
             $this->addFlash('success', 'Inscription réussie ! Vous pouvez maintenant vous connecter.');
 
+            if ($returnTo !== null) {
+                return $this->redirectToRoute('login', ['return_to' => $returnTo]);
+            }
+
             return $this->redirectToRoute('login');
         }
 
         return $this->render('registration/register.html.twig', [
             'registrationForm' => $form,
+            'return_to' => $returnTo,
         ]);
+    }
+
+    private function getSafeReturnTo(Request $request): ?string
+    {
+        $candidate = trim((string) $request->query->get('return_to', ''));
+        if ($candidate === '') {
+            $candidate = trim((string) $request->request->get('return_to', ''));
+        }
+
+        if ($candidate === '') {
+            return null;
+        }
+
+        if (!str_starts_with($candidate, '/') || str_starts_with($candidate, '//')) {
+            return null;
+        }
+
+        return $candidate;
     }
 }

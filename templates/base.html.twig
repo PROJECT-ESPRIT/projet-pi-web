@@ -114,6 +114,7 @@
         {% endblock %}
     </head>
     <body class="{{ app.user ? 'back-mode' : 'front-mode' }}">
+        {% set sweet_success_messages = app.flashes('sweet_success') %}
         {% if app.user %}
             {# Back-office / Logged-in Layout #}
             <div class="wrapper">
@@ -139,6 +140,9 @@
                             </li>
                             <li>
                                 <a href="{{ path('app_donation_index') }}"><i class="fas fa-hand-holding-heart me-2"></i> Liste des Dons</a>
+                            </li>
+                            <li>
+                                <a href="{{ path('app_admin_charity_index') }}"><i class="fas fa-landmark me-2"></i> Gérer Causes</a>
                             </li>
                         {% endif %}
 
@@ -172,6 +176,9 @@
                         </li>
                         <li>
                             <a href="{{ path('app_donation_my') }}"><i class="fas fa-hand-holding-heart me-2"></i> Mes Dons</a>
+                        </li>
+                        <li>
+                            <a href="{{ path('app_charity_index') }}"><i class="fas fa-landmark me-2"></i> Causes</a>
                         </li>
                         <li>
                             <a href="{{ path('app_commande_my') }}"><i class="fas fa-shopping-bag me-2"></i> Mes Commandes</a>
@@ -241,12 +248,13 @@
             </div>
         {% else %}
             {# Guest Layout (Login/Register/Public Home) #}
+            {% set guest_return_to = app.request.attributes.get('_route') in ['login', 'register'] ? null : app.request.requestUri %}
             <nav class="navbar navbar-expand-lg navbar-light guest-nav mb-4 shadow-sm">
                 <div class="container public-shell">
                     <a class="navbar-brand guest-brand" href="{{ path('home') }}">ART CONNECT</a>
                     <div class="d-flex">
-                        <a href="{{ path('login') }}" class="btn btn-outline-primary me-2">Connexion</a>
-                        <a href="{{ path('register') }}" class="btn btn-primary">Inscription</a>
+                        <a href="{{ path('login', guest_return_to ? {'return_to': guest_return_to} : {}) }}" class="btn btn-outline-primary me-2">Connexion</a>
+                        <a href="{{ path('register', guest_return_to ? {'return_to': guest_return_to} : {}) }}" class="btn btn-primary">Inscription</a>
                     </div>
                 </div>
             </nav>
@@ -282,6 +290,10 @@
         {% endif %}
 
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        {% for message in sweet_success_messages %}
+            <div class="d-none js-sweet-success" data-message="{{ message|e('html_attr') }}"></div>
+        {% endfor %}
         <script>
             // Function to update active state
             function updateActiveState() {
@@ -322,6 +334,17 @@
 
             // Run on page load
             document.addEventListener('DOMContentLoaded', function() {
+                document.querySelectorAll('.js-sweet-success').forEach(function (el) {
+                    if (window.Swal) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Succès',
+                            text: el.dataset.message,
+                            confirmButtonText: 'OK'
+                        });
+                    }
+                });
+
                 // Toggle sidebar on mobile
                 const sidebarCollapse = document.getElementById('sidebarCollapse');
                 const sidebar = document.getElementById('sidebar');

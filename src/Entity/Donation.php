@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\DonationRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: DonationRepository::class)]
 class Donation
@@ -27,6 +28,19 @@ class Donation
     #[ORM\ManyToOne(inversedBy: 'donations')]
     #[ORM\JoinColumn(nullable: false)]
     private ?User $donateur = null;
+
+    #[ORM\ManyToOne(inversedBy: 'donations')]
+    private ?Charity $charity = null;
+
+    #[ORM\Column(nullable: true)]
+    #[Assert\PositiveOrZero(message: 'Le montant doit être positif ou nul.')]
+    private ?float $amount = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $photo = null;
+
+    #[ORM\Column(options: ['default' => false])]
+    private bool $isAnonymous = false;
 
     public function __construct()
     {
@@ -82,6 +96,54 @@ class Donation
     public function setDonateur(?User $donateur): static
     {
         $this->donateur = $donateur;
+
+        return $this;
+    }
+
+    public function getCharity(): ?Charity
+    {
+        return $this->charity;
+    }
+
+    public function setCharity(?Charity $charity): static
+    {
+        $this->charity = $charity;
+
+        return $this;
+    }
+
+    public function getAmount(): ?float
+    {
+        return $this->amount;
+    }
+
+    public function setAmount(?float $amount): static
+    {
+        $this->amount = $amount;
+
+        return $this;
+    }
+
+    public function getPhoto(): ?string
+    {
+        return $this->photo;
+    }
+
+    public function setPhoto(?string $photo): static
+    {
+        $this->photo = $photo;
+
+        return $this;
+    }
+
+    public function isAnonymous(): bool
+    {
+        return $this->isAnonymous;
+    }
+
+    public function setIsAnonymous(bool $isAnonymous): static
+    {
+        $this->isAnonymous = $isAnonymous;
 
         return $this;
     }

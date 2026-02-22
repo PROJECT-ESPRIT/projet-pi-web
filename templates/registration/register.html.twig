@@ -10,6 +10,9 @@
                 <h2 class="card-title text-center mb-4">Inscription</h2>
                 
                 {{ form_start(registrationForm, {'attr': {'novalidate': 'novalidate'}}) }}
+                    {% if return_to is defined and return_to %}
+                        <input type="hidden" name="return_to" value="{{ return_to }}">
+                    {% endif %}
                     <div class="mb-3">
                         {{ form_label(registrationForm.email) }}
                         {{ form_widget(registrationForm.email) }}
@@ -58,7 +61,10 @@
                 {{ form_end(registrationForm) }}
 
                 <div class="text-center mt-3">
-                    <p class="mb-0">Déjà un compte ? <a href="{{ path('login') }}">Connectez-vous</a></p>
+                    <p class="mb-0">
+                        Déjà un compte ?
+                        <a href="{{ path('login', return_to is defined and return_to ? {'return_to': return_to} : {}) }}">Connectez-vous</a>
+                    </p>
                 </div>
             </div>
         </div>
