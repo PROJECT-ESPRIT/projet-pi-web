@@ -4,87 +4,86 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Confirmation de réservation</title>
+    <style type="text/css">
+        .email-wrap { max-width: 720px; width: 100%; }
+        @media screen and (max-width: 640px) {
+            .email-detail-cell { display: block !important; width: 100% !important; }
+        }
+    </style>
 </head>
-<body style="margin:0;padding:0;background:linear-gradient(180deg,#eef2fb 0%,#f8f9fc 100%);font-family:'Segoe UI',Roboto,Arial,sans-serif;-webkit-font-smoothing:antialiased;">
-    <table width="100%" cellpadding="0" cellspacing="0" style="padding:32px 16px;">
+<body style="margin:0;padding:0;background:linear-gradient(180deg,#eef2fb 0%,#f8f9fc 100%);font-family:'Segoe UI',Tahoma,Roboto,Arial,sans-serif;font-size:15px;color:#1f2937;-webkit-font-smoothing:antialiased;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="padding:28px 16px;">
         <tr><td align="center">
-            <table width="580" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 8px 40px rgba(30,15,117,.1);">
+            <table class="email-wrap" width="720" cellpadding="0" cellspacing="0" style="max-width:720px;width:100%;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 8px 40px rgba(30,15,117,.1);">
                 <!-- Header -->
                 <tr>
-                    <td style="background:linear-gradient(135deg,#1e0f75 0%,#3785d8 60%,#bf8ce1 100%);padding:36px 40px 32px;text-align:center;position:relative;">
-                        <table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center">
-                            <div style="display:inline-block;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.2);border-radius:50px;padding:6px 18px;font-size:12px;font-weight:700;color:#fff;letter-spacing:.05em;margin-bottom:14px;">&#10003; RÉSERVATION CONFIRMÉE</div>
-                        </td></tr></table>
-                        <h1 style="margin:0;color:#fff;font-size:24px;font-weight:800;letter-spacing:-.02em;">Art Connect</h1>
-                        <p style="margin:8px 0 0;color:rgba(255,255,255,.85);font-size:14px;font-weight:500;">Votre place est réservée !</p>
+                    <td style="background:linear-gradient(135deg,#1e0f75 0%,#3785d8 55%,#bf8ce1 100%);padding:32px 48px 28px;text-align:center;">
+                        <div style="display:inline-block;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);border-radius:50px;padding:8px 20px;font-size:12px;font-weight:700;color:#fff;letter-spacing:.06em;margin-bottom:12px;">&#10003; RÉSERVATION CONFIRMÉE</div>
+                        <h1 style="margin:0;color:#fff;font-size:26px;font-weight:800;letter-spacing:-.02em;font-family:'Segoe UI',Tahoma,Roboto,Arial,sans-serif;">Art Connect</h1>
+                        <p style="margin:8px 0 0;color:rgba(255,255,255,.9);font-size:15px;font-weight:500;">Votre place est réservée !</p>
                     </td>
                 </tr>
-                <!-- Body -->
+                <!-- Event image: full width, landscape, with overlay gradient -->
+                {% if event_image is defined and event_image %}
                 <tr>
-                    <td style="padding:36px 40px 20px;">
-                        <p style="margin:0 0 8px;color:#1f2937;font-size:17px;font-weight:700;">
-                            Bonjour {{ name }},
-                        </p>
-                        <p style="margin:0 0 28px;color:#6b7280;font-size:14px;line-height:1.65;">
-                            Votre réservation a été confirmée avec succès. Voici tous les détails pour votre événement.
-                        </p>
-
-                        {% if event_image is defined and event_image %}
-                        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
-                            <tr><td align="center">
-                                <img src="{{ event_image }}" alt="{{ event }}" style="max-width:100%;height:auto;max-height:200px;border-radius:14px;object-fit:cover;display:block;box-shadow:0 4px 16px rgba(30,15,117,.1);" />
-                            </td></tr>
+                    <td style="padding:0;margin:0;line-height:0;position:relative;height:220px;overflow:hidden;">
+                        <img src="{{ event_image }}" alt="{{ event }}" style="width:100%;height:220px;object-fit:cover;display:block;margin:0;vertical-align:top;" />
+                        <div style="position:absolute;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg, rgba(30,15,117,.45) 0%, rgba(55,133,216,.2) 50%, rgba(191,140,225,.35) 100%);pointer-events:none;"></div>
+                    </td>
+                </tr>
+                {% endif %}
+                <!-- Body: single column -->
+                <tr>
+                    <td style="padding:32px 48px 28px;">
+                        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;">
+                            <tr>
+                                <td style="width:40px;vertical-align:top;">
+                                    <div style="width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#1e0f75,#3785d8);text-align:center;line-height:40px;color:#fff;font-size:18px;">&#127912;</div>
+                                </td>
+                                <td style="padding-left:12px;vertical-align:top;">
+                                    <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Événement</div>
+                                    <div style="font-size:17px;font-weight:800;color:#1e0f75;line-height:1.3;">{{ event }}</div>
+                                </td>
+                            </tr>
                         </table>
-                        {% endif %}
 
-                        <!-- Info Card -->
+                        <p style="margin:0 0 6px;color:#1f2937;font-size:17px;font-weight:700;font-family:'Segoe UI',Tahoma,Roboto,Arial,sans-serif;">Bonjour {{ name }},</p>
+                        <p style="margin:0 0 20px;color:#6b7280;font-size:14px;line-height:1.6;">Votre réservation a été confirmée avec succès. Voici les détails.</p>
+
                         <table width="100%" cellpadding="0" cellspacing="0" style="background:linear-gradient(160deg,#fafbff,#f4f0fc);border-radius:16px;border:1px solid rgba(30,15,117,.08);overflow:hidden;">
-                            <tr><td style="padding:24px;">
-                                <!-- Event name -->
-                                <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:16px;">
-                                    <tr>
-                                        <td style="width:36px;vertical-align:top;">
-                                            <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#1e0f75,#3785d8);display:inline-block;text-align:center;line-height:36px;color:#fff;font-size:16px;">&#127912;</div>
-                                        </td>
-                                        <td style="padding-left:14px;vertical-align:top;">
-                                            <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Événement</div>
-                                            <div style="font-size:16px;font-weight:800;color:#1e0f75;">{{ event }}</div>
-                                        </td>
-                                    </tr>
-                                </table>
-                                <!-- Details grid -->
+                            <tr><td style="padding:20px 24px;">
                                 <table width="100%" cellpadding="0" cellspacing="0">
                                     <tr>
-                                        <td style="padding:10px 0;border-top:1px solid rgba(30,15,117,.06);width:50%;vertical-align:top;">
-                                            <div style="font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.05em;">&#128197; Date</div>
-                                            <div style="font-size:14px;font-weight:600;color:#1f2937;margin-top:3px;">{{ date is defined and date ? (date.timestamp is defined ? date|date('d/m/Y à H:i') : date) : '-' }}</div>
+                                        <td class="email-detail-cell" style="padding:10px 16px 10px 0;border-top:1px solid rgba(30,15,117,.06);width:50%;vertical-align:top;">
+                                            <div style="font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.06em;">&#128197; Date</div>
+                                            <div style="font-size:14px;font-weight:600;color:#1f2937;margin-top:4px;">{{ date is defined and date ? (date.timestamp is defined ? date|date('d/m/Y à H:i') : date) : '-' }}</div>
                                         </td>
                                         {% if lieu is defined and lieu %}
-                                        <td style="padding:10px 0;border-top:1px solid rgba(30,15,117,.06);width:50%;vertical-align:top;">
-                                            <div style="font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.05em;">&#128205; Lieu</div>
-                                            <div style="font-size:14px;font-weight:600;color:#1f2937;margin-top:3px;">{{ lieu }}</div>
+                                        <td class="email-detail-cell" style="padding:10px 0;border-top:1px solid rgba(30,15,117,.06);width:50%;vertical-align:top;">
+                                            <div style="font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.06em;">&#128205; Lieu</div>
+                                            <div style="font-size:14px;font-weight:600;color:#1f2937;margin-top:4px;">{{ lieu }}</div>
                                         </td>
                                         {% endif %}
                                     </tr>
                                     <tr>
                                         {% if seat_label is defined and seat_label %}
-                                        <td style="padding:10px 0;border-top:1px solid rgba(30,15,117,.06);width:50%;vertical-align:top;">
-                                            <div style="font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.05em;">&#128186; Place</div>
-                                            <div style="font-size:14px;font-weight:700;color:#3785d8;margin-top:3px;">{{ seat_label }}</div>
+                                        <td class="email-detail-cell" style="padding:10px 16px 10px 0;border-top:1px solid rgba(30,15,117,.06);width:50%;vertical-align:top;">
+                                            <div style="font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.06em;">&#128186; Place</div>
+                                            <div style="font-size:14px;font-weight:700;color:#3785d8;margin-top:4px;">{{ seat_label }}</div>
                                         </td>
                                         {% endif %}
                                         {% if price is defined and price %}
-                                        <td style="padding:10px 0;border-top:1px solid rgba(30,15,117,.06);width:50%;vertical-align:top;">
-                                            <div style="font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.05em;">&#128176; Montant</div>
-                                            <div style="font-size:14px;font-weight:800;color:#059669;margin-top:3px;">{{ price }}</div>
+                                        <td class="email-detail-cell" style="padding:10px 0;border-top:1px solid rgba(30,15,117,.06);width:50%;vertical-align:top;">
+                                            <div style="font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.06em;">&#128176; Montant</div>
+                                            <div style="font-size:14px;font-weight:800;color:#059669;margin-top:4px;">{{ price }}</div>
                                         </td>
                                         {% endif %}
                                     </tr>
                                     {% if reservation_date is defined and reservation_date %}
                                     <tr>
-                                        <td colspan="2" style="padding:10px 0;border-top:1px solid rgba(30,15,117,.06);vertical-align:top;">
-                                            <div style="font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.05em;">&#128336; Date de réservation</div>
-                                            <div style="font-size:14px;font-weight:600;color:#1f2937;margin-top:3px;">{{ reservation_date }}</div>
+                                        <td colspan="2" class="email-detail-cell" style="padding:10px 0;border-top:1px solid rgba(30,15,117,.06);vertical-align:top;">
+                                            <div style="font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.06em;">&#128336; Date de réservation</div>
+                                            <div style="font-size:14px;font-weight:600;color:#1f2937;margin-top:4px;">{{ reservation_date }}</div>
                                         </td>
                                     </tr>
                                     {% endif %}
@@ -94,31 +93,28 @@
 
                         {% if description is defined and description %}
                         <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:20px;">
-                            <tr><td style="background:rgba(191,140,225,.08);border-radius:12px;padding:14px 18px;border:1px solid rgba(191,140,225,.15);">
-                                <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Description</div>
-                                <div style="font-size:13px;color:#4b5563;line-height:1.6;">{{ description|nl2br }}</div>
+                            <tr><td style="background:rgba(191,140,225,.08);border-radius:12px;padding:16px 20px;border:1px solid rgba(191,140,225,.15);">
+                                <div style="font-size:10px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Description</div>
+                                <div style="font-size:13px;color:#4b5563;line-height:1.65;font-family:'Segoe UI',Tahoma,Roboto,Arial,sans-serif;">{{ description|nl2br }}</div>
                             </td></tr>
                         </table>
                         {% endif %}
 
-                        <!-- Success badge -->
-                        <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:28px;">
+                        <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:24px;">
                             <tr><td align="center">
-                                <div style="background:linear-gradient(135deg,#d1fae5,#a7f3d0);border-radius:14px;padding:16px 32px;display:inline-block;box-shadow:0 4px 14px rgba(5,150,105,.15);">
-                                    <p style="margin:0;color:#059669;font-size:15px;font-weight:800;">&#10003; Réservation confirmée</p>
+                                <div style="background:linear-gradient(135deg,#d1fae5,#a7f3d0);border-radius:14px;padding:14px 28px;display:inline-block;box-shadow:0 4px 14px rgba(5,150,105,.15);">
+                                    <p style="margin:0;color:#059669;font-size:15px;font-weight:800;font-family:'Segoe UI',Tahoma,Roboto,Arial,sans-serif;">&#10003; Réservation confirmée</p>
                                 </div>
                             </td></tr>
                         </table>
 
-                        <p style="margin:28px 0 0;color:#9ca3af;font-size:12px;line-height:1.6;text-align:center;">
-                            Conservez cet email comme justificatif. Présentez-le le jour de l'événement si nécessaire.
-                        </p>
+                        <p style="margin:24px 0 0;color:#9ca3af;font-size:12px;line-height:1.6;text-align:center;">Conservez cet email comme justificatif. Présentez-le le jour de l'événement si nécessaire.</p>
                     </td>
                 </tr>
                 <!-- Footer -->
                 <tr>
-                    <td style="background:linear-gradient(135deg,#f8f9fc,#f0eef9);padding:24px 40px;text-align:center;border-top:1px solid rgba(30,15,117,.06);">
-                        <p style="margin:0 0 4px;color:#1e0f75;font-size:13px;font-weight:700;">Art Connect</p>
+                    <td style="background:linear-gradient(135deg,#f8f9fc,#f0eef9);padding:22px 48px;text-align:center;border-top:1px solid rgba(30,15,117,.06);">
+                        <p style="margin:0 0 4px;color:#1e0f75;font-size:13px;font-weight:700;font-family:'Segoe UI',Tahoma,Roboto,Arial,sans-serif;">Art Connect</p>
                         <p style="margin:0;color:#9ca3af;font-size:11px;">L'art inclusif pour tous &middot; &copy; {{ 'now'|date('Y') }}</p>
                     </td>
                 </tr>

@@ -139,7 +139,7 @@
             white-space: nowrap;
         }
         .filter-tab.active {
-            background: linear-gradient(135deg, #1E0F75, #3785D8);
+            background: linear-gradient(135deg, #1e0f75 0%, #3785d8 55%, #bf8ce1 100%);
             color: #fff;
             box-shadow: 0 4px 12px rgba(30,15,117,0.25);
         }
@@ -182,7 +182,7 @@
             cursor: pointer; transition: all 0.25s; flex-shrink: 0;
         }
         .filter-toggle-adv:hover, .filter-toggle-adv.active {
-            background: linear-gradient(135deg, #1E0F75, #3785D8);
+            background: linear-gradient(135deg, #1e0f75 0%, #3785d8 55%, #bf8ce1 100%);
             color: #fff; border-color: transparent;
         }
         .filter-advanced {
@@ -633,20 +633,33 @@
         </div>
 
         {# --- Filter Bar --- #}
-        <div class="filter-bar" id="eventFilterBar">
+        <div class="filter-bar" id="eventFilterBar" data-user-type="{{ isArtist ? 'artist' : (app.user ? 'participant' : 'guest') }}">
             <div class="filter-tabs">
                 {% if isArtist %}
                     <button class="filter-tab active" data-filter="mine" onclick="filterEvents('mine', this)">
-                        <i class="fas fa-paint-brush me-1"></i>Mes événements
-                        <span class="filter-count">{{ myEvents|length }}</span>
+                        <i class="fas fa-paint-brush me-1"></i>Événements que je crée
+                        <span class="filter-count">{{ total_mine|default(0) }}</span>
                     </button>
                     <button class="filter-tab" data-filter="others" onclick="filterEvents('others', this)">
                         <i class="fas fa-users me-1"></i>Autres artistes
-                        <span class="filter-count">{{ otherEvents|length }}</span>
+                        <span class="filter-count">{{ total_others|default(0) }}</span>
                     </button>
                     <button class="filter-tab" data-filter="all" onclick="filterEvents('all', this)">
                         <i class="fas fa-globe-americas me-1"></i>Tous
-                        <span class="filter-count">{{ latestEvents|length }}</span>
+                        <span class="filter-count">{{ total_all|default(0) }}</span>
+                    </button>
+                {% elseif app.user %}
+                    <button class="filter-tab active" data-filter="registered" onclick="filterEvents('registered', this)">
+                        <i class="fas fa-ticket-alt me-1"></i>Événements où je suis inscrit
+                        <span class="filter-count">{{ total_registered|default(0) }}</span>
+                    </button>
+                    <button class="filter-tab" data-filter="others" onclick="filterEvents('others', this)">
+                        <i class="fas fa-users me-1"></i>Autres
+                        <span class="filter-count">{{ total_others|default(0) }}</span>
+                    </button>
+                    <button class="filter-tab" data-filter="all" onclick="filterEvents('all', this)">
+                        <i class="fas fa-globe-americas me-1"></i>Tous
+                        <span class="filter-count">{{ total_all|default(0) }}</span>
                     </button>
                 {% else %}
                     <button class="filter-tab active" data-filter="all" onclick="filterEvents('all', this)">
@@ -708,6 +721,7 @@
                 {% set reservedCount = event.reservations|length %}
                 {% set fillPct = event.nbPlaces > 0 ? ((reservedCount / event.nbPlaces) * 100)|round : 0 %}
                 {% set isMine = isArtist and event.organisateur and event.organisateur.id == app.user.id %}
+                {% set isRegistered = event.id in (registered_event_ids|default([])) %}
                 <div class="col-sm-6 col-lg-4 event-card-col"
                      data-title="{{ event.titre|lower }}"
                      data-lieu="{{ event.lieu|lower }}"
@@ -715,7 +729,8 @@
                      data-date-end="{{ event.dateFin ? event.dateFin|date('Y-m-d') : '' }}"
                      data-price="{{ event.prix ?? 0 }}"
                      data-free="{{ (event.prix is null or event.prix == 0) ? '1' : '0' }}"
-                     data-owner="{{ isMine ? 'mine' : 'others' }}">
+                     data-owner="{{ isMine ? 'mine' : 'others' }}"
+                     data-registered="{{ (app.user and not isArtist and isRegistered) ? '1' : '0' }}">
                     <a href="{{ path('app_evenement_show', {id: event.id}) }}" class="text-decoration-none">
                         <div class="ev-card">
                             <div class="ev-card-img">
@@ -982,8 +997,7 @@
                                 <span><i class="fas fa-users"></i> {{ event.nbPlaces }} places</span>
                             </div>
                             <div class="slide-actions">
-                                <a href="{{ path('register') }}" class="btn btn-light btn-slide">Inscription</a>
-                                <a href="{{ path('login') }}" class="btn btn-outline-light btn-slide">Connexion</a>
+                                <a href="{{ path('app_evenement_show', {id: event.id}) }}" class="btn btn-light btn-slide">Voir l'événement</a>
                             </div>
                         </div>
                     </div>
@@ -1002,8 +1016,8 @@
             <p style="color:rgba(255,255,255,0.88); max-width: 620px;">
                 Découvrez les événements artistiques, la boutique solidaire, le forum et la charité en quelques clics.
             </p>
-            <a href="{{ path('register') }}" class="btn btn-light btn-hero me-2 mt-2">Inscription</a>
-            <a href="{{ path('login') }}" class="btn btn-outline-light btn-hero mt-2">Connexion</a>
+            <a href="{{ path('app_evenement_index') }}" class="btn btn-light btn-hero me-2 mt-2">Découvrir les événements</a>
+            <small style="opacity:0.9;">Utilisez <strong>Connexion</strong> ou <strong>Inscription</strong> dans la barre ci-dessus pour réserver.</small>
         </section>
         {% endif %}
 
@@ -1159,7 +1173,8 @@
     {{ parent() }}
     <script>
     (function() {
-        var activeFilter = '{{ isArtist ? "mine" : "all" }}';
+        var activeFilter = '{{ isArtist ? "mine" : (app.user ? "registered" : "all") }}';
+        var userType = (document.getElementById('eventFilterBar') || {}).dataset.userType || 'guest';
         var searchTerm = '';
         var sortMode = 'date_asc';
 
@@ -1211,7 +1226,8 @@
                 var show = true;
 
                 if (activeFilter === 'mine') show = card.dataset.owner === 'mine';
-                else if (activeFilter === 'others') show = card.dataset.owner === 'others';
+                else if (activeFilter === 'registered') show = card.dataset.registered === '1';
+                else if (activeFilter === 'others') show = userType === 'participant' ? (card.dataset.registered === '0') : (card.dataset.owner === 'others');
                 else if (activeFilter === 'free') show = card.dataset.free === '1';
                 else if (activeFilter === 'paid') show = card.dataset.free === '0';
 

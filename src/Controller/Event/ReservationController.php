@@ -5,11 +5,13 @@ namespace App\Controller\Event;
 use App\Entity\Evenement;
 use App\Service\EmailService;
 use App\Service\StripeService;
+use App\Service\TicketPdfService;
 use App\Entity\Reservation;
 use App\Entity\User;
 use App\Repository\ReservationRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -23,7 +25,55 @@ class ReservationController extends AbstractController
         private StripeService $stripeService,
         private EmailService $emailService,
         private UrlGeneratorInterface $urlGenerator,
+        private ParameterBagInterface $params,
     ) {
+    }
+
+    /**
+     * Public scan endpoint: scan QR → mark ticket as scanned, redirect to event.
+     * Token is required (HMAC of reservation id with app secret).
+     */
+    #[Route('/{id}/scan', name: 'app_reservation_scan', methods: ['GET'])]
+    public function scan(Reservation $reservation, Request $request, EntityManagerInterface $entityManager): Response
+    {
+        $token = (string) $request->query->get('token', '');
+        $secret = $this->params->get('kernel.secret');
+        $expected = hash_hmac('sha256', (string) $reservation->getId(), $secret);
+
+        if (!hash_equals($expected, $token)) {
+            $this->addFlash('danger', 'Lien de scan invalide ou expiré.');
+            return $this->redirectToRoute('home');
+        }
+
+        if ($reservation->getScannedAt() === null) {
+            $reservation->setScannedAt(new \DateTimeImmutable());
+            $entityManager->flush();
+        }
+
+        $this->addFlash('success', 'Billet scanné avec succès.');
+        return $this->redirectToRoute('app_evenement_show', ['id' => $reservation->getEvenement()->getId()]);
+    }
+
+    #[Route('/{id}/ticket', name: 'app_reservation_ticket', methods: ['GET'])]
+    #[IsGranted('ROLE_USER')]
+    public function downloadTicket(Reservation $reservation, TicketPdfService $ticketPdfService): Response
+    {
+        $user = $this->getUser();
+        $isOwner = $reservation->getParticipant() === $user;
+        $isEventOrganizer = $reservation->getEvenement()->getOrganisateur() === $user;
+        $isAdmin = $this->isGranted('ROLE_ADMIN');
+
+        if (!$isOwner && !$isEventOrganizer && !$isAdmin) {
+            throw $this->createAccessDeniedException();
+        }
+
+        $pdf = $ticketPdfService->generatePdf($reservation);
+        $filename = 'ticket-artconnect-' . $reservation->getId() . '.pdf';
+
+        return new Response($pdf, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="' . $filename . '"',
+        ]);
     }
 
     #[Route('/payment-success', name: 'app_reservation_payment_success', methods: ['GET'])]
@@ -391,6 +441,15 @@ class ReservationController extends AbstractController
         if ($reservation->getEvenement()->getDateDebut() < new \DateTime() && !$isAdmin) {
             $this->addFlash('error', 'Impossible d\'annuler une réservation pour un événement déjà passé.');
             return $this->redirectToRoute('app_reservation_my');
+        }
+
+        // Notify owner (participant X cancelled) and participant (confirmation + refund contact if paid)
+        try {
+            $this->emailService->sendReservationCancelledByUserToOwner($reservation);
+            $this->emailService->sendReservationCancelledByUserToParticipant($reservation);
+        } catch (\Throwable $e) {
+            // Log but do not block cancellation
+            $this->addFlash('warning', 'La réservation a été annulée mais l\'envoi d\'un email de notification a échoué.');
         }
 
         $entityManager->remove($reservation);

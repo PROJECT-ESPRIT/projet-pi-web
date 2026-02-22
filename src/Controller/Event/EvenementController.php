@@ -7,6 +7,7 @@ use App\Entity\User;
 use App\Form\Event\EvenementType;
 use App\Repository\EvenementRepository;
 use App\Repository\ReservationRepository;
+use App\Service\EmailService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -18,7 +19,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 class EvenementController extends AbstractController
 {
     #[Route('/', name: 'app_evenement_index', methods: ['GET'])]
-    public function index(Request $request, EvenementRepository $evenementRepository): Response
+    public function index(Request $request, EvenementRepository $evenementRepository, ReservationRepository $reservationRepository): Response
     {
         $filterInput = [
             'q' => trim((string) $request->query->get('q', '')),
@@ -27,7 +28,8 @@ class EvenementController extends AbstractController
             'date_end' => (string) $request->query->get('date_end', ''),
             'prix_min' => (string) $request->query->get('prix_min', ''),
             'prix_max' => (string) $request->query->get('prix_max', ''),
-            'sort' => (string) $request->query->get('sort', 'date_asc'), // upcoming first by default
+            'sort' => (string) $request->query->get('sort', 'date_asc'),
+            'scope' => (string) $request->query->get('scope', ''),
         ];
 
         $filters = [
@@ -40,12 +42,41 @@ class EvenementController extends AbstractController
             'sort' => $filterInput['sort'],
         ];
 
+        $user = $this->getUser();
+        $isArtist = $user && \in_array('ROLE_ARTISTE', $user->getRoles(), true);
+        $registeredEventIds = [];
+        $totalMine = 0;
+        $totalOthers = 0;
+        $totalAll = 0;
+        $totalRegistered = 0;
+
+        if (!$this->isGranted('ROLE_ADMIN') && $user) {
+            if ($isArtist) {
+                $scope = \in_array($filterInput['scope'], ['mine', 'others', 'all'], true) ? $filterInput['scope'] : 'mine';
+                $filterInput['scope'] = $scope;
+                $filters['owner_id'] = ($scope === 'mine') ? $user->getId() : null;
+                $filters['exclude_owner_id'] = ($scope === 'others') ? $user->getId() : null;
+                $totalMine = $evenementRepository->countByFilters(array_merge($filters, ['owner_id' => $user->getId(), 'exclude_owner_id' => null]));
+                $totalOthers = $evenementRepository->countByFilters(array_merge($filters, ['owner_id' => null, 'exclude_owner_id' => $user->getId()]));
+                $totalAll = $evenementRepository->countByFilters(array_merge($filters, ['owner_id' => null, 'exclude_owner_id' => null]));
+            } else {
+                $registeredEventIds = $reservationRepository->getEventIdsWithReservationFor($user);
+                $scope = \in_array($filterInput['scope'], ['registered', 'others', 'all'], true) ? $filterInput['scope'] : 'all';
+                $filterInput['scope'] = $scope;
+                $filters['event_ids'] = ($scope === 'registered') ? ($registeredEventIds ?: [-1]) : null;
+                $filters['exclude_event_ids'] = ($scope === 'others' && $registeredEventIds) ? $registeredEventIds : null;
+                $totalRegistered = $evenementRepository->countByFilters(array_merge($filters, ['event_ids' => $registeredEventIds ?: [-1], 'exclude_event_ids' => null]));
+                $totalOthers = $evenementRepository->countByFilters(array_merge($filters, ['event_ids' => null, 'exclude_event_ids' => $registeredEventIds]));
+                $totalAll = $evenementRepository->countByFilters(array_merge($filters, ['event_ids' => null, 'exclude_event_ids' => null]));
+            }
+        }
+
         $page = max(1, (int) $request->query->get('page', 1));
         $perPage = 10;
         $paginator = $evenementRepository->searchAndSort($filters, $page, $perPage);
         $total = count($paginator);
         $totalPages = max(1, (int) ceil($total / $perPage));
-        if ($page > $totalPages) {
+        if ($page > $totalPages && $totalPages > 0) {
             $page = $totalPages;
             $paginator = $evenementRepository->searchAndSort($filters, $page, $perPage);
         }
@@ -57,6 +88,13 @@ class EvenementController extends AbstractController
             'page' => $page,
             'total_pages' => $totalPages,
             'total' => $total,
+            'is_artist' => $isArtist,
+            'scope' => $filterInput['scope'] ?? 'all',
+            'total_mine' => $totalMine,
+            'total_others' => $totalOthers,
+            'total_all' => $totalAll,
+            'total_registered' => $totalRegistered,
+            'registered_event_ids' => $registeredEventIds,
         ]);
     }
 
@@ -139,6 +177,61 @@ class EvenementController extends AbstractController
         ]);
     }
 
+    #[Route('/{id}/cancel', name: 'app_evenement_cancel', methods: ['GET', 'POST'])]
+    #[IsGranted('ROLE_ARTISTE')]
+    public function cancel(Request $request, Evenement $evenement, EntityManagerInterface $entityManager, EmailService $emailService): Response
+    {
+        if ($evenement->getOrganisateur() !== $this->getUser() && !$this->isGranted('ROLE_ADMIN')) {
+            throw $this->createAccessDeniedException('Vous n\'êtes pas autorisé à annuler cet événement.');
+        }
+        if ($evenement->isAnnule()) {
+            $this->addFlash('warning', 'Cet événement est déjà annulé.');
+            return $this->redirectToRoute('app_evenement_show', ['id' => $evenement->getId()]);
+        }
+
+        if ($request->isMethod('POST') && $this->isCsrfTokenValid('cancel' . $evenement->getId(), $request->request->get('_token'))) {
+            $reason = trim((string) $request->request->get('motif_annulation', ''));
+            if ($reason === '') {
+                $this->addFlash('danger', 'Veuillez indiquer le motif d\'annulation.');
+                return $this->render('evenement/cancel.html.twig', ['evenement' => $evenement]);
+            }
+
+            $evenement->setAnnule(true);
+            $evenement->setMotifAnnulation($reason);
+            $evenement->setDateAnnulation(new \DateTimeImmutable());
+            $entityManager->flush();
+
+            $owner = $evenement->getOrganisateur();
+            $eventTitle = $evenement->getTitre();
+            $ownerEmail = $owner ? $owner->getEmail() : '';
+            $ownerPhone = $owner ? $owner->getTelephone() : null;
+            $isPaid = $evenement->getPrix() !== null && $evenement->getPrix() > 0;
+            foreach ($evenement->getReservations() as $reservation) {
+                $p = $reservation->getParticipant();
+                if ($p && $p->getEmail()) {
+                    try {
+                        $emailService->sendEventCancelledByArtistToParticipant(
+                            $p->getEmail(),
+                            trim($p->getPrenom() . ' ' . $p->getNom()) ?: 'Participant',
+                            $eventTitle,
+                            $ownerEmail,
+                            $ownerPhone,
+                            $isPaid,
+                            $reason
+                        );
+                    } catch (\Throwable $e) {
+                        // continue
+                    }
+                }
+            }
+
+            $this->addFlash('success', 'L\'événement a été annulé. Les participants ont été notifiés par email.');
+            return $this->redirectToRoute('app_evenement_show', ['id' => $evenement->getId()]);
+        }
+
+        return $this->render('evenement/cancel.html.twig', ['evenement' => $evenement]);
+    }
+
     #[Route('/{id}', name: 'app_evenement_delete', methods: ['POST'])]
     #[IsGranted('ROLE_ARTISTE')]
     public function delete(Request $request, Evenement $evenement, EntityManagerInterface $entityManager): Response
@@ -147,7 +240,13 @@ class EvenementController extends AbstractController
             throw $this->createAccessDeniedException('Vous n\'êtes pas autorisé à supprimer cet événement.');
         }
 
-        if ($this->isCsrfTokenValid('delete'.$evenement->getId(), $request->request->get('_token'))) {
+        $reservationsCount = $evenement->getReservations()->count();
+        if ($reservationsCount > 0) {
+            $this->addFlash('danger', 'Impossible de supprimer un événement qui possède au moins une réservation. Annulez l\'événement à la place (les participants seront notifiés).');
+            return $this->redirectToRoute('app_evenement_show', ['id' => $evenement->getId()]);
+        }
+
+        if ($this->isCsrfTokenValid('delete' . $evenement->getId(), $request->request->get('_token'))) {
             $entityManager->remove($evenement);
             $entityManager->flush();
             $this->addFlash('success', 'Événement supprimé avec succès !');

@@ -4,14 +4,17 @@
 
 {% block body %}
 {% if is_granted('ROLE_ADMIN') %}
-{# ===================== ADMIN VIEW — unchanged ===================== #}
+{# ===================== ADMIN VIEW ===================== #}
 <style>
-    .ev-badge-past { position:absolute; top:12px; left:12px; z-index:2; background:rgba(55,65,81,.9); color:#fff; font-size:.7rem; font-weight:700; padding:.35rem .6rem; border-radius:8px; text-transform:uppercase; letter-spacing:.04em; }
+    .bo-table .ev-places-bar { display:inline-flex; align-items:center; gap:.4rem; }
+    .bo-table .ev-places-track { width:45px; height:5px; border-radius:3px; background:rgba(30,15,117,.06); overflow:hidden; }
+    .bo-table .ev-places-fill { height:100%; border-radius:3px; }
 </style>
+
 <div class="bo-page-header">
     <h1>
         <i class="fas fa-calendar-alt"></i> Événements
-        <span class="badge bg-primary bg-opacity-75">{{ total }}</span>
+        <span class="badge">{{ total }}</span>
     </h1>
     <div class="bo-actions">
         <a href="{{ path('app_evenement_new') }}" class="btn btn-primary"><i class="fas fa-plus me-1"></i> Nouveau</a>
@@ -21,23 +24,23 @@
 <form method="get" action="{{ path('app_evenement_index') }}" class="bo-filter-bar">
     <div class="row g-2 align-items-end">
         <div class="col-12 col-md-3">
-            <label>Recherche</label>
+            <label><i class="fas fa-search me-1"></i>Recherche</label>
             <input type="text" name="q" class="form-control" value="{{ filter_input.q|default('') }}" placeholder="Titre, lieu, organisateur…">
         </div>
         <div class="col-6 col-md-2">
-            <label>Lieu</label>
+            <label><i class="fas fa-map-marker-alt me-1"></i>Lieu</label>
             <input type="text" name="lieu" class="form-control" value="{{ filter_input.lieu|default('') }}" placeholder="Ville / lieu">
         </div>
         <div class="col-6 col-md-2">
-            <label>Date début</label>
+            <label><i class="fas fa-calendar me-1"></i>Date début</label>
             <input type="date" name="date_start" class="form-control" value="{{ filter_input.date_start|default('') }}">
         </div>
         <div class="col-6 col-md-2">
-            <label>Date fin</label>
+            <label><i class="fas fa-calendar-check me-1"></i>Date fin</label>
             <input type="date" name="date_end" class="form-control" value="{{ filter_input.date_end|default('') }}">
         </div>
         <div class="col-6 col-md-3">
-            <label>Tri</label>
+            <label><i class="fas fa-sort me-1"></i>Tri</label>
             <select name="sort" class="form-select">
                 <option value="date_asc" {{ filter_input.sort == 'date_asc' ? 'selected' }}>Date ↑</option>
                 <option value="date_desc" {{ filter_input.sort == 'date_desc' ? 'selected' }}>Date ↓</option>
@@ -48,11 +51,11 @@
             </select>
         </div>
         <div class="col-6 col-md-1">
-            <label>Prix min</label>
+            <label><i class="fas fa-coins me-1"></i>Min</label>
             <input type="number" step="0.01" name="prix_min" class="form-control" value="{{ filter_input.prix_min|default('') }}" placeholder="0">
         </div>
         <div class="col-6 col-md-1">
-            <label>Prix max</label>
+            <label><i class="fas fa-coins me-1"></i>Max</label>
             <input type="number" step="0.01" name="prix_max" class="form-control" value="{{ filter_input.prix_max|default('') }}" placeholder="∞">
         </div>
         <div class="col-12 col-md-4 col-lg-3 d-flex gap-2">
@@ -60,7 +63,7 @@
                 <span class="btn-label"><i class="fas fa-search me-1"></i> Filtrer</span>
                 <span class="btn-spinner" style="display:none;"><i class="fas fa-spinner fa-spin me-1"></i></span>
             </button>
-            <a class="btn btn-outline-secondary" href="{{ path('app_evenement_index') }}">Réinitialiser</a>
+            <a class="btn btn-outline-secondary" href="{{ path('app_evenement_index') }}"><i class="fas fa-undo me-1"></i>Reset</a>
         </div>
     </div>
 </form>
@@ -79,6 +82,7 @@
                     {% set nowTs = "now"|date('U') %}
                     {% set evStartTs = ev.dateDebut ? ev.dateDebut|date('U') : 0 %}
                     {% set isPassedAdmin = ev.dateDebut and evStartTs < nowTs %}
+                    {% set fillPct = ev.nbPlaces > 0 ? ((ev.reservations|length / ev.nbPlaces) * 100)|round : 0 %}
                     {% if isPassedAdmin %}
                         {% set statusBadge = 'Passé' %}{% set statusClass = 'bg-secondary' %}
                     {% else %}
@@ -89,23 +93,51 @@
                         {% elseif evWeek == nowWeek %}{% set statusBadge = 'Cette semaine' %}{% set statusClass = 'bg-info' %}
                         {% else %}{% set daysLeft = ((evStartTs - nowTs) / 86400)|round %}{% set statusBadge = daysLeft > 0 ? ('J-' ~ daysLeft) : '—' %}{% set statusClass = 'bg-light text-dark' %}{% endif %}
                     {% endif %}
-                    <tr class="{{ isPassedAdmin ? 'table-secondary' : '' }}" style="{{ isPassedAdmin ? 'opacity:.88;' : '' }}">
-                        <td class="text-muted">{{ ev.id }}</td>
-                        <td><div class="fw-semibold">{{ ev.titre }}</div><small class="text-muted">{{ ev.description|length > 60 ? ev.description|slice(0, 60) ~ '…' : ev.description }}</small></td>
-                        <td style="white-space:nowrap;"><div>{{ ev.dateDebut ? ev.dateDebut|date('d/m/Y') : '—' }}</div><small class="text-muted">{{ ev.dateDebut ? ev.dateDebut|date('H:i') : '' }}{{ ev.dateFin ? ' → ' ~ ev.dateFin|date('H:i') : '' }}</small></td>
-                        <td><span class="badge {{ statusClass }}" style="font-size:.7rem;">{{ statusBadge }}</span></td>
-                        <td>{{ ev.lieu }}</td>
-                        <td><span class="badge bg-secondary bg-opacity-75">{{ ev.reservations|length }} / {{ ev.nbPlaces }}</span></td>
-                        <td>{% if ev.prix %}<span class="fw-semibold">{{ ev.prix }} TND</span>{% else %}<span class="badge bg-success bg-opacity-75">Gratuit</span>{% endif %}</td>
-                        <td>{{ ev.organisateur.prenom }} {{ ev.organisateur.nom|first }}.</td>
+                    <tr style="{{ isPassedAdmin ? 'opacity:.7;' : '' }}">
+                        <td class="text-muted" style="font-size:.78rem;">{{ ev.id }}</td>
+                        <td>
+                            <div class="fw-semibold" style="color:var(--ac-deep);">{{ ev.titre }}</div>
+                            <small class="text-muted" style="font-size:.72rem;">{{ ev.description|length > 55 ? ev.description|slice(0, 55) ~ '…' : ev.description }}</small>
+                        </td>
+                        <td style="white-space:nowrap;">
+                            <div style="font-weight:600;">{{ ev.dateDebut ? ev.dateDebut|date('d/m/Y') : '—' }}</div>
+                            <small class="text-muted" style="font-size:.72rem;">{{ ev.dateDebut ? ev.dateDebut|date('H:i') : '' }}{{ ev.dateFin ? ' → ' ~ ev.dateFin|date('H:i') : '' }}</small>
+                        </td>
+                        <td><span class="badge {{ statusClass }}">{{ statusBadge }}</span></td>
+                        <td style="font-size:.82rem;">{{ ev.lieu }}</td>
+                        <td>
+                            <div class="ev-places-bar">
+                                <div class="ev-places-track">
+                                    <div class="ev-places-fill" style="width:{{ fillPct }}%; background:{% if fillPct < 50 %}linear-gradient(90deg,#059669,#34d399){% elseif fillPct < 80 %}linear-gradient(90deg,#d97706,#fbbf24){% else %}linear-gradient(90deg,#dc2626,#f87171){% endif %};"></div>
+                                </div>
+                                <span style="font-size:.75rem; font-weight:600; color:#6b7280;">{{ ev.reservations|length }}/{{ ev.nbPlaces }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            {% if ev.prix %}
+                                <span style="font-weight:700; color:var(--ac-deep);">{{ ev.prix }} TND</span>
+                            {% else %}
+                                <span class="badge bg-success">Gratuit</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div style="display:flex; align-items:center; gap:.4rem;">
+                                <span style="width:24px; height:24px; border-radius:8px; background:linear-gradient(135deg,var(--ac-deep),var(--ac-blue)); color:#fff; display:inline-flex; align-items:center; justify-content:center; font-size:.6rem; font-weight:700;">{{ ev.organisateur.prenom|first }}{{ ev.organisateur.nom|first }}</span>
+                                <span style="font-size:.82rem;">{{ ev.organisateur.prenom }} {{ ev.organisateur.nom|first }}.</span>
+                            </div>
+                        </td>
                         <td class="text-end">
                             <div class="d-flex gap-1 justify-content-end">
                                 <a href="{{ path('app_evenement_show', {id: ev.id}) }}" class="btn-action btn-view" title="Voir"><i class="fas fa-eye"></i></a>
                                 <a href="{{ path('app_evenement_edit', {id: ev.id}) }}" class="btn-action btn-edit" title="Éditer"><i class="fas fa-pen"></i></a>
+                                {% if ev.reservations|length > 0 %}
+                                <a href="{{ path('app_evenement_cancel', {id: ev.id}) }}" class="btn-action btn-edit" title="Annuler l'événement"><i class="fas fa-ban"></i></a>
+                                {% else %}
                                 <form method="post" action="{{ path('app_evenement_delete', {id: ev.id}) }}" class="d-inline" data-confirm-title="Supprimer cet événement" data-confirm="Cette action est irréversible. Voulez-vous continuer ?">
                                     <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ ev.id) }}">
                                     <button class="btn-action btn-del" title="Supprimer"><i class="fas fa-trash"></i></button>
                                 </form>
+                                {% endif %}
                             </div>
                         </td>
                     </tr>
@@ -144,81 +176,139 @@
     }
     .fo-ev-header .badge { font-size: .72rem; border-radius: 8px; }
 
-    /* Filter bar — matching home style */
-    .fo-filter-bar {
-        background: #fff; border-radius: 16px;
-        padding: .8rem 1rem;
-        box-shadow: 0 4px 16px rgba(30,15,117,.06);
-        border: 1px solid rgba(30,15,117,.08);
-        margin-bottom: .4rem;
+    /* ===== FILTER BAR — same as home ===== */
+    .filter-bar {
+        background: #fff;
+        border-radius: 16px;
+        padding: 0.8rem 1rem;
+        box-shadow: 0 4px 16px rgba(30,15,117,0.06);
+        border: 1px solid rgba(30,15,117,0.08);
+        margin-bottom: 1.5rem;
+        display: flex; align-items: center; gap: 0.6rem;
+        flex-wrap: wrap;
     }
-    .fo-filter-row {
-        display: flex; align-items: center; gap: .5rem; flex-wrap: wrap;
+    .filter-tabs {
+        display: flex; gap: 0.3rem;
+        background: #f4f2fc;
+        border-radius: 12px;
+        padding: 0.25rem;
     }
-    .fo-filter-search {
-        flex: 1; min-width: 180px; position: relative;
+    .filter-tab {
+        padding: 0.45rem 1rem;
+        border-radius: 10px;
+        border: none;
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: #666;
+        background: transparent;
+        cursor: pointer;
+        transition: all 0.25s;
+        white-space: nowrap;
+        text-decoration: none;
+        display: inline-flex; align-items: center;
     }
-    .fo-filter-search input {
-        width: 100%; border: 1px solid rgba(30,15,117,.1);
-        border-radius: 10px; padding: .5rem .8rem .5rem 2.2rem;
-        font-size: .85rem; background: #faf9fe; transition: all .25s;
+    .filter-tab.active {
+        background: linear-gradient(135deg, #1e0f75 0%, #3785d8 55%, #bf8ce1 100%);
+        color: #fff;
+        box-shadow: 0 4px 12px rgba(30,15,117,0.25);
     }
-    .fo-filter-search input:focus {
-        outline: none; border-color: #3785D8;
-        box-shadow: 0 0 0 3px rgba(55,133,216,.1); background: #fff;
+    .filter-tab:not(.active):hover {
+        background: rgba(30,15,117,0.06);
+        color: #1E0F75;
     }
-    .fo-filter-search i {
-        position: absolute; left: .75rem; top: 50%; transform: translateY(-50%);
-        color: #999; font-size: .8rem;
+    .filter-search {
+        flex: 1; min-width: 180px;
+        position: relative;
     }
-    .fo-filter-select {
-        border: 1px solid rgba(30,15,117,.1); border-radius: 10px;
-        padding: .5rem .7rem; font-size: .82rem;
-        background: #faf9fe; cursor: pointer; color: #555;
+    .filter-search input {
+        width: 100%; border: 1px solid rgba(30,15,117,0.1);
+        border-radius: 10px; padding: 0.5rem 0.8rem 0.5rem 2.2rem;
+        font-size: 0.85rem; background: #faf9fe;
+        transition: all 0.25s;
     }
-    .fo-filter-select:focus { outline: none; border-color: #3785D8; }
-    .fo-filter-input {
-        border: 1px solid rgba(30,15,117,.1); border-radius: 10px;
-        padding: .5rem .6rem; font-size: .82rem;
-        background: #faf9fe; width: 110px;
+    .filter-search input:focus {
+        outline: none;
+        border-color: #3785D8;
+        box-shadow: 0 0 0 3px rgba(55,133,216,0.1);
+        background: #fff;
     }
-    .fo-filter-input:focus { outline: none; border-color: #3785D8; box-shadow: 0 0 0 2px rgba(55,133,216,.1); }
-    .fo-filter-btn {
-        border-radius: 10px; font-weight: 700; font-size: .82rem;
-        padding: .5rem 1rem; min-width: 90px; border: none;
-        background: linear-gradient(135deg, #1E0F75, #3785D8);
-        color: #fff; cursor: pointer; transition: all .2s;
+    .filter-search i {
+        position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%);
+        color: #999; font-size: 0.8rem;
     }
-    .fo-filter-btn:hover { filter: brightness(.95); transform: translateY(-1px); }
-    .fo-filter-reset {
-        border-radius: 10px; font-weight: 600; font-size: .82rem;
-        padding: .5rem .8rem; border: 1px solid rgba(30,15,117,.15);
-        background: transparent; color: #666; cursor: pointer;
-        text-decoration: none; transition: all .2s;
+    .filter-sort {
+        border: 1px solid rgba(30,15,117,0.1);
+        border-radius: 10px; padding: 0.5rem 0.75rem;
+        font-size: 0.82rem; background: #faf9fe;
+        cursor: pointer; color: #555;
     }
-    .fo-filter-reset:hover { background: rgba(30,15,117,.04); color: #1E0F75; }
-    .fo-filter-toggle {
-        width: 38px; height: 38px; border-radius: 10px;
-        border: 1px solid rgba(30,15,117,.1); background: #faf9fe;
-        color: #666; display: flex; align-items: center; justify-content: center;
-        cursor: pointer; transition: all .25s; flex-shrink: 0;
+    .filter-sort:focus { outline: none; border-color: #3785D8; }
+    .filter-toggle-adv {
+        width: 38px; height: 38px;
+        border-radius: 10px; border: 1px solid rgba(30,15,117,0.1);
+        background: #faf9fe; color: #666;
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer; transition: all 0.25s; flex-shrink: 0;
     }
-    .fo-filter-toggle:hover, .fo-filter-toggle.active {
-        background: linear-gradient(135deg, #1E0F75, #3785D8);
+    .filter-toggle-adv:hover, .filter-toggle-adv.active {
+        background: linear-gradient(135deg, #1e0f75 0%, #3785d8 55%, #bf8ce1 100%);
         color: #fff; border-color: transparent;
     }
-    .fo-filter-advanced {
-        background: #fff; border-radius: 0 0 16px 16px;
-        padding: .7rem 1rem; box-shadow: 0 4px 16px rgba(30,15,117,.06);
-        border: 1px solid rgba(30,15,117,.08); border-top: none;
-        margin-bottom: 1rem;
-        animation: slideDown .3s ease;
+    .filter-btn-submit {
+        border-radius: 10px; font-weight: 700; font-size: 0.82rem;
+        padding: 0.5rem 1rem; min-width: 90px; border: none;
+        background: linear-gradient(135deg, #1e0f75 0%, #3785d8 55%, #bf8ce1 100%);
+        color: #fff; cursor: pointer; transition: all 0.2s;
+    }
+    .filter-btn-submit:hover { filter: brightness(0.95); transform: translateY(-1px); }
+    .filter-count {
+        display: inline-flex; align-items: center; justify-content: center;
+        background: rgba(30,15,117,0.08); color: #1E0F75;
+        border-radius: 6px; font-size: 0.7rem; font-weight: 700;
+        min-width: 20px; height: 18px; padding: 0 4px; margin-left: 4px;
+    }
+    .filter-tab.active .filter-count {
+        background: rgba(255,255,255,0.25); color: #fff;
+    }
+    .filter-advanced {
+        background: #fff;
+        border-radius: 0 0 16px 16px;
+        padding: 0.8rem 1rem;
+        box-shadow: 0 4px 16px rgba(30,15,117,0.06);
+        border: 1px solid rgba(30,15,117,0.08);
+        border-top: none;
+        margin-top: -1.5rem; margin-bottom: 1.5rem;
+        animation: slideDown 0.3s ease;
     }
     @keyframes slideDown { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
-    .fo-filter-adv-row { display: flex; gap: .5rem; flex-wrap: wrap; align-items: end; }
-    .fo-filter-adv-group { flex: 1; min-width: 130px; }
-    .fo-filter-adv-group label {
-        display: block; font-size: .7rem; font-weight: 700; color: #666; margin-bottom: .15rem;
+    .filter-adv-row {
+        display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: end;
+    }
+    .filter-adv-group { flex: 1; min-width: 140px; }
+    .filter-adv-group label {
+        display: block; font-size: 0.72rem; font-weight: 700;
+        color: #666; margin-bottom: 0.2rem;
+    }
+    .filter-adv-group input {
+        width: 100%; border: 1px solid rgba(30,15,117,0.1);
+        border-radius: 8px; padding: 0.4rem 0.6rem;
+        font-size: 0.82rem; background: #faf9fe;
+    }
+    .filter-adv-group input:focus {
+        outline: none; border-color: #3785D8;
+        box-shadow: 0 0 0 2px rgba(55,133,216,0.1);
+    }
+    .filter-reset-btn {
+        border: 1px solid rgba(220,53,69,0.3);
+        background: rgba(220,53,69,0.05);
+        color: #dc3545; border-radius: 8px;
+        padding: 0.4rem 0.8rem; font-size: 0.78rem;
+        font-weight: 600; cursor: pointer;
+        transition: all 0.2s; white-space: nowrap;
+        text-decoration: none; display: inline-block;
+    }
+    .filter-reset-btn:hover {
+        background: #dc3545; color: #fff;
     }
 
     /* Event cards — same as home */
@@ -237,6 +327,18 @@
     .ev-card.ev-past { opacity: .85; }
     .ev-card.ev-past .ev-card-img img,
     .ev-card.ev-past .ev-card-img .placeholder-art { filter: grayscale(60%); }
+    .ev-card-owner-badge {
+        position: absolute; top: 52px; right: 12px; z-index: 2;
+        font-size: .65rem; font-weight: 700; padding: .22rem .55rem;
+        border-radius: 8px; backdrop-filter: blur(8px);
+        display: flex; align-items: center; gap: .25rem;
+    }
+    .ev-card-owner-badge.mine-badge {
+        background: rgba(30,15,117,.88); color: #fff;
+    }
+    .ev-card-owner-badge.registered-badge {
+        background: rgba(55,133,216,.9); color: #fff;
+    }
     .ev-card-img { height: 180px; position: relative; overflow: hidden; }
     .ev-card-img img { width: 100%; height: 100%; object-fit: cover; transition: transform .4s; }
     .ev-card:hover .ev-card-img img { transform: scale(1.05); }
@@ -308,8 +410,18 @@
     @keyframes fadeInUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
     .ev-card { animation: fadeInUp .4s ease both; }
 
-    .fo-pagination .page-item.active .page-link { background: var(--ac-mid); border-color: var(--ac-mid); color: #fff; }
-    .fo-pagination .page-link { border-radius: 10px; color: #374151; font-weight: 600; font-size: .85rem; }
+    .fo-pagination .pagination { gap: 0.6rem; list-style: none; padding-left: 0; }
+    .fo-pagination .page-link {
+        border-radius: 12px; color: #374151; font-weight: 600; font-size: .9rem;
+        padding: .5rem .85rem; border: 1.5px solid rgba(30,15,117,.1); background: #fff;
+        transition: all .2s ease; text-decoration: none; display: block; min-width: 2.5rem; text-align: center;
+    }
+    .fo-pagination .page-item:not(.disabled) .page-link:hover { background: rgba(55,133,216,.08); border-color: rgba(55,133,216,.25); color: #1e3a5f; }
+    .fo-pagination .page-item.active .page-link {
+        background: var(--ac-mid); border-color: var(--ac-mid); color: #fff;
+        box-shadow: 0 3px 12px rgba(55,133,216,.3);
+    }
+    .fo-pagination .page-item.disabled .page-link { color: #d1d5db; border-color: #e5e7eb; background: #f9fafb; cursor: not-allowed; }
 
     .fo-empty {
         background: #fff; border: 1px solid rgba(30,15,117,.06);
@@ -333,57 +445,103 @@
     </div>
 </div>
 
-{# ---- Enhanced Filter Bar ---- #}
+{# ---- Filter Bar — same as home ---- #}
 {% set hasAdvFilters = filter_input.lieu|default('') or filter_input.date_start|default('') or filter_input.date_end|default('') or filter_input.prix_min|default('') or filter_input.prix_max|default('') %}
-<form method="get" action="{{ path('app_evenement_index') }}" id="foFilterForm">
-    <div class="fo-filter-bar">
-        <div class="fo-filter-row">
-            <div class="fo-filter-search">
-                <i class="fas fa-search"></i>
-                <input type="text" name="q" value="{{ filter_input.q|default('') }}" placeholder="Rechercher un événement, lieu, artiste...">
-            </div>
-            <select name="sort" class="fo-filter-select">
-                <option value="date_asc" {{ filter_input.sort == 'date_asc' ? 'selected' }}>Date (proche)</option>
-                <option value="date_desc" {{ filter_input.sort == 'date_desc' ? 'selected' }}>Date (lointaine)</option>
-                <option value="prix_asc" {{ filter_input.sort == 'prix_asc' ? 'selected' }}>Prix croissant</option>
-                <option value="prix_desc" {{ filter_input.sort == 'prix_desc' ? 'selected' }}>Prix décroissant</option>
-                <option value="titre_asc" {{ filter_input.sort == 'titre_asc' ? 'selected' }}>Nom A-Z</option>
-                <option value="titre_desc" {{ filter_input.sort == 'titre_desc' ? 'selected' }}>Nom Z-A</option>
-                <option value="created_desc" {{ filter_input.sort == 'created_desc' ? 'selected' }}>Récents</option>
-            </select>
-            <button type="submit" class="fo-filter-btn">
-                <span class="btn-label"><i class="fas fa-search me-1"></i> Filtrer</span>
-                <span class="btn-spinner" style="display:none;"><i class="fas fa-spinner fa-spin"></i></span>
-            </button>
-            <button type="button" class="fo-filter-toggle {{ hasAdvFilters ? 'active' : '' }}" onclick="this.classList.toggle('active');document.getElementById('foAdvFilters').classList.toggle('d-none');" title="Filtres avancés">
-                <i class="fas fa-sliders-h"></i>
-            </button>
+{% set qp = { q: filter_input.q|default(''), lieu: filter_input.lieu|default(''), date_start: filter_input.date_start|default(''), date_end: filter_input.date_end|default(''), sort: filter_input.sort|default('date_asc'), scope: scope|default('all'), prix_min: filter_input.prix_min|default(''), prix_max: filter_input.prix_max|default('') } %}
+{% set isFreeActive = filter_input.prix_max|default('') == '0' and (filter_input.prix_min|default('')) == '' %}
+{% set isPaidActive = (filter_input.prix_min|default('')) != '' and (filter_input.prix_max|default('')) == '' %}
+<form method="get" action="{{ path('app_evenement_index') }}" id="eventFilterForm">
+    <input type="hidden" name="scope" value="{{ scope|default('all') }}">
+    <div class="filter-bar" id="eventFilterBar">
+        <div class="filter-tabs">
+            {% if app.user and not is_granted('ROLE_ADMIN') %}
+                {% if is_artist|default(false) %}
+                    <a href="{{ path('app_evenement_index', qp|merge({ scope: 'mine', page: 1, prix_min: '', prix_max: '' })) }}" class="filter-tab {{ scope|default('all') == 'mine' ? 'active' : '' }}">
+                        <i class="fas fa-paint-brush me-1"></i>Événements que je crée
+                        <span class="filter-count">{{ total_mine|default(0) }}</span>
+                    </a>
+                    <a href="{{ path('app_evenement_index', qp|merge({ scope: 'others', page: 1, prix_min: '', prix_max: '' })) }}" class="filter-tab {{ scope|default('all') == 'others' ? 'active' : '' }}">
+                        <i class="fas fa-users me-1"></i>Autres artistes
+                        <span class="filter-count">{{ total_others|default(0) }}</span>
+                    </a>
+                    <a href="{{ path('app_evenement_index', qp|merge({ scope: 'all', page: 1, prix_min: '', prix_max: '' })) }}" class="filter-tab {{ scope|default('all') == 'all' ? 'active' : '' }}">
+                        <i class="fas fa-globe-americas me-1"></i>Tous
+                        <span class="filter-count">{{ total_all|default(total) }}</span>
+                    </a>
+                {% else %}
+                    <a href="{{ path('app_evenement_index', qp|merge({ scope: 'registered', page: 1, prix_min: '', prix_max: '' })) }}" class="filter-tab {{ scope|default('all') == 'registered' ? 'active' : '' }}">
+                        <i class="fas fa-ticket-alt me-1"></i>Événements où je suis inscrit
+                        <span class="filter-count">{{ total_registered|default(0) }}</span>
+                    </a>
+                    <a href="{{ path('app_evenement_index', qp|merge({ scope: 'others', page: 1, prix_min: '', prix_max: '' })) }}" class="filter-tab {{ scope|default('all') == 'others' ? 'active' : '' }}">
+                        <i class="fas fa-search me-1"></i>Autres
+                        <span class="filter-count">{{ total_others|default(0) }}</span>
+                    </a>
+                    <a href="{{ path('app_evenement_index', qp|merge({ scope: 'all', page: 1, prix_min: '', prix_max: '' })) }}" class="filter-tab {{ scope|default('all') == 'all' ? 'active' : '' }}">
+                        <i class="fas fa-globe-americas me-1"></i>Tous
+                        <span class="filter-count">{{ total_all|default(total) }}</span>
+                    </a>
+                {% endif %}
+            {% else %}
+                <a href="{{ path('app_evenement_index', qp|merge({ scope: 'all', page: 1, prix_min: '', prix_max: '' })) }}" class="filter-tab {{ scope|default('all') == 'all' ? 'active' : '' }}">
+                    <i class="fas fa-globe-americas me-1"></i>Tous
+                    <span class="filter-count">{{ total }}</span>
+                </a>
+            {% endif %}
+            <a href="{{ path('app_evenement_index', qp|merge({ scope: scope|default('all'), page: 1, prix_min: '', prix_max: '0' })) }}" class="filter-tab {{ isFreeActive ? 'active' : '' }}">
+                <i class="fas fa-gift me-1"></i>Gratuit
+            </a>
+            <a href="{{ path('app_evenement_index', qp|merge({ scope: scope|default('all'), page: 1, prix_min: '0.01', prix_max: '' })) }}" class="filter-tab {{ isPaidActive ? 'active' : '' }}">
+                <i class="fas fa-coins me-1"></i>Payant
+            </a>
         </div>
+        <div class="filter-search">
+            <i class="fas fa-search"></i>
+            <input type="text" name="q" value="{{ filter_input.q|default('') }}" placeholder="Rechercher un événement...">
+        </div>
+        <select name="sort" class="filter-sort">
+            <option value="date_asc" {{ filter_input.sort == 'date_asc' ? 'selected' : '' }}>Date (proche)</option>
+            <option value="date_desc" {{ filter_input.sort == 'date_desc' ? 'selected' : '' }}>Date (lointaine)</option>
+            <option value="prix_asc" {{ filter_input.sort == 'prix_asc' ? 'selected' : '' }}>Prix croissant</option>
+            <option value="prix_desc" {{ filter_input.sort == 'prix_desc' ? 'selected' : '' }}>Prix décroissant</option>
+            <option value="titre_asc" {{ filter_input.sort == 'titre_asc' ? 'selected' : '' }}>Nom A-Z</option>
+            <option value="titre_desc" {{ filter_input.sort == 'titre_desc' ? 'selected' : '' }}>Nom Z-A</option>
+            <option value="created_desc" {{ filter_input.sort == 'created_desc' ? 'selected' : '' }}>Récents</option>
+        </select>
+        <button type="submit" class="filter-btn-submit">
+            <span class="btn-label"><i class="fas fa-search me-1"></i> Filtrer</span>
+            <span class="btn-spinner" style="display:none;"><i class="fas fa-spinner fa-spin"></i></span>
+        </button>
+        <button type="button" class="filter-toggle-adv {{ hasAdvFilters ? 'active' : '' }}" onclick="this.classList.toggle('active');document.getElementById('eventAdvFilters').classList.toggle('d-none');" title="Filtres avancés">
+            <i class="fas fa-sliders-h"></i>
+        </button>
     </div>
-    <div class="fo-filter-advanced {{ not hasAdvFilters ? 'd-none' : '' }}" id="foAdvFilters">
-        <div class="fo-filter-adv-row">
-            <div class="fo-filter-adv-group">
-                <label><i class="fas fa-map-marker-alt me-1"></i>Lieu</label>
-                <input type="text" name="lieu" class="fo-filter-input" style="width:100%;" value="{{ filter_input.lieu|default('') }}" placeholder="Ville / lieu">
-            </div>
-            <div class="fo-filter-adv-group">
+    <div class="filter-advanced {{ not hasAdvFilters ? 'd-none' : '' }}" id="eventAdvFilters">
+        <div class="filter-adv-row">
+            <div class="filter-adv-group">
                 <label><i class="fas fa-calendar me-1"></i>Date début</label>
-                <input type="date" name="date_start" class="fo-filter-input" style="width:100%;" value="{{ filter_input.date_start|default('') }}">
+                <input type="date" name="date_start" value="{{ filter_input.date_start|default('') }}">
             </div>
-            <div class="fo-filter-adv-group">
+            <div class="filter-adv-group">
                 <label><i class="fas fa-calendar-check me-1"></i>Date fin</label>
-                <input type="date" name="date_end" class="fo-filter-input" style="width:100%;" value="{{ filter_input.date_end|default('') }}">
+                <input type="date" name="date_end" value="{{ filter_input.date_end|default('') }}">
             </div>
-            <div class="fo-filter-adv-group">
-                <label><i class="fas fa-coins me-1"></i>Prix min</label>
-                <input type="number" step="0.01" name="prix_min" class="fo-filter-input" style="width:100%;" value="{{ filter_input.prix_min|default('') }}" placeholder="0">
+            <div class="filter-adv-group">
+                <label><i class="fas fa-map-marker-alt me-1"></i>Lieu</label>
+                <input type="text" name="lieu" value="{{ filter_input.lieu|default('') }}" placeholder="Filtrer par lieu...">
             </div>
-            <div class="fo-filter-adv-group">
-                <label><i class="fas fa-coins me-1"></i>Prix max</label>
-                <input type="number" step="0.01" name="prix_max" class="fo-filter-input" style="width:100%;" value="{{ filter_input.prix_max|default('') }}" placeholder="∞">
+            <div class="filter-adv-group">
+                <label><i class="fas fa-coins me-1"></i>Prix max (TND)</label>
+                <input type="number" name="prix_max" min="0" step="0.01" value="{{ filter_input.prix_max|default('') }}" placeholder="Max">
             </div>
-            <div class="fo-filter-adv-group" style="align-self:end; flex:0;">
-                <a href="{{ path('app_evenement_index') }}" class="fo-filter-reset"><i class="fas fa-undo me-1"></i>Reset</a>
+            <div class="filter-adv-group">
+                <label><i class="fas fa-coins me-1"></i>Prix min (TND)</label>
+                <input type="number" name="prix_min" min="0" step="0.01" value="{{ filter_input.prix_min|default('') }}" placeholder="0">
+            </div>
+            <div class="filter-adv-group" style="align-self:end;">
+                <a href="{{ path('app_evenement_index', { scope: scope|default('all') }) }}" class="filter-reset-btn">
+                    <i class="fas fa-undo me-1"></i>Réinitialiser
+                </a>
             </div>
         </div>
     </div>
@@ -445,6 +603,15 @@
                         {% if timingLabel %}
                             <div class="ev-card-timing-badge {{ timingClass }}">
                                 {% if isPassed %}<i class="fas fa-clock me-1"></i>{% endif %}{{ timingLabel }}
+                            </div>
+                        {% endif %}
+                        {% if isMine %}
+                            <div class="ev-card-owner-badge mine-badge">
+                                <i class="fas fa-palette"></i> Mon événement
+                            </div>
+                        {% elseif registered_event_ids is defined and ev.id in registered_event_ids %}
+                            <div class="ev-card-owner-badge registered-badge">
+                                <i class="fas fa-ticket-alt"></i> Inscrit
                             </div>
                         {% endif %}
                     </div>

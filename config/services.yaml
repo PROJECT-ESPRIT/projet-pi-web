@@ -42,3 +42,7 @@ services:
     App\Controller\Event\StripeWebhookController:
         arguments:
             $stripeWebhookSecret: '%env(default::STRIPE_WEBHOOK_SECRET)%'
+
+    App\Service\TicketPdfService:
+        arguments:
+            $projectDir: '%kernel.project_dir%'

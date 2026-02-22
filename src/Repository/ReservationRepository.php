@@ -105,6 +105,26 @@ class ReservationRepository extends ServiceEntityRepository
         return array_values($results);
     }
 
+    /**
+     * Event IDs for which the given user has at least one (non-cancelled) reservation.
+     *
+     * @return int[]
+     */
+    public function getEventIdsWithReservationFor(User $participant): array
+    {
+        $rows = $this->createQueryBuilder('r')
+            ->select('IDENTITY(r.evenement) as eventId')
+            ->where('r.participant = :participant')
+            ->andWhere('r.status != :cancelled')
+            ->setParameter('participant', $participant)
+            ->setParameter('cancelled', 'CANCELLED')
+            ->groupBy('r.evenement')
+            ->getQuery()
+            ->getScalarResult();
+
+        return array_map('intval', array_column($rows, 'eventId'));
+    }
+
     public function searchAndSort(array $filters, int $page, int $perPage, ?User $participant, bool $isAdmin): Paginator
     {
         $qb = $this->createQueryBuilder('r')

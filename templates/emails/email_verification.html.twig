@@ -5,26 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vérification email</title>
 </head>
-<body style="margin:0;padding:0;background:linear-gradient(180deg,#eef2fb 0%,#f8f9fc 100%);font-family:'Segoe UI',Roboto,Arial,sans-serif;-webkit-font-smoothing:antialiased;">
-    <table width="100%" cellpadding="0" cellspacing="0" style="padding:32px 16px;">
+<body style="margin:0;padding:0;background:linear-gradient(180deg,#eef2fb 0%,#f8f9fc 100%);font-family:'Segoe UI',Tahoma,Roboto,Arial,sans-serif;font-size:15px;color:#1f2937;-webkit-font-smoothing:antialiased;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="padding:28px 16px;">
         <tr><td align="center">
-            <table width="580" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 8px 40px rgba(30,15,117,.1);">
+            <table width="720" cellpadding="0" cellspacing="0" style="max-width:720px;width:100%;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 8px 40px rgba(30,15,117,.1);">
                 <!-- Header -->
                 <tr>
-                    <td style="background:linear-gradient(135deg,#1e0f75 0%,#3785d8 60%,#bf8ce1 100%);padding:36px 40px 32px;text-align:center;">
+                    <td style="background:linear-gradient(135deg,#1e0f75 0%,#3785d8 55%,#bf8ce1 100%);padding:32px 48px 28px;text-align:center;">
                         <table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center">
-                            <div style="display:inline-block;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.2);border-radius:50px;padding:6px 18px;font-size:12px;font-weight:700;color:#fff;letter-spacing:.05em;margin-bottom:14px;">&#9993; VÉRIFICATION EMAIL</div>
+                            <div style="display:inline-block;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);border-radius:50px;padding:8px 20px;font-size:12px;font-weight:700;color:#fff;letter-spacing:.06em;margin-bottom:12px;">&#9993; VÉRIFICATION EMAIL</div>
                         </td></tr></table>
-                        <h1 style="margin:0;color:#fff;font-size:24px;font-weight:800;letter-spacing:-.02em;">Art Connect</h1>
-                        <p style="margin:8px 0 0;color:rgba(255,255,255,.85);font-size:14px;font-weight:500;">Confirmez votre adresse email</p>
+                        <h1 style="margin:0;color:#fff;font-size:26px;font-weight:800;letter-spacing:-.02em;font-family:'Segoe UI',Tahoma,Roboto,Arial,sans-serif;">Art Connect</h1>
+                        <p style="margin:8px 0 0;color:rgba(255,255,255,.9);font-size:15px;font-weight:500;">Confirmez votre adresse email</p>
                     </td>
                 </tr>
                 <!-- Body -->
                 <tr>
-                    <td style="padding:36px 40px 20px;">
-                        <p style="margin:0 0 8px;color:#1f2937;font-size:17px;font-weight:700;">
-                            Bonjour {{ user.prenom }},
-                        </p>
+                    <td style="padding:32px 48px 28px;">
+                        <p style="margin:0 0 8px;color:#1f2937;font-size:17px;font-weight:700;font-family:'Segoe UI',Tahoma,Roboto,Arial,sans-serif;">Bonjour {{ user.prenom }},</p>
                         <p style="margin:0 0 28px;color:#6b7280;font-size:14px;line-height:1.65;">
                             Merci de vous être inscrit sur Art Connect ! Cliquez sur le bouton ci-dessous pour vérifier votre adresse email et activer votre compte.
                         </p>
@@ -58,8 +56,8 @@
                 </tr>
                 <!-- Footer -->
                 <tr>
-                    <td style="background:linear-gradient(135deg,#f8f9fc,#f0eef9);padding:24px 40px;text-align:center;border-top:1px solid rgba(30,15,117,.06);">
-                        <p style="margin:0 0 4px;color:#1e0f75;font-size:13px;font-weight:700;">Art Connect</p>
+                    <td style="background:linear-gradient(135deg,#f8f9fc,#f0eef9);padding:22px 48px;text-align:center;border-top:1px solid rgba(30,15,117,.06);">
+                        <p style="margin:0 0 4px;color:#1e0f75;font-size:13px;font-weight:700;font-family:'Segoe UI',Tahoma,Roboto,Arial,sans-serif;">Art Connect</p>
                         <p style="margin:0;color:#9ca3af;font-size:11px;">L'art inclusif pour tous &middot; &copy; {{ 'now'|date('Y') }}</p>
                     </td>
                 </tr>

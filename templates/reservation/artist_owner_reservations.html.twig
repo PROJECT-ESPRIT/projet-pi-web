@@ -27,10 +27,30 @@
     .fo-filter-select:focus { outline:none; border-color:#3785D8; }
     .fo-filter-input { border:1px solid rgba(30,15,117,.1); border-radius:10px; padding:.5rem .6rem; font-size:.82rem; background:#faf9fe; width:110px; }
     .fo-filter-input:focus { outline:none; border-color:#3785D8; box-shadow:0 0 0 2px rgba(55,133,216,.1); }
-    .fo-filter-btn { border-radius:10px; font-weight:700; font-size:.82rem; padding:.5rem 1rem; min-width:90px; border:none; background:linear-gradient(135deg,#1E0F75,#3785D8); color:#fff; cursor:pointer; transition:all .2s; }
+    .fo-filter-tabs { display:flex; gap:.3rem; flex-wrap:wrap; width:100%; margin-bottom:.6rem; }
+    .fo-filter-tab {
+        padding:.45rem 1rem; border-radius:10px; border:none;
+        font-size:.82rem; font-weight:600; color:#666;
+        background:transparent; text-decoration:none;
+        transition:all .25s; white-space:nowrap;
+        display:inline-flex; align-items:center;
+    }
+    .fo-filter-tab:hover { background:rgba(30,15,117,.06); color:#1E0F75; }
+    .fo-filter-tab.active {
+        background:linear-gradient(135deg,#1e0f75 0%,#3785d8 55%,#bf8ce1 100%);
+        color:#fff; box-shadow:0 4px 12px rgba(30,15,117,.25);
+    }
+    .fo-filter-tab .fo-filter-count {
+        display:inline-flex; align-items:center; justify-content:center;
+        background:rgba(30,15,117,.08); color:#1E0F75;
+        border-radius:6px; font-size:.7rem; font-weight:700;
+        min-width:20px; height:18px; padding:0 4px; margin-left:4px;
+    }
+    .fo-filter-tab.active .fo-filter-count { background:rgba(255,255,255,.25); color:#fff; }
+    .fo-filter-btn { border-radius:10px; font-weight:700; font-size:.82rem; padding:.5rem 1rem; min-width:90px; border:none; background:linear-gradient(135deg,#1e0f75 0%,#3785d8 55%,#bf8ce1 100%); color:#fff; cursor:pointer; transition:all .2s; }
     .fo-filter-btn:hover { filter:brightness(.95); transform:translateY(-1px); }
     .fo-filter-toggle { width:38px; height:38px; border-radius:10px; border:1px solid rgba(30,15,117,.1); background:#faf9fe; color:#666; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all .25s; flex-shrink:0; }
-    .fo-filter-toggle:hover,.fo-filter-toggle.active { background:linear-gradient(135deg,#1E0F75,#3785D8); color:#fff; border-color:transparent; }
+    .fo-filter-toggle:hover,.fo-filter-toggle.active { background:linear-gradient(135deg,#1e0f75 0%,#3785d8 55%,#bf8ce1 100%); color:#fff; border-color:transparent; }
     .fo-filter-advanced { background:#fff; border-radius:0 0 16px 16px; padding:.7rem 1rem; box-shadow:0 4px 16px rgba(30,15,117,.06); border:1px solid rgba(30,15,117,.08); border-top:none; margin-bottom:1rem; animation:slideDown .3s ease; }
     @keyframes slideDown { from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)} }
     .fo-filter-adv-row { display:flex; gap:.5rem; flex-wrap:wrap; align-items:end; }
@@ -58,8 +78,18 @@
         text-align:center; padding:3rem 1.5rem; color:#6b7280;
     }
     .fo-aor-empty i { font-size:2.5rem; color:rgba(191,140,225,.4); margin-bottom:.7rem; display:block; }
-    .fo-aor-pagination .page-item.active .page-link { background:var(--ac-mid); border-color:var(--ac-mid); color:#fff; }
-    .fo-aor-pagination .page-link { border-radius:10px; color:#374151; font-weight:600; font-size:.85rem; }
+    .fo-aor-pagination .pagination { gap:0.6rem; list-style:none; padding-left:0; }
+    .fo-aor-pagination .page-link {
+        border-radius:12px; color:#374151; font-weight:600; font-size:.9rem;
+        padding:.5rem .85rem; border:1.5px solid rgba(30,15,117,.1); background:#fff;
+        transition:all .2s ease; text-decoration:none; display:block; min-width:2.5rem; text-align:center;
+    }
+    .fo-aor-pagination .page-item:not(.disabled) .page-link:hover { background:rgba(55,133,216,.08); border-color:rgba(55,133,216,.25); color:#1e3a5f; }
+    .fo-aor-pagination .page-item.active .page-link {
+        background:var(--ac-mid); border-color:var(--ac-mid); color:#fff;
+        box-shadow:0 3px 12px rgba(55,133,216,.3);
+    }
+    .fo-aor-pagination .page-item.disabled .page-link { color:#d1d5db; border-color:#e5e7eb; background:#f9fafb; cursor:not-allowed; }
 </style>
 
 <div class="fo-aor-header">
@@ -69,10 +99,25 @@
     </h1>
 </div>
 
-{# ---- Enhanced Filter Bar ---- #}
+{# ---- Enhanced Filter Bar (same pill tabs + gradient as home/events) ---- #}
 {% set hasAdvAorFilters = filter_input.date_start|default('') or filter_input.date_end|default('') %}
+{% set aorQp = { q: filter_input.q|default(''), sort: filter_input.sort|default('date_desc'), date_start: filter_input.date_start|default(''), date_end: filter_input.date_end|default('') } %}
 <form method="get" action="{{ path('app_reservation_artist_owner') }}">
     <div class="fo-filter-bar">
+        <div class="fo-filter-tabs">
+            <a href="{{ path('app_reservation_artist_owner', aorQp|merge({ status: '', page: 1 })) }}" class="fo-filter-tab {{ (filter_input.status|default('')) == '' ? 'active' : '' }}">
+                <i class="fas fa-list me-1"></i>Tous
+            </a>
+            <a href="{{ path('app_reservation_artist_owner', aorQp|merge({ status: 'CONFIRMED', page: 1 })) }}" class="fo-filter-tab {{ (filter_input.status|default('')) == 'CONFIRMED' ? 'active' : '' }}">
+                <i class="fas fa-check-circle me-1"></i>Confirmé
+            </a>
+            <a href="{{ path('app_reservation_artist_owner', aorQp|merge({ status: 'PENDING', page: 1 })) }}" class="fo-filter-tab {{ (filter_input.status|default('')) == 'PENDING' ? 'active' : '' }}">
+                <i class="fas fa-clock me-1"></i>En attente
+            </a>
+            <a href="{{ path('app_reservation_artist_owner', aorQp|merge({ status: 'CANCELLED', page: 1 })) }}" class="fo-filter-tab {{ (filter_input.status|default('')) == 'CANCELLED' ? 'active' : '' }}">
+                <i class="fas fa-times-circle me-1"></i>Annulé
+            </a>
+        </div>
         <div class="fo-filter-row">
             <div class="fo-filter-search">
                 <i class="fas fa-search"></i>
@@ -130,6 +175,7 @@
                     <th>Place</th>
                     <th>Date résa</th>
                     <th>Statut</th>
+                    <th>Billet</th>
                     <th class="text-end">Action</th>
                 </tr>
             </thead>
@@ -170,6 +216,13 @@
                                 <span class="badge" style="background:rgba(245,158,11,.12); color:#b45309; font-weight:700; border-radius:8px;"><i class="fas fa-clock me-1"></i>En attente</span>
                             {% else %}
                                 <span class="badge bg-secondary bg-opacity-75">{{ r.status }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if r.scannedAt %}
+                                <span class="badge" style="background:rgba(34,197,94,.15); color:#059669; font-weight:700; border-radius:8px;" title="Scanné le {{ r.scannedAt|date('d/m/Y H:i') }}"><i class="fas fa-qrcode me-1"></i>Scanné</span>
+                            {% else %}
+                                <span class="text-muted" style="font-size:.78rem;">—</span>
                             {% endif %}
                         </td>
                         <td class="text-end">

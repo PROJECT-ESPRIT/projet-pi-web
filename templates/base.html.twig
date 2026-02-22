@@ -271,19 +271,19 @@
                 border-top:1px solid rgba(30,15,117,.04);
             }
             .bo-pagination .page-info { font-size:.8rem; color:#6b7280; font-weight:500; }
-            .bo-pagination .pagination { margin:0; gap:4px; }
+            .bo-pagination .pagination { margin:0; gap:0.5rem; list-style:none; padding-left:0; }
             .bo-pagination .page-link {
-                border-radius:10px; font-size:.8rem; font-weight:600; padding:.35rem .65rem;
-                border:1.5px solid rgba(30,15,117,.1); color:#374151;
-                transition:all .2s;
+                border-radius:12px; font-size:.8rem; font-weight:600; padding:.45rem .8rem;
+                border:1.5px solid rgba(30,15,117,.12); color:#374151; background:#fff;
+                transition:all .2s ease; text-decoration:none; display:block; min-width:2.25rem; text-align:center;
             }
             .bo-pagination .page-item.active .page-link {
                 background:linear-gradient(135deg,var(--ac-deep),var(--ac-blue));
                 border-color:transparent; color:#fff;
-                box-shadow:0 3px 10px rgba(30,15,117,.2);
+                box-shadow:0 3px 12px rgba(30,15,117,.25);
             }
-            .bo-pagination .page-link:hover { background:rgba(30,15,117,.04); border-color:rgba(30,15,117,.15); }
-            .bo-pagination .page-item.disabled .page-link { color:#d1d5db; border-color:#f3f4f6; }
+            .bo-pagination .page-item:not(.disabled) .page-link:hover { background:rgba(30,15,117,.06); border-color:rgba(30,15,117,.2); }
+            .bo-pagination .page-item.disabled .page-link { color:#d1d5db; border-color:#f3f4f6; background:#f9fafb; cursor:not-allowed; }
 
             .bo-empty {
                 text-align:center; padding:3.5rem 1.5rem; color:#9ca3af;
@@ -401,11 +401,64 @@
             .fo-footer-hr { border-color:rgba(255,255,255,.12); margin:1.5rem 0 1rem; }
 
             /* ===== GUEST ===== */
-            .guest-nav { background: #fff; }
+            .guest-nav {
+                background: #fff;
+                padding: 0.6rem 0;
+                box-shadow: 0 2px 12px rgba(30,15,117,.06);
+                border-bottom: 1px solid rgba(30,15,117,.06);
+            }
             .guest-brand {
                 font-family: 'Sora', sans-serif;
                 font-weight: 700;
+                font-size: 1.25rem;
                 color: var(--ac-deep) !important;
+                text-decoration: none;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+            }
+            .guest-brand:hover { color: var(--ac-mid) !important; }
+            .guest-nav .nav-link-guest {
+                font-weight: 600;
+                font-size: 0.9rem;
+                color: #374151;
+                padding: 0.5rem 0.85rem;
+                border-radius: 10px;
+                transition: all 0.2s;
+            }
+            .guest-nav .nav-link-guest:hover {
+                color: var(--ac-deep);
+                background: rgba(30,15,117,.06);
+            }
+            .guest-nav .btn-guest-login {
+                border: 2px solid var(--ac-blue);
+                color: var(--ac-mid);
+                font-weight: 700;
+                font-size: 0.88rem;
+                padding: 0.5rem 1.1rem;
+                border-radius: 12px;
+                transition: all 0.2s;
+            }
+            .guest-nav .btn-guest-login:hover {
+                background: rgba(55,133,216,.08);
+                border-color: var(--ac-mid);
+                color: var(--ac-deep);
+            }
+            .guest-nav .btn-guest-register {
+                background: linear-gradient(135deg, var(--ac-deep), var(--ac-mid));
+                color: #fff !important;
+                font-weight: 700;
+                font-size: 0.88rem;
+                padding: 0.5rem 1.25rem;
+                border-radius: 12px;
+                border: none;
+                transition: all 0.2s;
+                box-shadow: 0 4px 14px rgba(30,15,117,.25);
+            }
+            .guest-nav .btn-guest-register:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 6px 20px rgba(30,15,117,.35);
+                color: #fff !important;
             }
         </style>
 
@@ -427,12 +480,24 @@
 
     {% if layout == 'guest' %}
         {% block guest_wrapper_open %}
-        <nav class="navbar navbar-expand-lg navbar-light guest-nav mb-4 shadow-sm">
+        <nav class="navbar navbar-expand-lg navbar-light guest-nav mb-4">
             <div class="container public-shell">
                 <a class="navbar-brand guest-brand" href="{{ path('home') }}">ART CONNECT</a>
-                <div class="d-flex">
-                    <a href="{{ path('login') }}" class="btn btn-outline-primary me-2">Connexion</a>
-                    <a href="{{ path('register') }}" class="btn btn-primary">Inscription</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#guestNav" aria-controls="guestNav" aria-expanded="false" aria-label="Menu">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="guestNav">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        <li class="nav-item"><a class="nav-link nav-link-guest" href="{{ path('home') }}"><i class="fas fa-home me-1"></i> Accueil</a></li>
+                        <li class="nav-item"><a class="nav-link nav-link-guest" href="{{ path('app_evenement_index') }}"><i class="fas fa-calendar-alt me-1"></i> Événements</a></li>
+                        <li class="nav-item"><a class="nav-link nav-link-guest" href="{{ path('app_produit_index') }}"><i class="fas fa-store me-1"></i> Boutique</a></li>
+                        <li class="nav-item"><a class="nav-link nav-link-guest" href="{{ path('app_donation_new') }}"><i class="fas fa-hand-holding-heart me-1"></i> Faire un Don</a></li>
+                        <li class="nav-item"><a class="nav-link nav-link-guest" href="{{ path('app_forum_index') }}"><i class="fas fa-comments me-1"></i> Forum</a></li>
+                    </ul>
+                    <div class="d-flex align-items-center gap-2 flex-shrink-0">
+                        <a href="{{ path('login') }}" class="btn btn-guest-login">Connexion</a>
+                        <a href="{{ path('register') }}" class="btn btn-guest-register">Inscription</a>
+                    </div>
                 </div>
             </div>
         </nav>
@@ -443,7 +508,7 @@
         <div class="bo-wrapper">
             <nav id="sidebar">
                 <div class="sidebar-header">
-                    <img src="{{ asset('images/logo.png') }}" alt="Logo">
+                    <img src="https://i.ibb.co/nszzmdt6/logo.png" alt="Logo">
                     <h3>ART CONNECT</h3>
                 </div>
 
@@ -498,7 +563,7 @@
         <nav class="navbar navbar-expand-lg fo-navbar">
             <div class="container-xl">
                 <a class="navbar-brand" href="{{ path('home') }}">
-                    <img src="{{ asset('images/logo.png') }}" alt="Logo">
+                    <img src="https://i.ibb.co/nszzmdt6/logo.png" alt="Logo">
                     ART CONNECT
                 </a>
 
@@ -1014,21 +1079,22 @@
             justify-content: flex-end; gap: .5rem;
         }
         .confirm-modal-cancel {
-            border-radius: 10px; font-weight: 600; font-size: .88rem; padding: .55rem 1.3rem;
-            background: transparent; color: #6b7280; border: none;
+            border-radius: 12px; font-weight: 600; font-size: .9rem; padding: .6rem 1.4rem;
+            background: transparent; color: #6c757d; border: none;
             transition: all .2s ease; cursor: pointer;
         }
-        .confirm-modal-cancel:hover { color: #374151; background: #f3f4f6; }
+        .confirm-modal-cancel:hover { color: #495057; }
         .confirm-modal-confirm {
-            border-radius: 10px; font-weight: 600; font-size: .88rem; padding: .55rem 1.5rem;
-            background: linear-gradient(135deg, #f87171, #ef4444); color: #fff; border: none;
-            transition: all .25s ease; box-shadow: 0 3px 12px rgba(239,68,68,.2);
-            cursor: pointer;
+            border-radius: 12px; font-weight: 600; font-size: .9rem; padding: .6rem 1.6rem;
+            background: linear-gradient(180deg, #f87171 0%, #ef4444 50%, #dc2626 100%);
+            color: #fff; border: none;
+            box-shadow: 0 4px 14px rgba(220,38,38,.25);
+            transition: all .25s ease; cursor: pointer;
         }
         .confirm-modal-confirm:hover {
-            background: linear-gradient(135deg, #ef4444, #dc2626);
-            transform: translateY(-1px); color: #fff;
-            box-shadow: 0 6px 20px rgba(239,68,68,.3);
+            background: linear-gradient(180deg, #fca5a5 0%, #f87171 50%, #ef4444 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(220,38,38,.35);
         }
         @keyframes confirmSlideUp {
             from { opacity: 0; transform: translateY(20px) scale(.96); }
@@ -1050,8 +1116,8 @@
                     <p id="confirmActionMessage" class="confirm-modal-msg"></p>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn confirm-modal-cancel" data-bs-dismiss="modal">Annuler</button>
-                    <button type="button" id="confirmActionBtn" class="btn confirm-modal-confirm">Supprimer</button>
+                    <button type="button" id="confirmActionCancelBtn" class="btn confirm-modal-cancel" data-bs-dismiss="modal">Annuler</button>
+                    <button type="button" id="confirmActionBtn" class="btn confirm-modal-confirm">Confirmer</button>
                 </div>
             </div>
         </div>
@@ -1074,15 +1140,12 @@
                 e.preventDefault();
                 pendingForm=form;
                 var title=form.getAttribute('data-confirm-title')||'Êtes-vous sûr ?';
-                var btn=form.getAttribute('data-confirm-btn')||'Supprimer';
+                var btn=form.getAttribute('data-confirm-btn')||'Confirmer';
+                var cancelBtn=form.getAttribute('data-confirm-cancel');
                 var icon=el.querySelector('.confirm-modal-icon-wrap i');
-                if(msg.toLowerCase().indexOf('annuler')!==-1){
-                    icon.className='fas fa-ban';
-                    document.getElementById('confirmActionBtn').textContent=btn==='Supprimer'?'Annuler':btn;
-                } else {
-                    icon.className='fas fa-trash-alt';
-                    document.getElementById('confirmActionBtn').textContent=btn;
-                }
+                if(msg.toLowerCase().indexOf('annuler')!==-1){ icon.className='fas fa-ban'; } else { icon.className='fas fa-trash-alt'; }
+                document.getElementById('confirmActionBtn').textContent=btn;
+                document.getElementById('confirmActionCancelBtn').textContent=(cancelBtn!==null&&cancelBtn!=='')?cancelBtn:'Annuler';
                 document.getElementById('confirmActionTitle').textContent=title;
                 document.getElementById('confirmActionMessage').textContent=msg;
                 modal.show();
