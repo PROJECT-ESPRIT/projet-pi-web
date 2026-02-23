@@ -120,10 +120,10 @@ class SeedDatabaseCommand extends Command
         $io->text(' + admin@art.com (ADMIN)');
 
         $artistData = [
-            ['youssefjobrane98@gmail.com', 'Jobrane', 'Youssef'],
             ['leila.art@mail.tn', 'Ben Salah', 'Leila'],
             ['karim.design@mail.tn', 'Trabelsi', 'Karim'],
             ['nour.music@mail.tn', 'Gharbi', 'Nour'],
+            ['yasminemaatougui9@gmail.com', 'Maatougui', 'Yasmine'],
         ];
 
         $artists = [];
@@ -144,9 +144,6 @@ class SeedDatabaseCommand extends Command
             $participants[] = $this->makeUser($email, $nom, $prenom, ['ROLE_PARTICIPANT']);
             $io->text(" + $email (PARTICIPANT)");
         }
-
-        $pendingArtist = $this->makeUser('pending.artist@mail.tn', 'Maatoug', 'Yasmine', ['ROLE_ARTISTE'], User::STATUS_EMAIL_VERIFIED);
-        $io->text(' + pending.artist@mail.tn (ARTISTE - EMAIL_VERIFIED, awaiting admin)');
 
         $emailPending = $this->makeUser('new.user@mail.tn', 'Chaabane', 'Omar', ['ROLE_PARTICIPANT'], User::STATUS_EMAIL_PENDING);
         $emailPending->setEmailVerificationToken(bin2hex(random_bytes(32)));
@@ -216,7 +213,7 @@ class SeedDatabaseCommand extends Command
             'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=800',
         ];
 
-        $youssefArtist = $artists[0];
+        $yasmine = $artists[3];  // Yasmine Maatougui
 
         $data = [
             ['Atelier Aquarelle pour enfants', 'Découvrez les techniques de base de l\'aquarelle dans un cadre ludique et bienveillant. Adapté aux enfants de 5 à 12 ans.', 'Espace Culturel El Menzah, Tunis', 25, 0, 5, 12, 15.00],
@@ -244,11 +241,13 @@ class SeedDatabaseCommand extends Command
             $ev->setAgeMax($ageMax);
             $ev->setPrix($prix);
 
+            // Dates will be set in createReservations with multi-month distribution
             $start = new \DateTime('+' . ($i * 5 + 3) . ' days');
             $start->setTime(random_int(9, 15), 0);
             $ev->setDateDebut($start);
             $ev->setDateFin((clone $start)->modify('+2 hours'));
-            $ev->setOrganisateur(($i < 6 || $i >= 8) ? $youssefArtist : $artists[$i % count($artists)]);
+            // Assign events: Yasmine gets events 0, 1, 5, 9; others get the rest
+            $ev->setOrganisateur(in_array($i, [0, 1, 5, 9]) ? $yasmine : $artists[$i % count($artists)]);
             $ev->setImage($images[$i % count($images)]);
 
             if ($i === 2) {
@@ -314,10 +313,25 @@ class SeedDatabaseCommand extends Command
     private function createReservations(SymfonyStyle $io, array $events, array $participants): void
     {
         $count = 0;
-        foreach ($events as $event) {
+
+        // Create reservations spread across different months and dates
+        $months = [-2, -1, 0, 1, 2]; // Past 2 months, current month, future 2 months
+
+        foreach ($events as $eventIndex => $event) {
+            // Pick a random month for this event
+            $month = $months[array_rand($months)];
+
+            // Set event dates to different months
+            $start = new \DateTime('+' . ($eventIndex * 5 + 3 + ($month * 30)) . ' days');
+            $start->setTime(random_int(9, 15), 0);
+            $event->setDateDebut($start);
+            $event->setDateFin((clone $start)->modify('+2 hours'));
+
+            // Create 2-5 reservations per event
             $shuffled = $participants;
             shuffle($shuffled);
-            $pick = array_slice($shuffled, 0, min(2, count($shuffled)));
+            $numReservations = random_int(2, 5);
+            $pick = array_slice($shuffled, 0, min($numReservations, count($shuffled)));
 
             $seatIndex = 0;
             foreach ($pick as $participant) {
@@ -344,7 +358,7 @@ class SeedDatabaseCommand extends Command
         }
 
         $this->em->flush();
-        $io->text(" + $count reservations created");
+        $io->text(" + $count reservations created (spread across multiple months)");
     }
 
     // -----------------------------------------------------------------

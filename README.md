@@ -30,7 +30,7 @@
    ```
 
 
-4. **Lancer l’application**
+4. **Lancer l'application**
 
    ```bash
    php -S localhost:8000 -t public
@@ -39,3 +39,30 @@
    Ou avec Symfony CLI : `symfony server:start`
 
    Ouvrir http://localhost:8000
+
+## ngrok - Exposer l'application localement
+
+Pour tester les webhooks Stripe ou accéder à l'application depuis l'extérieur :
+
+   ```bash
+   ngrok http 8000
+   ```
+
+Cela génère une URL publique (ex: `https://xxxx-xx-xxx-xxx-xx.ngrok.io`) à utiliser pour configurer les webhooks Stripe.
+
+## Stripe Webhook
+
+Endpoint : `POST /stripe-webhook`
+
+**Configuration** :
+1. Exposer l'app avec ngrok : `ngrok http 8000`
+2. Copier l'URL ngrok générée
+3. Dans Stripe Dashboard > Developers > Webhooks, ajouter l'endpoint : `https://votre-url.ngrok.io/stripe-webhook`
+4. Sélectionner l'événement : `checkout.session.completed`
+5. Copier le Signing Secret dans `.env` : `STRIPE_WEBHOOK_SECRET=whsec_...`
+
+**Flux** :
+- Paiement → Webhook reçu → Réservation confirmée → Emails envoyés + Ticket généré
+
+**Logs** : `var/log/dev.log`
+
