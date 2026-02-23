@@ -1,0 +1,27 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}PDF Generation Error{% endblock %}
+
+{% block body %}
+<div class="public-shell">
+    <div class="row">
+        <div class="col-12">
+            <div class="alert alert-danger">
+                <h4><i class="fas fa-exclamation-triangle me-2"></i>PDF Generation Error</h4>
+                <p>Sorry, we couldn't generate the PDF for this forum post.</p>
+                
+                {% if error %}
+                    <strong>Error details:</strong> {{ error }}
+                {% endif %}
+                
+                <hr>
+                <div class="mt-3">
+                    <a href="{{ path('app_forum_show', {'id': forum.id}) }}" class="btn btn-primary">
+                        <i class="fas fa-arrow-left me-1"></i> Back to Post
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
