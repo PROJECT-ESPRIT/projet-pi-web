@@ -15,7 +15,7 @@ class TypeDonType extends AbstractType
         $builder
             ->add('libelle', TextType::class, [
                 'label' => 'Libellé du type',
-                'attr' => ['class' => 'form-control', 'placeholder' => 'Ex: Meubles, Argent, Vêtements']
+                'attr' => ['class' => 'form-control', 'placeholder' => 'Ex: fourniture, money, clothes']
             ])
         ;
     }

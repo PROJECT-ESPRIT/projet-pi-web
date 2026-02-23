@@ -23,12 +23,22 @@ class TypeDonRepository extends ServiceEntityRepository
 
     public function findDefaultForCommentDonation(): ?TypeDon
     {
-        $monetary = $this->createQueryBuilder('t')
+        $qb = $this->createQueryBuilder('t')
             ->andWhere('LOWER(t.libelle) LIKE :money')
-            ->setParameter('money', '%argent%')
+            ->setParameter('money', '%money%')
             ->setMaxResults(1)
-            ->getQuery()
-            ->getOneOrNullResult();
+        ;
+
+        $monetary = $qb->getQuery()->getOneOrNullResult();
+
+        if (!$monetary instanceof TypeDon) {
+            $monetary = $this->createQueryBuilder('t')
+                ->andWhere('LOWER(t.libelle) LIKE :legacyMoney')
+                ->setParameter('legacyMoney', '%argent%')
+                ->setMaxResults(1)
+                ->getQuery()
+                ->getOneOrNullResult();
+        }
 
         if ($monetary instanceof TypeDon) {
             return $monetary;
