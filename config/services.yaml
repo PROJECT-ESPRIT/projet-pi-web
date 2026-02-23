@@ -9,12 +9,16 @@ parameters:
     donation_ai_confidence_default: '0.45'
     donation_ai_fallback_confidence_default: '0.08'
     donation_ai_timeout_default: '20'
+    donation_stripe_secret_key_default: ''
+    donation_stripe_currency_default: 'eur'
     donation_ai_python_bin: '%env(default:donation_ai_python_bin_default:DONATION_AI_PYTHON_BIN)%'
     donation_ai_model: '%env(default:donation_ai_model_default:DONATION_AI_MODEL)%'
     donation_ai_confidence: '%env(default:donation_ai_confidence_default:DONATION_AI_CONFIDENCE)%'
     donation_ai_fallback_confidence: '%env(default:donation_ai_fallback_confidence_default:DONATION_AI_FALLBACK_CONFIDENCE)%'
     donation_ai_timeout: '%env(default:donation_ai_timeout_default:DONATION_AI_TIMEOUT)%'
     donation_ai_settings_dir: '%kernel.project_dir%/var/ultralytics'
+    donation_stripe_secret_key: '%env(default:donation_stripe_secret_key_default:STRIPE_SECRET_KEY)%'
+    donation_stripe_currency: '%env(default:donation_stripe_currency_default:STRIPE_CURRENCY)%'
 
 services:
     # Configuration par défaut
@@ -58,3 +62,8 @@ services:
                 clothes: ['clothes', 'cloth', 'clothing', 'habit', 'habits', 'vetement', 'vetements']
                 money: ['money', 'argent', 'cash']
             $nonVisualTypes: ['money']
+
+    App\Service\StripeCheckoutService:
+        arguments:
+            $secretKey: '%donation_stripe_secret_key%'
+            $currency: '%donation_stripe_currency%'

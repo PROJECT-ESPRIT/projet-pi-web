@@ -9,6 +9,7 @@ use App\Form\DonationType;
 use App\Repository\CharityRepository;
 use App\Repository\DonationRepository;
 use App\Repository\TypeDonRepository;
+use App\Service\StripeCheckoutService;
 use App\Service\YoloDonationImageValidator;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -16,6 +17,7 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use App\Service\EmailService;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -63,7 +65,8 @@ class DonationController extends AbstractController
         EntityManagerInterface $entityManager,
         CharityRepository $charityRepository,
         SluggerInterface $slugger,
-        YoloDonationImageValidator $imageValidator
+        YoloDonationImageValidator $imageValidator,
+        StripeCheckoutService $stripeCheckoutService
     ): Response
     {
         $user = $this->getUser();
@@ -95,6 +98,49 @@ class DonationController extends AbstractController
                     'donation' => $donation,
                     'form' => $form,
                 ]);
+            }
+
+            if ($this->isMoneyTypeLabel($donation->getType()?->getLibelle())) {
+                $amount = $donation->getAmount();
+                if ($amount === null || $amount <= 0) {
+                    $this->addFlash('error', 'Pour un don money, le montant doit être supérieur à 0.');
+
+                    return $this->render('donation/new.html.twig', [
+                        'donation' => $donation,
+                        'form' => $form,
+                    ]);
+                }
+
+                $charity = $donation->getCharity();
+                if (!$charity instanceof Charity || $charity->getId() === null || $donation->getType()?->getId() === null) {
+                    $this->addFlash('error', 'Cause ou type de don invalide.');
+
+                    return $this->render('donation/new.html.twig', [
+                        'donation' => $donation,
+                        'form' => $form,
+                    ]);
+                }
+
+                $pending = [
+                    'source' => 'donation_form',
+                    'charity_id' => $charity->getId(),
+                    'charity_title' => (string) $charity->getTitle(),
+                    'type_id' => $donation->getType()->getId(),
+                    'description' => (string) $donation->getDescription(),
+                    'amount' => $amount,
+                    'is_anonymous' => $donation->isAnonymous(),
+                ];
+
+                try {
+                    return $this->createStripeCheckoutRedirect($request, $stripeCheckoutService, $pending);
+                } catch (\Throwable $e) {
+                    $this->addFlash('error', 'Paiement Stripe indisponible: ' . $e->getMessage());
+
+                    return $this->render('donation/new.html.twig', [
+                        'donation' => $donation,
+                        'form' => $form,
+                    ]);
+                }
             }
 
             $photoFile = $form->get('photoFile')->getData();
@@ -165,7 +211,8 @@ class DonationController extends AbstractController
         EntityManagerInterface $entityManager,
         TypeDonRepository $typeDonRepository,
         SluggerInterface $slugger,
-        YoloDonationImageValidator $imageValidator
+        YoloDonationImageValidator $imageValidator,
+        StripeCheckoutService $stripeCheckoutService
     ): Response {
         $page = max(1, (int) $request->request->get('page', 1));
         $redirectUrl = $this->generateUrl('app_charity_index', ['page' => $page]) . '#cause-' . $charity->getId();
@@ -235,6 +282,47 @@ class DonationController extends AbstractController
             $this->addFlash('error', 'Type de don invalide.');
 
             return $this->redirect($redirectUrl);
+        }
+
+        if ($this->isMoneyTypeLabel($type->getLibelle())) {
+            if ($amount === null || $amount <= 0) {
+                $this->addFlash('error', 'Pour un don money, le montant doit être supérieur à 0.');
+                $this->addFlash('donation_comment_draft', [
+                    'charity_id' => $charity->getId(),
+                    'type_id' => $typeId,
+                    'comment' => $description,
+                    'amount' => $amountInput,
+                    'is_anonymous' => $request->request->has('is_anonymous'),
+                ]);
+
+                return $this->redirect($redirectUrlOpenForm);
+            }
+
+            $pending = [
+                'source' => 'charity_comment',
+                'page' => $page,
+                'charity_id' => $charity->getId(),
+                'charity_title' => (string) $charity->getTitle(),
+                'type_id' => $type->getId(),
+                'description' => $description,
+                'amount' => $amount,
+                'is_anonymous' => $request->request->has('is_anonymous'),
+            ];
+
+            try {
+                return $this->createStripeCheckoutRedirect($request, $stripeCheckoutService, $pending);
+            } catch (\Throwable $e) {
+                $this->addFlash('error', 'Paiement Stripe indisponible: ' . $e->getMessage());
+                $this->addFlash('donation_comment_draft', [
+                    'charity_id' => $charity->getId(),
+                    'type_id' => $typeId,
+                    'comment' => $description,
+                    'amount' => $amountInput,
+                    'is_anonymous' => $request->request->has('is_anonymous'),
+                ]);
+
+                return $this->redirect($redirectUrlOpenForm);
+            }
         }
 
         $photoFile = $request->files->get('photo_file');
@@ -310,6 +398,280 @@ class DonationController extends AbstractController
             'sort' => $sort,
             'direction' => strtoupper($direction) === 'ASC' ? 'ASC' : 'DESC',
         ]);
+    }
+
+    #[Route('/payment/stripe/success/{token}', name: 'app_donation_stripe_success', methods: ['GET'])]
+    #[IsGranted('ROLE_USER')]
+    public function stripeSuccess(
+        string $token,
+        Request $request,
+        StripeCheckoutService $stripeCheckoutService,
+        CharityRepository $charityRepository,
+        TypeDonRepository $typeDonRepository,
+        EntityManagerInterface $entityManager
+    ): Response {
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            $this->addFlash('error', 'Utilisateur invalide.');
+
+            return $this->redirectToRoute('login');
+        }
+
+        $pending = $this->getPendingStripeDonation($request, $token);
+        if (!is_array($pending)) {
+            $this->addFlash('error', 'Aucune tentative de paiement en attente.');
+
+            return $this->redirectToRoute('app_donation_new');
+        }
+
+        $sessionId = trim((string) $request->query->get('session_id', ''));
+        if ($sessionId === '') {
+            $this->addFlash('error', 'session_id Stripe manquant.');
+
+            return $this->redirect($this->buildReturnUrlForPending($pending, false));
+        }
+
+        try {
+            $checkout = $stripeCheckoutService->getCheckoutSession($sessionId);
+        } catch (\Throwable $e) {
+            $this->addFlash('error', 'Vérification Stripe impossible: ' . $e->getMessage());
+
+            return $this->redirect($this->buildReturnUrlForPending($pending, false));
+        }
+
+        $paymentStatus = (string) ($checkout['payment_status'] ?? '');
+        $status = (string) ($checkout['status'] ?? '');
+        $metadataToken = trim((string) ($checkout['metadata']['payment_token'] ?? ''));
+        $isTokenValid = $metadataToken === '' || hash_equals($token, $metadataToken);
+        if (!$isTokenValid || $paymentStatus !== 'paid' || $status !== 'complete') {
+            $this->addFlash('error', 'Paiement non validé.');
+
+            return $this->redirect($this->buildReturnUrlForPending($pending, false));
+        }
+
+        try {
+            $charity = $charityRepository->find((int) ($pending['charity_id'] ?? 0));
+            $type = $typeDonRepository->find((int) ($pending['type_id'] ?? 0));
+
+            if (!$charity instanceof Charity || $charity->getId() === null || $type === null) {
+                throw new \RuntimeException('Cause ou type de don introuvable.');
+            }
+            if ($charity->getStatus() !== Charity::STATUS_ACTIVE) {
+                throw new \RuntimeException('Cette cause n\'accepte pas de dons pour le moment.');
+            }
+            if ($charity->getCreatedBy() === $user) {
+                throw new \RuntimeException('Vous ne pouvez pas faire un don à votre propre cause.');
+            }
+
+            $donation = new Donation();
+            $donation
+                ->setCharity($charity)
+                ->setType($type)
+                ->setDonateur($user)
+                ->setDescription((string) ($pending['description'] ?? ''))
+                ->setAmount((float) ($pending['amount'] ?? 0))
+                ->setIsAnonymous((bool) ($pending['is_anonymous'] ?? false))
+                ->setDateDon(new \DateTimeImmutable());
+
+            $entityManager->persist($donation);
+            $entityManager->flush();
+        } catch (\Throwable $e) {
+            $this->addFlash('error', 'Échec de l\'enregistrement du don après paiement: ' . $e->getMessage());
+
+            return $this->redirect($this->buildReturnUrlForPending($pending, false));
+        }
+
+        $this->removePendingStripeDonation($request, $token);
+        $this->addFlash('sweet_success', 'Donation successful, thank you for your contribution.');
+
+        if (($pending['source'] ?? '') === 'charity_comment') {
+            return $this->redirect($this->buildReturnUrlForPending($pending, false));
+        }
+
+        return $this->redirectToRoute('app_donation_my');
+    }
+
+    #[Route('/payment/stripe/cancel/{token}', name: 'app_donation_stripe_cancel', methods: ['GET'])]
+    #[IsGranted('ROLE_USER')]
+    public function stripeCancel(string $token, Request $request): Response
+    {
+        $pending = $this->getPendingStripeDonation($request, $token);
+        if (!is_array($pending)) {
+            $this->addFlash('info', 'Paiement annulé.');
+
+            return $this->redirectToRoute('app_donation_new');
+        }
+
+        $this->removePendingStripeDonation($request, $token);
+        $this->addFlash('info', 'Paiement annulé.');
+
+        if (($pending['source'] ?? '') === 'charity_comment') {
+            $this->addFlash('donation_comment_draft', [
+                'charity_id' => (int) ($pending['charity_id'] ?? 0),
+                'type_id' => (int) ($pending['type_id'] ?? 0),
+                'comment' => (string) ($pending['description'] ?? ''),
+                'amount' => (string) ($pending['amount'] ?? ''),
+                'is_anonymous' => (bool) ($pending['is_anonymous'] ?? false),
+            ]);
+
+            return $this->redirect($this->buildReturnUrlForPending($pending, true));
+        }
+
+        $charityId = (int) ($pending['charity_id'] ?? 0);
+        if ($charityId > 0) {
+            return $this->redirectToRoute('app_donation_new', ['charity' => $charityId]);
+        }
+
+        return $this->redirectToRoute('app_donation_new');
+    }
+
+    /**
+     * @param array<string, mixed> $pending
+     */
+    private function createStripeCheckoutRedirect(
+        Request $request,
+        StripeCheckoutService $stripeCheckoutService,
+        array $pending
+    ): Response {
+        $amount = (float) ($pending['amount'] ?? 0);
+        $amountCents = (int) round($amount * 100);
+        if ($amountCents <= 0) {
+            throw new \RuntimeException('Montant de paiement invalide.');
+        }
+
+        $token = bin2hex(random_bytes(16));
+        $pending['token'] = $token;
+        $this->savePendingStripeDonation($request, $token, $pending);
+
+        $successUrl = $this->generateUrl(
+            'app_donation_stripe_success',
+            ['token' => $token],
+            UrlGeneratorInterface::ABSOLUTE_URL
+        ) . '?session_id={CHECKOUT_SESSION_ID}';
+        $cancelUrl = $this->generateUrl(
+            'app_donation_stripe_cancel',
+            ['token' => $token],
+            UrlGeneratorInterface::ABSOLUTE_URL
+        );
+
+        $charityTitle = trim((string) ($pending['charity_title'] ?? ''));
+        $description = $charityTitle !== ''
+            ? sprintf('Donation money pour %s', $charityTitle)
+            : 'Donation money';
+
+        $checkout = $stripeCheckoutService->createCheckoutSession(
+            $amountCents,
+            $successUrl,
+            $cancelUrl,
+            $description,
+            [
+                'payment_token' => $token,
+                'source' => (string) ($pending['source'] ?? 'donation_form'),
+            ]
+        );
+
+        return $this->redirect($checkout['url'], Response::HTTP_SEE_OTHER);
+    }
+
+    /**
+     * @param array<string, mixed> $pending
+     */
+    private function buildReturnUrlForPending(array $pending, bool $openForm): string
+    {
+        if (($pending['source'] ?? '') !== 'charity_comment') {
+            $charityId = (int) ($pending['charity_id'] ?? 0);
+            if ($charityId > 0) {
+                return $this->generateUrl('app_donation_new', ['charity' => $charityId]);
+            }
+
+            return $this->generateUrl('app_donation_new');
+        }
+
+        $charityId = (int) ($pending['charity_id'] ?? 0);
+        $page = max(1, (int) ($pending['page'] ?? 1));
+        $params = ['page' => $page];
+        if ($openForm && $charityId > 0) {
+            $params['open_donate'] = $charityId;
+        }
+
+        $url = $this->generateUrl('app_charity_index', $params);
+        if ($charityId > 0) {
+            $url .= '#cause-' . $charityId;
+        }
+
+        return $url;
+    }
+
+    private function isMoneyTypeLabel(?string $label): bool
+    {
+        $normalized = $this->normalizeTypeLabel((string) $label);
+        if ($normalized === '') {
+            return false;
+        }
+
+        return str_contains($normalized, 'money')
+            || str_contains($normalized, 'argent')
+            || str_contains($normalized, 'cash');
+    }
+
+    private function normalizeTypeLabel(string $label): string
+    {
+        $label = trim($label);
+        if ($label === '') {
+            return '';
+        }
+
+        $transliterated = @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $label);
+        if (is_string($transliterated) && $transliterated !== '') {
+            $label = $transliterated;
+        }
+
+        $label = strtolower($label);
+
+        return trim((string) preg_replace('/\s+/', ' ', $label));
+    }
+
+    /**
+     * @param array<string, mixed> $pending
+     */
+    private function savePendingStripeDonation(Request $request, string $token, array $pending): void
+    {
+        $session = $request->getSession();
+        $allPending = $session->get('donation_stripe_pending', []);
+        if (!is_array($allPending)) {
+            $allPending = [];
+        }
+
+        $allPending[$token] = $pending;
+        $session->set('donation_stripe_pending', $allPending);
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function getPendingStripeDonation(Request $request, string $token): ?array
+    {
+        $session = $request->getSession();
+        $allPending = $session->get('donation_stripe_pending', []);
+        if (!is_array($allPending)) {
+            return null;
+        }
+
+        $pending = $allPending[$token] ?? null;
+
+        return is_array($pending) ? $pending : null;
+    }
+
+    private function removePendingStripeDonation(Request $request, string $token): void
+    {
+        $session = $request->getSession();
+        $allPending = $session->get('donation_stripe_pending', []);
+        if (!is_array($allPending)) {
+            return;
+        }
+
+        unset($allPending[$token]);
+        $session->set('donation_stripe_pending', $allPending);
     }
 
     private function storeDonationPhoto(UploadedFile $photoFile, SluggerInterface $slugger): string

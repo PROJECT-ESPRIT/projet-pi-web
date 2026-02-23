@@ -13,8 +13,11 @@
     <div class="alert alert-warning">
         Les dons materiels sont verifies par IA. Si la photo ne correspond pas au type choisi, le don est refuse.
     </div>
+    <div class="alert alert-info">
+        Les dons de type <strong>money</strong> sont payes via Stripe Checkout.
+    </div>
 
-    {{ form_start(form, {'attr': {'novalidate': 'novalidate'}}) }}
+    {{ form_start(form, {'attr': {'novalidate': 'novalidate', 'data-turbo': 'false'}}) }}
         {{ form_row(form.charity) }}
         {{ form_row(form.type) }}
         {{ form_row(form.amount) }}

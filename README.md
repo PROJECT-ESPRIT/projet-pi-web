@@ -99,6 +99,50 @@ Variables disponibles (avec valeurs par défaut dans `.env`) :
 - `DONATION_AI_CONFIDENCE` (par défaut `0.45`)
 - `DONATION_AI_TIMEOUT` (par défaut `20`)
 
+### 4. Paiement Stripe (type de don `money` uniquement)
+
+Les dons de type `money` passent par Stripe Checkout avant enregistrement.
+
+1. Ajouter les variables Stripe dans `.env.local` :
+   ```dotenv
+   STRIPE_SECRET_KEY=sk_test_xxx
+   STRIPE_CURRENCY=eur
+   ```
+2. Vider le cache Symfony :
+   ```bash
+   php bin/console cache:clear
+   ```
+
+Sans `STRIPE_SECRET_KEY`, les dons `money` ne pourront pas démarrer le paiement.
+
+#### Procédure collab (recommandée)
+
+1. Mettre à jour la branche :
+   ```bash
+   git checkout feature/charity
+   git pull
+   ```
+2. Installer/mettre à jour l'IA locale :
+   ```bash
+   bin/setup-ai-validator.sh
+   ```
+3. Configurer Stripe en local dans `.env.local` (jamais dans git) :
+   ```dotenv
+   STRIPE_SECRET_KEY=sk_test_xxx
+   STRIPE_CURRENCY=eur
+   ```
+4. Vider le cache :
+   ```bash
+   php bin/console cache:clear
+   ```
+
+#### Cartes de test Stripe
+
+- Paiement réussi : `4242 4242 4242 4242`
+- Paiement refusé : `4000 0000 0000 9995`
+
+Date d'expiration future + CVC + code postal quelconques.
+
 ---
 
 ## 👤 Création d'un Administrateur

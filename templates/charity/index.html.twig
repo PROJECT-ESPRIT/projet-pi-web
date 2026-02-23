@@ -214,7 +214,7 @@
                             {% if app.user and charity.createdBy and app.user.id != charity.createdBy.id %}
                                 <div class="collapse mt-3 {{ shouldOpenDonate ? 'show' : '' }}" id="donate-{{ charity.id }}">
                                     <h6 class="mb-2">Nouveau don</h6>
-                                    <form method="post" action="{{ path('app_donation_comment', {'id': charity.id}) }}" enctype="multipart/form-data">
+                                    <form method="post" action="{{ path('app_donation_comment', {'id': charity.id}) }}" enctype="multipart/form-data" data-turbo="false">
                                         <input type="hidden" name="_token" value="{{ csrf_token('comment_donation_' ~ charity.id) }}">
                                         <input type="hidden" name="page" value="{{ page }}">
                                         <div class="mb-2">
