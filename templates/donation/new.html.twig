@@ -10,6 +10,9 @@
         Vous pouvez consulter les causes disponibles
         <a href="{{ path('app_charity_index') }}" class="alert-link">ici</a>.
     </div>
+    <div class="alert alert-warning">
+        Les dons materiels sont verifies par IA. Si la photo ne correspond pas au type choisi, le don est refuse.
+    </div>
 
     {{ form_start(form, {'attr': {'novalidate': 'novalidate'}}) }}
         {{ form_row(form.charity) }}

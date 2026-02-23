@@ -4,6 +4,17 @@
 parameters:
     mailer_from_default: 'no-reply@artconnect.local'
     mailer_from: '%env(default:mailer_from_default:MAILER_FROM)%'
+    donation_ai_python_bin_default: 'python/.venv/bin/python'
+    donation_ai_model_default: 'yolov8n.pt'
+    donation_ai_confidence_default: '0.45'
+    donation_ai_fallback_confidence_default: '0.08'
+    donation_ai_timeout_default: '20'
+    donation_ai_python_bin: '%env(default:donation_ai_python_bin_default:DONATION_AI_PYTHON_BIN)%'
+    donation_ai_model: '%env(default:donation_ai_model_default:DONATION_AI_MODEL)%'
+    donation_ai_confidence: '%env(default:donation_ai_confidence_default:DONATION_AI_CONFIDENCE)%'
+    donation_ai_fallback_confidence: '%env(default:donation_ai_fallback_confidence_default:DONATION_AI_FALLBACK_CONFIDENCE)%'
+    donation_ai_timeout: '%env(default:donation_ai_timeout_default:DONATION_AI_TIMEOUT)%'
+    donation_ai_settings_dir: '%kernel.project_dir%/var/ultralytics'
 
 services:
     # Configuration par défaut
@@ -27,4 +38,23 @@ services:
     # Configuration du service d'email personnalisé
     App\Service\EmailService:
         arguments:
-            $adminEmail: '%env(string:default:no-reply@artconnect.local:MAILER_FROM%'
+            $adminEmail: '%mailer_from%'
+
+    App\Service\YoloDonationImageValidator:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+            $pythonBinary: '%donation_ai_python_bin%'
+            $scriptPath: '%kernel.project_dir%/python/image_scanner.py'
+            $modelName: '%donation_ai_model%'
+            $confidenceThreshold: '%donation_ai_confidence%'
+            $fallbackConfidenceThreshold: '%donation_ai_fallback_confidence%'
+            $timeoutSeconds: '%donation_ai_timeout%'
+            $settingsDir: '%donation_ai_settings_dir%'
+            $typeClassMap:
+                fourniture: ['chair', 'couch', 'bed', 'dining table', 'bench', 'tv', 'laptop', 'book', 'refrigerator', 'microwave', 'oven', 'sink', 'potted plant', 'clock', 'vase', 'toaster', 'remote', 'keyboard', 'mouse', 'cell phone', 'bottle', 'cup', 'bowl']
+                clothes: ['person', 'backpack', 'handbag', 'suitcase', 'tie']
+            $typeAliases:
+                fourniture: ['fourniture', 'fournitures', 'meuble', 'meubles', 'furniture']
+                clothes: ['clothes', 'cloth', 'clothing', 'habit', 'habits', 'vetement', 'vetements']
+                money: ['money', 'argent', 'cash']
+            $nonVisualTypes: ['money']

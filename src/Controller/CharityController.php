@@ -7,6 +7,7 @@ use App\Entity\User;
 use App\Form\CharityType;
 use App\Repository\CharityRepository;
 use App\Repository\DonationRepository;
+use App\Repository\TypeDonRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -20,7 +21,12 @@ use Symfony\Component\String\Slugger\SluggerInterface;
 class CharityController extends AbstractController
 {
     #[Route('/', name: 'app_charity_index', methods: ['GET'])]
-    public function index(Request $request, CharityRepository $charityRepository, DonationRepository $donationRepository): Response
+    public function index(
+        Request $request,
+        CharityRepository $charityRepository,
+        DonationRepository $donationRepository,
+        TypeDonRepository $typeDonRepository
+    ): Response
     {
         $page = max(1, (int) $request->query->get('page', 1));
         $perPage = 9;
@@ -37,9 +43,22 @@ class CharityController extends AbstractController
             $charityRows
         )));
 
+        $openDonateId = max(0, (int) $request->query->get('open_donate', 0));
+        $donationCommentDraft = null;
+        if ($request->hasSession()) {
+            $drafts = $request->getSession()->getFlashBag()->get('donation_comment_draft', []);
+            if (isset($drafts[0]) && is_array($drafts[0])) {
+                $donationCommentDraft = $drafts[0];
+                $openDonateId = max($openDonateId, (int) ($donationCommentDraft['charity_id'] ?? 0));
+            }
+        }
+
         return $this->render('charity/index.html.twig', [
             'charities' => $charityRows,
             'donations_by_charity' => $donationRepository->findRecentByCharityIds($charityIds, 12),
+            'donation_types' => $typeDonRepository->findBy([], ['libelle' => 'ASC']),
+            'open_donate_id' => $openDonateId,
+            'donation_comment_draft' => $donationCommentDraft,
             'page' => $page,
             'total_pages' => $totalPages,
             'total' => $total,

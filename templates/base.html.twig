@@ -115,6 +115,7 @@
     </head>
     <body class="{{ app.user ? 'back-mode' : 'front-mode' }}">
         {% set sweet_success_messages = app.flashes('sweet_success') %}
+        {% set sweet_warning_messages = app.flashes('sweet_warning') %}
         {% if app.user %}
             {# Back-office / Logged-in Layout #}
             <div class="wrapper">
@@ -294,6 +295,9 @@
         {% for message in sweet_success_messages %}
             <div class="d-none js-sweet-success" data-message="{{ message|e('html_attr') }}"></div>
         {% endfor %}
+        {% for message in sweet_warning_messages %}
+            <div class="d-none js-sweet-warning" data-message="{{ message|e('html_attr') }}"></div>
+        {% endfor %}
         <script>
             // Function to update active state
             function updateActiveState() {
@@ -332,9 +336,13 @@
                 }
             }
 
-            // Run on page load
-            document.addEventListener('DOMContentLoaded', function() {
+            function showSweetSuccessAlerts() {
                 document.querySelectorAll('.js-sweet-success').forEach(function (el) {
+                    if (el.dataset.shown === '1') {
+                        return;
+                    }
+
+                    el.dataset.shown = '1';
                     if (window.Swal) {
                         Swal.fire({
                             icon: 'success',
@@ -344,6 +352,30 @@
                         });
                     }
                 });
+            }
+
+            function showSweetWarningAlerts() {
+                document.querySelectorAll('.js-sweet-warning').forEach(function (el) {
+                    if (el.dataset.shown === '1') {
+                        return;
+                    }
+
+                    el.dataset.shown = '1';
+                    if (window.Swal) {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Notice',
+                            text: el.dataset.message,
+                            confirmButtonText: 'OK'
+                        });
+                    }
+                });
+            }
+
+            // Run on page load
+            document.addEventListener('DOMContentLoaded', function() {
+                showSweetSuccessAlerts();
+                showSweetWarningAlerts();
 
                 // Toggle sidebar on mobile
                 const sidebarCollapse = document.getElementById('sidebarCollapse');
@@ -359,6 +391,8 @@
                 
                 // Listen for navigation events (Turbo/HTMX or traditional)
                 document.addEventListener('turbo:load', updateActiveState); // For Turbo
+                document.addEventListener('turbo:load', showSweetSuccessAlerts); // Show alerts after Turbo redirects
+                document.addEventListener('turbo:load', showSweetWarningAlerts); // Show warning alerts after Turbo redirects
                 document.addEventListener('htmx:afterSettle', updateActiveState); // For HTMX
                 
                 // For traditional navigation

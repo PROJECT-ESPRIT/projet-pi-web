@@ -71,7 +71,8 @@ class DonationType extends AbstractType
                 'label' => 'Photo du don (optionnel)',
                 'mapped' => false,
                 'required' => false,
-                'attr' => ['class' => 'form-control'],
+                'help' => 'Obligatoire pour les dons materiels verifies par IA.',
+                'attr' => ['class' => 'form-control', 'accept' => 'image/*'],
             ])
             ->add('isAnonymous', CheckboxType::class, [
                 'label' => 'Don anonyme (masquer mon nom publiquement)',

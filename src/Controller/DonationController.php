@@ -9,6 +9,7 @@ use App\Form\DonationType;
 use App\Repository\CharityRepository;
 use App\Repository\DonationRepository;
 use App\Repository\TypeDonRepository;
+use App\Service\YoloDonationImageValidator;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -57,7 +58,13 @@ class DonationController extends AbstractController
 
     #[Route('/new', name: 'app_donation_new', methods: ['GET', 'POST'])]
     #[IsGranted('ROLE_USER')]
-    public function new(Request $request, EntityManagerInterface $entityManager, CharityRepository $charityRepository, SluggerInterface $slugger): Response
+    public function new(
+        Request $request,
+        EntityManagerInterface $entityManager,
+        CharityRepository $charityRepository,
+        SluggerInterface $slugger,
+        YoloDonationImageValidator $imageValidator
+    ): Response
     {
         $user = $this->getUser();
         if (!$user instanceof User) {
@@ -91,19 +98,34 @@ class DonationController extends AbstractController
             }
 
             $photoFile = $form->get('photoFile')->getData();
-            if ($photoFile instanceof UploadedFile) {
-                $originalFilename = pathinfo($photoFile->getClientOriginalName(), PATHINFO_FILENAME);
-                $safeFilename = (string) $slugger->slug($originalFilename);
-                $extension = $photoFile->guessExtension() ?: 'bin';
-                $newFilename = $safeFilename . '-' . uniqid('', true) . '.' . $extension;
-
-                $targetDirectory = $this->getParameter('kernel.project_dir') . '/public/uploads/donations';
-                if (!is_dir($targetDirectory)) {
-                    mkdir($targetDirectory, 0775, true);
+            $validation = $imageValidator->validate(
+                $photoFile instanceof UploadedFile ? $photoFile->getPathname() : null,
+                $donation->getType()?->getLibelle()
+            );
+            if (!$validation['is_valid']) {
+                if (($validation['service_error'] ?? false) === true) {
+                    $this->addFlash('error', $validation['message']);
+                } else {
+                    $this->addFlash('sweet_warning', 'please send a valid picture');
                 }
 
-                $photoFile->move($targetDirectory, $newFilename);
-                $donation->setPhoto('uploads/donations/' . $newFilename);
+                return $this->render('donation/new.html.twig', [
+                    'donation' => $donation,
+                    'form' => $form,
+                ]);
+            }
+
+            if ($photoFile instanceof UploadedFile) {
+                try {
+                    $donation->setPhoto($this->storeDonationPhoto($photoFile, $slugger));
+                } catch (\Throwable $e) {
+                    $this->addFlash('error', 'Échec de l\'upload de la photo. Veuillez réessayer.');
+
+                    return $this->render('donation/new.html.twig', [
+                        'donation' => $donation,
+                        'form' => $form,
+                    ]);
+                }
             }
 
             try {
@@ -111,6 +133,7 @@ class DonationController extends AbstractController
                 $entityManager->persist($donation);
                 $entityManager->flush();
             } catch (\Throwable $e) {
+                $this->removeDonationPhoto($donation->getPhoto());
                 $this->addFlash('error', 'Échec de l\'enregistrement du don. Veuillez réessayer.');
 
                 return $this->render('donation/new.html.twig', [
@@ -119,7 +142,7 @@ class DonationController extends AbstractController
                 ]);
             }
 
-            $this->addFlash('sweet_success', 'Don ajouté avec succès.');
+            $this->addFlash('sweet_success', 'Donation successful, thank you for your contribution.');
 
             return $this->redirectToRoute('app_donation_my', [], Response::HTTP_SEE_OTHER);
         }
@@ -141,10 +164,15 @@ class DonationController extends AbstractController
         Charity $charity,
         EntityManagerInterface $entityManager,
         TypeDonRepository $typeDonRepository,
-        SluggerInterface $slugger
+        SluggerInterface $slugger,
+        YoloDonationImageValidator $imageValidator
     ): Response {
         $page = max(1, (int) $request->request->get('page', 1));
         $redirectUrl = $this->generateUrl('app_charity_index', ['page' => $page]) . '#cause-' . $charity->getId();
+        $redirectUrlOpenForm = $this->generateUrl('app_charity_index', [
+            'page' => $page,
+            'open_donate' => $charity->getId(),
+        ]) . '#cause-' . $charity->getId();
 
         if (!$this->isCsrfTokenValid('comment_donation_' . $charity->getId(), (string) $request->request->get('_token'))) {
             $this->addFlash('error', 'Token CSRF invalide.');
@@ -195,11 +223,42 @@ class DonationController extends AbstractController
             }
         }
 
-        $type = $typeDonRepository->findDefaultForCommentDonation();
-        if ($type === null) {
-            $this->addFlash('error', 'Aucun type de don n\'est configuré.');
+        $typeId = (int) $request->request->get('type_id', 0);
+        if ($typeId <= 0) {
+            $this->addFlash('error', 'Le type de don est obligatoire.');
 
             return $this->redirect($redirectUrl);
+        }
+
+        $type = $typeDonRepository->find($typeId);
+        if ($type === null) {
+            $this->addFlash('error', 'Type de don invalide.');
+
+            return $this->redirect($redirectUrl);
+        }
+
+        $photoFile = $request->files->get('photo_file');
+        $validation = $imageValidator->validate(
+            $photoFile instanceof UploadedFile ? $photoFile->getPathname() : null,
+            $type->getLibelle()
+        );
+        if (!$validation['is_valid']) {
+            if (($validation['service_error'] ?? false) === true) {
+                $this->addFlash('error', $validation['message']);
+
+                return $this->redirect($redirectUrl);
+            } else {
+                $this->addFlash('sweet_warning', 'please send a valid picture');
+                $this->addFlash('donation_comment_draft', [
+                    'charity_id' => $charity->getId(),
+                    'type_id' => $typeId,
+                    'comment' => $description,
+                    'amount' => $amountInput,
+                    'is_anonymous' => $request->request->has('is_anonymous'),
+                ]);
+
+                return $this->redirect($redirectUrlOpenForm);
+            }
         }
 
         $donation = new Donation();
@@ -212,32 +271,27 @@ class DonationController extends AbstractController
             ->setIsAnonymous($request->request->has('is_anonymous'))
             ->setDateDon(new \DateTimeImmutable());
 
-        $photoFile = $request->files->get('photo_file');
         if ($photoFile instanceof UploadedFile) {
-            $originalFilename = pathinfo($photoFile->getClientOriginalName(), PATHINFO_FILENAME);
-            $safeFilename = (string) $slugger->slug($originalFilename);
-            $extension = $photoFile->guessExtension() ?: 'bin';
-            $newFilename = $safeFilename . '-' . uniqid('', true) . '.' . $extension;
+            try {
+                $donation->setPhoto($this->storeDonationPhoto($photoFile, $slugger));
+            } catch (\Throwable $e) {
+                $this->addFlash('error', 'Échec de l\'upload de la photo. Veuillez réessayer.');
 
-            $targetDirectory = $this->getParameter('kernel.project_dir') . '/public/uploads/donations';
-            if (!is_dir($targetDirectory)) {
-                mkdir($targetDirectory, 0775, true);
+                return $this->redirect($redirectUrl);
             }
-
-            $photoFile->move($targetDirectory, $newFilename);
-            $donation->setPhoto('uploads/donations/' . $newFilename);
         }
 
         try {
             $entityManager->persist($donation);
             $entityManager->flush();
         } catch (\Throwable $e) {
+            $this->removeDonationPhoto($donation->getPhoto());
             $this->addFlash('error', 'Échec de l\'enregistrement du don. Veuillez réessayer.');
 
             return $this->redirect($redirectUrl);
         }
 
-        $this->addFlash('sweet_success', 'Don ajouté avec succès.');
+        $this->addFlash('sweet_success', 'Donation successful, thank you for your contribution.');
 
         return $this->redirect($redirectUrl);
     }
@@ -256,5 +310,34 @@ class DonationController extends AbstractController
             'sort' => $sort,
             'direction' => strtoupper($direction) === 'ASC' ? 'ASC' : 'DESC',
         ]);
+    }
+
+    private function storeDonationPhoto(UploadedFile $photoFile, SluggerInterface $slugger): string
+    {
+        $originalFilename = pathinfo($photoFile->getClientOriginalName(), PATHINFO_FILENAME);
+        $safeFilename = (string) $slugger->slug($originalFilename);
+        $extension = $photoFile->guessExtension() ?: 'bin';
+        $newFilename = $safeFilename . '-' . uniqid('', true) . '.' . $extension;
+
+        $targetDirectory = $this->getParameter('kernel.project_dir') . '/public/uploads/donations';
+        if (!is_dir($targetDirectory) && !mkdir($targetDirectory, 0775, true) && !is_dir($targetDirectory)) {
+            throw new \RuntimeException('Impossible de créer le dossier des photos de dons.');
+        }
+
+        $photoFile->move($targetDirectory, $newFilename);
+
+        return 'uploads/donations/' . $newFilename;
+    }
+
+    private function removeDonationPhoto(?string $relativePhotoPath): void
+    {
+        if ($relativePhotoPath === null || trim($relativePhotoPath) === '') {
+            return;
+        }
+
+        $absolutePhotoPath = $this->getParameter('kernel.project_dir') . '/public/' . ltrim($relativePhotoPath, '/');
+        if (is_file($absolutePhotoPath)) {
+            @unlink($absolutePhotoPath);
+        }
     }
 }

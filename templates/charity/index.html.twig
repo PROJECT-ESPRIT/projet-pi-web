@@ -36,6 +36,47 @@
             height: 10px;
             background-color: #e9ecef;
         }
+
+        .cause-card {
+            overflow: hidden;
+        }
+
+        .cause-card-layout {
+            display: flex;
+            align-items: flex-start;
+            min-height: 260px;
+        }
+
+        .cause-card-main {
+            flex: 1 1 auto;
+            min-width: 0;
+        }
+
+        .cause-card-media {
+            flex: 0 0 clamp(180px, 28vw, 320px);
+            height: 220px;
+            align-self: flex-start;
+            border-left: 1px solid rgba(0, 0, 0, 0.08);
+            background: #f3f5fb;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        .cause-card-footer {
+            border-top: 1px solid rgba(0, 0, 0, 0.08);
+        }
+
+        @media (max-width: 768px) {
+            .cause-card-layout {
+                min-height: 0;
+            }
+
+            .cause-card-media {
+                flex-basis: 140px;
+                height: 140px;
+            }
+        }
     </style>
 {% endblock %}
 
@@ -60,16 +101,14 @@
         <div class="alert alert-info">Aucune cause disponible pour le moment.</div>
     {% else %}
         <h2 class="h5 mb-3">Toutes les causes de la plateforme</h2>
-        <div class="row">
+        <div class="d-flex flex-column gap-4">
             {% for row in charities %}
                 {% set charity = row.charity %}
-                <div class="col-md-6 col-lg-4 mb-4">
-                    <div id="cause-{{ charity.id }}" class="card h-100">
-                        {% if charity.picture %}
-                            {% set picturePath = charity.picture starts with('http') ? charity.picture : asset(charity.picture) %}
-                            <img src="{{ picturePath }}" class="card-img-top" alt="{{ charity.title }}" style="height: 220px; object-fit: cover;">
-                        {% endif %}
-                        <div class="card-body">
+                <div class="w-100">
+                    <div id="cause-{{ charity.id }}" class="card h-100 cause-card">
+                        <div class="cause-card-layout">
+                            <div class="cause-card-main">
+                                <div class="card-body">
                             <div class="d-flex justify-content-between align-items-start mb-2">
                                 <h5 class="card-title mb-0">{{ charity.title }}</h5>
                                 {% if charity.status == constant('App\\Entity\\Charity::STATUS_REJECTED') %}
@@ -106,6 +145,8 @@
                             {% endif %}
 
                             {% set comments = donations_by_charity[charity.id]|default([]) %}
+                            {% set shouldOpenDonate = open_donate_id|default(0) == charity.id %}
+                            {% set hasDraft = donation_comment_draft is iterable and donation_comment_draft.charity_id|default(0) == charity.id %}
                             <hr>
                             <div class="d-flex flex-wrap gap-2">
                                 <button
@@ -124,7 +165,7 @@
                                         type="button"
                                         data-bs-toggle="collapse"
                                         data-bs-target="#donate-{{ charity.id }}"
-                                        aria-expanded="false"
+                                        aria-expanded="{{ shouldOpenDonate ? 'true' : 'false' }}"
                                         aria-controls="donate-{{ charity.id }}"
                                     >
                                         Donner
@@ -171,25 +212,36 @@
                             </div>
 
                             {% if app.user and charity.createdBy and app.user.id != charity.createdBy.id %}
-                                <div class="collapse mt-3" id="donate-{{ charity.id }}">
+                                <div class="collapse mt-3 {{ shouldOpenDonate ? 'show' : '' }}" id="donate-{{ charity.id }}">
                                     <h6 class="mb-2">Nouveau don</h6>
                                     <form method="post" action="{{ path('app_donation_comment', {'id': charity.id}) }}" enctype="multipart/form-data">
                                         <input type="hidden" name="_token" value="{{ csrf_token('comment_donation_' ~ charity.id) }}">
                                         <input type="hidden" name="page" value="{{ page }}">
                                         <div class="mb-2">
+                                            <label class="form-label mb-1">Type de don</label>
+                                            <select name="type_id" class="form-select form-select-sm" required>
+                                                <option value="">Choisir un type</option>
+                                                {% for donation_type in donation_types %}
+                                                    <option value="{{ donation_type.id }}" {{ hasDraft and donation_comment_draft.type_id|default(0) == donation_type.id ? 'selected' : '' }}>
+                                                        {{ donation_type.libelle }}
+                                                    </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="mb-2">
                                             <label class="form-label mb-1">Votre commentaire de don</label>
-                                            <textarea name="comment" rows="2" class="form-control form-control-sm" required></textarea>
+                                            <textarea name="comment" rows="2" class="form-control form-control-sm" required>{{ hasDraft ? donation_comment_draft.comment|default('') }}</textarea>
                                         </div>
                                         <div class="mb-2">
                                             <label class="form-label mb-1">Montant (optionnel)</label>
-                                            <input type="number" min="0" step="0.01" name="amount" class="form-control form-control-sm">
+                                            <input type="number" min="0" step="0.01" name="amount" class="form-control form-control-sm" value="{{ hasDraft ? donation_comment_draft.amount|default('') }}">
                                         </div>
                                         <div class="mb-2">
                                             <label class="form-label mb-1">Photo (optionnel)</label>
                                             <input type="file" name="photo_file" accept="image/*" class="form-control form-control-sm">
                                         </div>
                                         <div class="form-check mb-2">
-                                            <input class="form-check-input" type="checkbox" id="anonymous-{{ charity.id }}" name="is_anonymous" value="1">
+                                            <input class="form-check-input" type="checkbox" id="anonymous-{{ charity.id }}" name="is_anonymous" value="1" {{ hasDraft and donation_comment_draft.is_anonymous|default(false) ? 'checked' : '' }}>
                                             <label class="form-check-label small" for="anonymous-{{ charity.id }}">Don anonyme</label>
                                         </div>
                                         <div class="d-flex gap-2">
@@ -205,22 +257,28 @@
                                     </form>
                                 </div>
                             {% endif %}
-                        </div>
-                        {% if is_granted('ROLE_ADMIN') %}
-                            <div class="card-footer bg-white">
-                                {% if charity.status == constant('App\\Entity\\Charity::STATUS_REJECTED') %}
-                                    <form method="post" action="{{ path('app_charity_restore', {'id': charity.id}) }}">
-                                        <input type="hidden" name="_token" value="{{ csrf_token('restore_charity_' ~ charity.id) }}">
-                                        <button class="btn btn-sm btn-outline-success">Réactiver</button>
-                                    </form>
-                                {% else %}
-                                    <form method="post" action="{{ path('app_charity_reject', {'id': charity.id}) }}" onsubmit="return confirm('Rejeter cette cause ?');">
-                                        <input type="hidden" name="_token" value="{{ csrf_token('reject_charity_' ~ charity.id) }}">
-                                        <button class="btn btn-sm btn-outline-danger">Rejeter</button>
-                                    </form>
+                                </div>
+                                {% if is_granted('ROLE_ADMIN') %}
+                                    <div class="card-footer bg-white cause-card-footer">
+                                        {% if charity.status == constant('App\\Entity\\Charity::STATUS_REJECTED') %}
+                                            <form method="post" action="{{ path('app_charity_restore', {'id': charity.id}) }}">
+                                                <input type="hidden" name="_token" value="{{ csrf_token('restore_charity_' ~ charity.id) }}">
+                                                <button class="btn btn-sm btn-outline-success">Réactiver</button>
+                                            </form>
+                                        {% else %}
+                                            <form method="post" action="{{ path('app_charity_reject', {'id': charity.id}) }}" onsubmit="return confirm('Rejeter cette cause ?');">
+                                                <input type="hidden" name="_token" value="{{ csrf_token('reject_charity_' ~ charity.id) }}">
+                                                <button class="btn btn-sm btn-outline-danger">Rejeter</button>
+                                            </form>
+                                        {% endif %}
+                                    </div>
                                 {% endif %}
                             </div>
-                        {% endif %}
+                            {% if charity.picture %}
+                                {% set picturePath = charity.picture starts with('http') ? charity.picture : asset(charity.picture) %}
+                                <div class="cause-card-media" role="img" aria-label="{{ charity.title }}" style="background-image: url('{{ picturePath|e('html_attr') }}');"></div>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
             {% endfor %}

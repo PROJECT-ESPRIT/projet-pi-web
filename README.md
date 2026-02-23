@@ -9,7 +9,8 @@ Avant de commencer, assurez-vous d'avoir installé :
 1. **PHP** (version 8.2 ou supérieure).
 2. **Composer** (Gestionnaire de dépendances PHP).
 3. **MySQL** (Serveur de base de données, via Laragon, XAMPP ou WAMP).
-4. **Symfony CLI** (Recommandé, mais optionnel).
+4. **Python** (version 3.10 ou supérieure, pour la validation IA des photos de dons).
+5. **Symfony CLI** (Recommandé, mais optionnel).
 
 ---
 
@@ -63,6 +64,40 @@ Dans votre terminal, exécutez les commandes suivantes une par une :
    php bin/console doctrine:migrations:migrate
    ```
    *Répondez "yes" si on vous demande confirmation.*
+
+### 3. Validation IA des images de dons (YOLOv8)
+
+Le projet utilise un script Python local pour valider les photos de dons selon le type choisi.
+
+1. Lancer l'installation automatique (recommandé) :
+   ```bash
+   bin/setup-ai-validator.sh
+   ```
+
+Le script :
+- crée `python/.venv`
+- installe `torch/torchvision` en CPU-only (plus léger/stable pour l'équipe)
+- installe `ultralytics` et dépendances
+- précharge le modèle `yolov8n.pt`
+- configure `.env.local` avec `DONATION_AI_PYTHON_BIN=python/.venv/bin/python`
+- vide le cache Symfony
+- les réglages Ultralytics sont stockés dans `var/ultralytics` (pas dans le home utilisateur)
+
+2. Si vous voulez forcer un autre binaire Python :
+   ```bash
+   bin/setup-ai-validator.sh python3
+   ```
+
+3. Configuration manuelle (optionnel) :
+   ```dotenv
+   DONATION_AI_PYTHON_BIN=python/.venv/bin/python
+   ```
+
+Variables disponibles (avec valeurs par défaut dans `.env`) :
+- `DONATION_AI_PYTHON_BIN` (par défaut `python/.venv/bin/python`)
+- `DONATION_AI_MODEL` (par défaut `yolov8n.pt`)
+- `DONATION_AI_CONFIDENCE` (par défaut `0.45`)
+- `DONATION_AI_TIMEOUT` (par défaut `20`)
 
 ---
 
