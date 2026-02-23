@@ -82,8 +82,26 @@ class Evenement
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $image = null;
 
+    #[ORM\Column(length: 20, nullable: true)]
+    private ?string $layoutType = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?int $layoutRows = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?int $layoutCols = null;
+
     #[ORM\Column]
     private ?\DateTimeImmutable $createdAt = null;
+
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
+    private bool $annule = false;
+
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    private ?string $motifAnnulation = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $dateAnnulation = null;
 
     #[ORM\ManyToOne(inversedBy: 'evenements')]
     #[ORM\JoinColumn(nullable: false)]
@@ -223,6 +241,50 @@ class Evenement
         return $this;
     }
 
+    public function getLayoutType(): ?string
+    {
+        return $this->layoutType;
+    }
+
+    public function setLayoutType(?string $layoutType): static
+    {
+        $this->layoutType = $layoutType;
+        return $this;
+    }
+
+    public function getLayoutRows(): ?int
+    {
+        return $this->layoutRows;
+    }
+
+    public function setLayoutRows(?int $layoutRows): static
+    {
+        $this->layoutRows = $layoutRows;
+        return $this;
+    }
+
+    public function getLayoutCols(): ?int
+    {
+        return $this->layoutCols;
+    }
+
+    public function setLayoutCols(?int $layoutCols): static
+    {
+        $this->layoutCols = $layoutCols;
+        return $this;
+    }
+
+    public function getTakenSeats(): array
+    {
+        $seats = [];
+        foreach ($this->reservations as $r) {
+            if ($r->getSeatLabel() && $r->getStatus() === Reservation::STATUS_CONFIRMED) {
+                $seats[$r->getSeatLabel()] = $r->getParticipant()->getPrenom() . ' ' . $r->getParticipant()->getNom()[0] . '.';
+            }
+        }
+        return $seats;
+    }
+
     public function getCreatedAt(): ?\DateTimeImmutable
     {
         return $this->createdAt;
@@ -232,6 +294,39 @@ class Evenement
     {
         $this->createdAt = $createdAt;
 
+        return $this;
+    }
+
+    public function isAnnule(): bool
+    {
+        return $this->annule;
+    }
+
+    public function setAnnule(bool $annule): static
+    {
+        $this->annule = $annule;
+        return $this;
+    }
+
+    public function getMotifAnnulation(): ?string
+    {
+        return $this->motifAnnulation;
+    }
+
+    public function setMotifAnnulation(?string $motifAnnulation): static
+    {
+        $this->motifAnnulation = $motifAnnulation;
+        return $this;
+    }
+
+    public function getDateAnnulation(): ?\DateTimeImmutable
+    {
+        return $this->dateAnnulation;
+    }
+
+    public function setDateAnnulation(?\DateTimeImmutable $dateAnnulation): static
+    {
+        $this->dateAnnulation = $dateAnnulation;
         return $this;
     }
 

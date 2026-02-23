@@ -3,26 +3,27 @@
 namespace App\Service;
 
 use Symfony\Component\Mailer\MailerInterface;
-use Symfony\Component\Mime\Email;
+use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 
 class ResetPasswordMailer
 {
     public function __construct(
         private MailerInterface $mailer,
-        private string $fromEmail
+        private string $fromEmail,
+        private int $passwordResetTtlMinutes,
     ) {}
 
     public function send(string $to, string $code): void
     {
-        $email = (new Email())
+        $email = (new TemplatedEmail())
             ->from($this->fromEmail)
             ->to($to)
-            ->subject('Code de vérification')
-            ->text(
-                "Bonjour,\n\n".
-                "Votre code de vérification est : $code\n\n".
-                "Il est valable 15 minutes."
-            );
+            ->subject('Code de réinitialisation — Art Connect')
+            ->htmlTemplate('emails/reset_password.html.twig')
+            ->context([
+                'code' => $code,
+                'ttlMinutes' => $this->passwordResetTtlMinutes,
+            ]);
 
         $this->mailer->send($email);
     }

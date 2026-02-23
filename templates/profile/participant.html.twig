@@ -1,12 +1,82 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Participant Profile{% endblock %}
+{% block title %}Mon profil — Art Connect{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    {% include 'profile/_styles.html.twig' %}
+{% endblock %}
 
 {% block body %}
-<div class="row">
-    <div class="col-12">
-        <h1>Participant Profile</h1>
-        <p>Welcome, {{ app.user ? app.user.prenom : '' }}.</p>
+<section class="fo-profile-shell">
+    <div class="fo-profile-header">
+        <div>
+            <h1 class="fo-profile-title"><i class="fas fa-user"></i> Mon profil</h1>
+            <p class="fo-profile-subtitle">Gérez vos informations personnelles et votre image.</p>
+        </div>
     </div>
-</div>
+
+    <article class="fo-profile-card">
+        <div class="fo-profile-card-body">
+            <div class="fo-profile-top">
+                <div class="fo-profile-identity">
+                    {% set initials = (app.user.prenom|first|default('U') ~ app.user.nom|first|default('S'))|upper %}
+                    <div class="fo-profile-avatar">
+                        {% if app.user.profileImageUrl %}
+                            <img src="{{ app.user.profileImageUrl }}" alt="Photo de profil">
+                        {% else %}
+                            {{ initials }}
+                        {% endif %}
+                    </div>
+                    <div>
+                        <span class="fo-profile-role">Participant</span>
+                        <p class="fo-profile-name">{{ app.user.prenom }} {{ app.user.nom }}</p>
+                        <p class="fo-profile-age">
+                            {% if app.user.dateNaissance %}
+                                {{ app.user.age }} ans &middot; Né(e) le {{ app.user.dateNaissance|date('d/m/Y') }}
+                            {% else %}
+                                Date de naissance non renseignée
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+
+                <div class="fo-profile-actions">
+                    <a href="{{ path('participant_profile_edit') }}" class="btn btn-primary">
+                        <span class="btn-label"><i class="fas fa-pen me-1"></i> Modifier</span>
+                        <span class="btn-spinner"><i class="fas fa-spinner fa-spin"></i></span>
+                    </a>
+                </div>
+            </div>
+
+            <div class="fo-profile-grid">
+                <div class="fo-profile-meta">
+                    <p class="label"><i class="fas fa-envelope me-1" style="color:var(--ac-blue);"></i>Email</p>
+                    <p class="value">{{ app.user.email }}</p>
+                </div>
+                <div class="fo-profile-meta">
+                    <p class="label"><i class="fas fa-phone me-1" style="color:var(--ac-blue);"></i>Téléphone</p>
+                    <p class="value">{{ app.user.telephone ?: 'Non renseigné' }}</p>
+                </div>
+                <div class="fo-profile-meta">
+                    <p class="label"><i class="fas fa-birthday-cake me-1" style="color:var(--ac-lavender);"></i>Date de naissance</p>
+                    <p class="value">{{ app.user.dateNaissance ? app.user.dateNaissance|date('d/m/Y') : 'Non renseignée' }}</p>
+                </div>
+                <div class="fo-profile-meta">
+                    <p class="label"><i class="fas fa-image me-1" style="color:var(--ac-lavender);"></i>Image de profil</p>
+                    <p class="value text-truncate">{{ app.user.profileImageUrl ? 'Photo personnalisée' : 'Initiales (par défaut)' }}</p>
+                </div>
+            </div>
+
+            <div class="fo-profile-note">
+                <i class="fas fa-circle-info me-1"></i>
+                {% if not app.user.dateNaissance %}
+                    Vous pouvez renseigner votre date de naissance une seule fois.
+                {% else %}
+                    Votre date de naissance est verrouillée après la première saisie.
+                {% endif %}
+            </div>
+        </div>
+    </article>
+</section>
 {% endblock %}

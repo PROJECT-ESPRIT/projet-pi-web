@@ -1,4 +1,108 @@
-{{ form_start(form, {'attr': {'novalidate': 'novalidate'}}) }}
-    {{ form_widget(form) }}
-    <button class="btn btn-primary mt-3">{{ button_label|default('Enregistrer') }}</button>
+<style>
+    .usr-form .form-label { font-weight:600; font-size:.78rem; color:#4b5563; text-transform:uppercase; letter-spacing:.03em; margin-bottom:.2rem; }
+    .usr-form .form-control, .usr-form .form-select { border-radius:8px; border:1.5px solid #e5e7eb; padding:.4rem .7rem; font-size:.85rem; transition:border-color .2s, box-shadow .2s; }
+    .usr-form .form-control:focus, .usr-form .form-select:focus { border-color:var(--ac-mid); box-shadow:0 0 0 3px rgba(28,29,171,.08); }
+    .usr-form .form-control.is-invalid { border-color:#ef4444; }
+    .usr-form .invalid-feedback, .usr-form .form-errors { color:#ef4444; font-size:.75rem; margin-top:.15rem; }
+    .usr-form .form-text { font-size:.72rem; color:#9ca3af; margin-top:.1rem; }
+    .usr-form .input-group-text { font-size:.82rem; padding:.4rem .6rem; }
+    .usr-form .fs { background:#f9fafb; border-radius:10px; padding:.85rem 1rem; margin-bottom:.75rem; border:1px solid #f3f4f6; }
+    .usr-form .fs-title { font-family:'Sora',sans-serif; font-weight:700; font-size:.82rem; color:var(--ac-deep); margin-bottom:.6rem; display:flex; align-items:center; gap:.4rem; }
+    .usr-form .fs-title i { color:var(--ac-lavender); font-size:.85rem; }
+    .usr-form .mb-f { margin-bottom:.6rem; }
+    .usr-form .btn-submit { background:linear-gradient(135deg,var(--ac-mid),var(--ac-blue)); border:none; border-radius:10px; padding:.5rem 1.5rem; font-weight:700; font-size:.88rem; color:#fff; transition:transform .15s, box-shadow .15s; }
+    .usr-form .btn-submit:hover { transform:translateY(-1px); box-shadow:0 4px 14px rgba(28,29,171,.2); color:#fff; }
+    .usr-form .role-checks { display:flex; gap:1rem; flex-wrap:wrap; }
+    .usr-form .role-check { display:flex; align-items:center; gap:.4rem; padding:.4rem .8rem; background:#fff; border:1.5px solid #e5e7eb; border-radius:8px; cursor:pointer; transition:all .15s; font-size:.82rem; font-weight:600; color:#4b5563; }
+    .usr-form .role-check:has(input:checked) { border-color:var(--ac-mid); background:rgba(28,29,171,.04); color:var(--ac-deep); }
+    .usr-form .role-check input { accent-color:var(--ac-mid); }
+</style>
+
+{{ form_start(form, {'attr': {'novalidate': 'novalidate', 'class': 'usr-form'}}) }}
+
+{# ---- Identity ---- #}
+<div class="fs">
+    <div class="fs-title"><i class="fas fa-user"></i> Identité</div>
+    <div class="row">
+        <div class="col-md-6 mb-f">
+            {{ form_label(form.prenom) }}
+            <div class="input-group">
+                <span class="input-group-text" style="border-radius:8px 0 0 8px; border:1.5px solid #e5e7eb; border-right:0; background:#f9fafb;"><i class="fas fa-user text-muted"></i></span>
+                {{ form_widget(form.prenom, {'attr': {'class': 'form-control' ~ (form.prenom.vars.valid ? '' : ' is-invalid'), 'style': 'border-radius:0 8px 8px 0; border-left:0;', 'placeholder': 'Ex: Mohamed'}}) }}
+            </div>
+            {{ form_errors(form.prenom) }}
+        </div>
+        <div class="col-md-6 mb-f">
+            {{ form_label(form.nom) }}
+            <div class="input-group">
+                <span class="input-group-text" style="border-radius:8px 0 0 8px; border:1.5px solid #e5e7eb; border-right:0; background:#f9fafb;"><i class="fas fa-user text-muted"></i></span>
+                {{ form_widget(form.nom, {'attr': {'class': 'form-control' ~ (form.nom.vars.valid ? '' : ' is-invalid'), 'style': 'border-radius:0 8px 8px 0; border-left:0;', 'placeholder': 'Ex: Ben Ali'}}) }}
+            </div>
+            {{ form_errors(form.nom) }}
+        </div>
+    </div>
+</div>
+
+{# ---- Contact + Password ---- #}
+<div class="fs">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="fs-title"><i class="fas fa-envelope"></i> Contact</div>
+            <div class="mb-f">
+                {{ form_label(form.email) }}
+                <div class="input-group">
+                    <span class="input-group-text" style="border-radius:8px 0 0 8px; border:1.5px solid #e5e7eb; border-right:0; background:#f9fafb;"><i class="fas fa-at text-muted"></i></span>
+                    {{ form_widget(form.email, {'attr': {'class': 'form-control' ~ (form.email.vars.valid ? '' : ' is-invalid'), 'style': 'border-radius:0 8px 8px 0; border-left:0;', 'placeholder': 'email@example.com'}}) }}
+                </div>
+                {{ form_errors(form.email) }}
+            </div>
+            <div class="mb-f">
+                {{ form_label(form.telephone) }}
+                <div class="input-group">
+                    <span class="input-group-text" style="border-radius:8px 0 0 8px; border:1.5px solid #e5e7eb; border-right:0; background:#f9fafb;"><i class="fas fa-phone text-muted"></i></span>
+                    {{ form_widget(form.telephone, {'attr': {'class': 'form-control' ~ (form.telephone.vars.valid ? '' : ' is-invalid'), 'style': 'border-radius:0 8px 8px 0; border-left:0;', 'placeholder': '+216 XX XXX XXX'}}) }}
+                </div>
+                {{ form_errors(form.telephone) }}
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="fs-title"><i class="fas fa-lock"></i> Sécurité</div>
+            <div class="mb-f">
+                {{ form_label(form.plainPassword) }}
+                <div class="input-group">
+                    <span class="input-group-text" style="border-radius:8px 0 0 8px; border:1.5px solid #e5e7eb; border-right:0; background:#f9fafb;"><i class="fas fa-key text-muted"></i></span>
+                    {{ form_widget(form.plainPassword, {'attr': {'class': 'form-control' ~ (form.plainPassword.vars.valid ? '' : ' is-invalid'), 'style': 'border-radius:0 8px 8px 0; border-left:0;', 'placeholder': '••••••••'}}) }}
+                </div>
+                {{ form_errors(form.plainPassword) }}
+                <span class="form-text">Min. 6 caractères. Vide = inchangé.</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# ---- Roles ---- #}
+<div class="fs">
+    <div class="fs-title"><i class="fas fa-shield-alt"></i> Rôle</div>
+    <div class="role-checks">
+        {% for child in form.roles %}
+            <label class="role-check">
+                {{ form_widget(child) }}
+                {{ child.vars.label }}
+            </label>
+        {% endfor %}
+    </div>
+    {{ form_errors(form.roles) }}
+</div>
+
+{# ---- Submit ---- #}
+<div class="d-flex justify-content-between align-items-center mt-1">
+    <a href="{{ path('app_user_index') }}" class="btn btn-outline-secondary btn-sm" style="border-radius:8px;">
+        <i class="fas fa-arrow-left me-1"></i> Retour
+    </a>
+    <button type="submit" class="btn btn-submit">
+        <span class="btn-label"><i class="fas fa-check me-1"></i> {{ button_label|default('Enregistrer') }}</span>
+        <span class="btn-spinner" style="display:none;" aria-hidden="true"><i class="fas fa-spinner fa-spin me-1"></i> Enregistrement...</span>
+    </button>
+</div>
+
 {{ form_end(form) }}

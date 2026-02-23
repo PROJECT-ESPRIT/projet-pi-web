@@ -1,0 +1,46 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Email vérifié — Art Connect{% endblock %}
+
+{% block guest_wrapper_open %}{% endblock %}
+{% block guest_wrapper_close %}{% endblock %}
+
+{% block body %}
+{% include 'security/_auth_styles.html.twig' %}
+
+<div class="auth-page">
+    <div class="auth-card wide" style="text-align:center;">
+        {% if user.status == constant('App\\Entity\\User::STATUS_EMAIL_VERIFIED') %}
+            <div class="auth-icon-circle amber">
+                <i class="fas fa-hourglass-half"></i>
+            </div>
+
+            <h2>Email vérifié avec succès !</h2>
+            <div style="margin:.8rem 0;">
+                <span class="auth-pill green"><i class="fas fa-check-circle"></i> Email confirmé</span>
+            </div>
+            <p class="auth-sub" style="margin-bottom:.6rem;">
+                Votre adresse email a été vérifiée. Votre compte est maintenant en attente
+                de validation par un administrateur.
+            </p>
+            <div>
+                <span class="auth-pill amber"><i class="fas fa-clock"></i> En attente de validation admin</span>
+            </div>
+        {% else %}
+            <div class="auth-icon-circle green">
+                <i class="fas fa-check-circle"></i>
+            </div>
+
+            <h2>Compte activé !</h2>
+            <div style="margin:.8rem 0;">
+                <span class="auth-pill green"><i class="fas fa-check-circle"></i> Prêt à l'emploi</span>
+            </div>
+            <p class="auth-sub">Votre email a été vérifié et votre compte est actif. Connectez-vous pour commencer !</p>
+        {% endif %}
+
+        <a href="{{ path('login') }}" class="btn-auth-outline" style="margin-top:1rem;">
+            <i class="fas fa-sign-in-alt"></i> Se connecter
+        </a>
+    </div>
+</div>
+{% endblock %}

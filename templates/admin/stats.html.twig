@@ -1,598 +1,604 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Statistiques Administrateur{% endblock %}
-
-{% block stylesheets %}
-    {{ parent() }}
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        .stat-card {
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            margin-bottom: 20px;
-            border: none;
-            background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
-            color: white;
-            position: relative;
-            overflow: hidden;
-        }
-        .stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            right: 0;
-            bottom: 0;
-            left: 0;
-            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%);
-            pointer-events: none;
-        }
-        .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
-        }
-        .stat-card .card-body {
-            padding: 1.5rem;
-            position: relative;
-            z-index: 1;
-        }
-        .stat-number {
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: white;
-            margin-bottom: 0.5rem;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.1);
-        }
-        .stat-label {
-            font-size: 1rem;
-            color: rgba(255, 255, 255, 0.9);
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 0.25rem;
-        }
-        .stat-percentage {
-            font-size: 0.85rem;
-            color: rgba(255, 255, 255, 0.8);
-            font-weight: 400;
-            opacity: 0.9;
-        }
-        .stat-card .card-icon {
-            position: absolute;
-            right: 1.5rem;
-            top: 1.5rem;
-            font-size: 2.5rem;
-            opacity: 0.2;
-            color: white;
-        }
-    </style>
-{% endblock %}
+{% block title %}Statistiques — Art Connect{% endblock %}
 
 {% block body %}
-    <div class="container py-5">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1 class="mb-0">Tableau de bord d'administration</h1>
-            <div class="btn-group" role="group">
-                <button class="btn btn-outline-primary">
-                    <i class="fas fa-filter me-1"></i> Filtrer
-                </button>
-                <button class="btn btn-outline-secondary">
-                    <i class="fas fa-sync-alt me-1"></i> Réinitialiser
-                </button>
-                <button id="toggleStatsBtn" class="btn btn-primary" onclick="toggleStats()">
-                </button>
-            </div>
+<style>
+    .stats-header {
+        margin-bottom:1rem; display:flex; align-items:flex-end; justify-content:space-between;
+        flex-wrap:wrap; gap:.5rem;
+        padding:1.1rem 1.4rem; border-radius:16px;
+        background:linear-gradient(135deg, var(--ac-deep) 0%, var(--ac-mid) 50%, var(--ac-blue) 100%);
+        color:#fff;
+    }
+    .stats-header h1 {
+        font-family:'Sora',sans-serif; font-weight:700; font-size:1.3rem;
+        color:#fff; margin:0; display:flex; align-items:center; gap:.5rem;
+    }
+    .stats-header h1 i { color:var(--ac-sky); }
+    .stats-header p { color:rgba(255,255,255,.7); font-size:.82rem; margin:.15rem 0 0; }
+    .stats-header .stats-date {
+        font-size:.76rem; color:rgba(255,255,255,.85);
+        background:rgba(255,255,255,.12); padding:.35rem .8rem;
+        border-radius:8px; backdrop-filter:blur(4px);
+    }
+
+    /* ---- KPI Row ---- */
+    .kpi-row {
+        display:grid; grid-template-columns:repeat(7, 1fr);
+        gap:.6rem; margin-bottom:1rem;
+    }
+    @media(max-width:1200px){ .kpi-row { grid-template-columns:repeat(4, 1fr); } }
+    @media(max-width:768px){ .kpi-row { grid-template-columns:repeat(2, 1fr); } }
+
+    .kpi-card {
+        border-radius:14px; padding:.9rem 1rem; position:relative; overflow:hidden;
+        transition: transform .18s, box-shadow .18s; border:none;
+        color:#fff; min-height:110px; display:flex; flex-direction:column; justify-content:space-between;
+    }
+    .kpi-card:hover { transform:translateY(-3px); box-shadow:0 8px 25px rgba(0,0,0,.18); }
+    .kpi-card::after {
+        content:''; position:absolute; top:-20px; right:-20px;
+        width:70px; height:70px; border-radius:50%;
+        background:rgba(255,255,255,.1);
+    }
+    .kpi-card::before {
+        content:''; position:absolute; bottom:-30px; left:-15px;
+        width:60px; height:60px; border-radius:50%;
+        background:rgba(255,255,255,.06);
+    }
+    .kpi-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:.4rem; position:relative; z-index:1; }
+    .kpi-icon-wrap {
+        width:34px; height:34px; border-radius:10px; display:flex;
+        align-items:center; justify-content:center; font-size:.9rem;
+        background:rgba(255,255,255,.2); color:#fff; backdrop-filter:blur(4px);
+    }
+    .kpi-value {
+        font-family:'Sora',sans-serif; font-weight:800; font-size:1.6rem;
+        color:#fff; line-height:1.1; position:relative; z-index:1;
+    }
+    .kpi-label {
+        font-size:.65rem; font-weight:700; color:rgba(255,255,255,.85);
+        text-transform:uppercase; letter-spacing:.05em;
+    }
+    .kpi-sub { font-size:.65rem; color:rgba(255,255,255,.65); margin-top:.1rem; position:relative; z-index:1; }
+
+    /* ---- Grid layouts ---- */
+    .st-grid { display:grid; gap:.75rem; margin-bottom:.75rem; }
+    .st-2 { grid-template-columns:1fr 1fr; }
+    .st-3 { grid-template-columns:1fr 1fr 1fr; }
+    .st-2-1 { grid-template-columns:2fr 1fr; }
+    @media(max-width:1100px){ .st-3 { grid-template-columns:1fr 1fr; } }
+    @media(max-width:768px){ .st-2, .st-3, .st-2-1 { grid-template-columns:1fr; } }
+
+    /* ---- Cards ---- */
+    .st-card {
+        background:#fff; border-radius:16px; padding:1.15rem 1.3rem;
+        box-shadow:0 2px 12px rgba(30,15,117,.05); border:1px solid rgba(30,15,117,.06);
+        transition: box-shadow .2s;
+    }
+    .st-card:hover { box-shadow:0 6px 24px rgba(30,15,117,.09); }
+    .st-card-title {
+        font-family:'Sora',sans-serif; font-weight:700; font-size:.84rem;
+        color:var(--ac-deep); margin-bottom:.75rem; display:flex;
+        align-items:center; gap:.45rem;
+    }
+    .st-card-title i {
+        width:26px; height:26px; border-radius:8px; display:inline-flex;
+        align-items:center; justify-content:center; font-size:.75rem;
+        background:linear-gradient(135deg, var(--ac-lavender), var(--ac-blue));
+        color:#fff;
+    }
+
+    /* ---- Mini tables ---- */
+    .st-table { width:100%; font-size:.78rem; }
+    .st-table th {
+        font-weight:700; color:#6b7280; font-size:.67rem;
+        text-transform:uppercase; letter-spacing:.03em;
+        padding:.35rem .4rem; border-bottom:2px solid #f3f4f6;
+    }
+    .st-table td { padding:.35rem .4rem; border-bottom:1px solid #f9fafb; color:#374151; }
+    .st-table tr:last-child td { border-bottom:none; }
+
+    .progress-bar-wrap { height:6px; border-radius:3px; background:#f0f1f5; overflow:hidden; }
+    .progress-bar-fill { height:100%; border-radius:3px; transition:width .5s ease; }
+
+    /* ---- Event stats grid ---- */
+    .ev-stat-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:.5rem; text-align:center; }
+    .ev-stat-item {
+        padding:.6rem .3rem; border-radius:10px; background:#f8f9fc;
+        transition: background .15s;
+    }
+    .ev-stat-item:hover { background:#eef0f7; }
+    .ev-stat-val { font-family:'Sora',sans-serif; font-size:1.25rem; font-weight:800; line-height:1.1; }
+    .ev-stat-lbl { font-size:.62rem; color:#6b7280; font-weight:600; margin-top:.15rem; }
+
+    /* ---- Revenue highlight ---- */
+    .revenue-box {
+        background:linear-gradient(135deg, var(--ac-deep) 0%, var(--ac-mid) 60%, var(--ac-blue) 100%);
+        border-radius:16px; padding:1.1rem 1.3rem; color:#fff;
+        position:relative; overflow:hidden;
+    }
+    .revenue-box::after {
+        content:''; position:absolute; top:-25px; right:-25px;
+        width:90px; height:90px; border-radius:50%;
+        background:rgba(255,255,255,.08);
+    }
+    .revenue-box .rev-amount { font-family:'Sora',sans-serif; font-weight:800; font-size:1.6rem; position:relative; z-index:1; }
+    .revenue-box .rev-label { font-size:.7rem; opacity:.7; text-transform:uppercase; letter-spacing:.04em; position:relative; z-index:1; }
+    .revenue-box .rev-sub { font-size:.75rem; opacity:.8; margin-top:.25rem; position:relative; z-index:1; }
+
+    /* ---- Donation type pills ---- */
+    .don-type-item {
+        display:flex; align-items:center; gap:.5rem;
+        padding:.4rem .5rem; margin-bottom:.2rem; border-radius:8px;
+        transition: background .15s;
+    }
+    .don-type-item:hover { background:#f8f9fc; }
+    .don-type-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+    .don-type-name { flex:1; font-size:.78rem; color:#374151; font-weight:500; }
+    .don-type-count { font-size:.78rem; font-weight:700; color:var(--ac-deep); }
+</style>
+
+{# ===== HEADER ===== #}
+<div class="stats-header">
+    <div>
+        <h1><i class="fas fa-chart-pie"></i> Statistiques</h1>
+        <p>Vue d'ensemble de la plateforme Art Connect</p>
+    </div>
+    <div class="stats-date">
+        <i class="far fa-clock me-1"></i> {{ "now"|date("d/m/Y H:i") }}
+    </div>
+</div>
+
+{# ===== KPI CARDS ===== #}
+<div class="kpi-row">
+    <div class="kpi-card" style="background:linear-gradient(135deg, #1C1DAB, #3785D8);">
+        <div class="kpi-top">
+            <div class="kpi-label">Utilisateurs</div>
+            <div class="kpi-icon-wrap"><i class="fas fa-users"></i></div>
         </div>
-        
-        <div class="row mb-4">
-            <div class="col-md-3 mb-4">
-                <div class="card stat-card" style="background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);">
-                    <div class="card-body">
-                        <i class="fas fa-calendar-check card-icon"></i>
-                        <div class="stat-number">{{ totalReservations ?? 0 }}</div>
-                        <div class="stat-label">Réservations totales</div>
-                        {% if totalReservations > 0 %}
-                            <div class="stat-percentage">100% du total</div>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-md-3 mb-4">
-                <div class="card stat-card" style="background: linear-gradient(135deg, #36b9cc 0%, #1a6b76 100%);">
-                    <div class="card-body">
-                        <i class="fas fa-calendar-day card-icon"></i>
-                        <div class="stat-number">{{ reservationsThisMonth ?? 0 }}</div>
-                        <div class="stat-label">Réservations (mois)</div>
-                        {% if totalReservations > 0 %}
-                            {% set percentage = ((reservationsThisMonth / totalReservations) * 100)|round(1) %}
-                            <div class="stat-percentage">{{ percentage }}% des réservations</div>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-md-3 mb-4">
-                <div class="card stat-card" style="background: linear-gradient(135deg, #4e9ef8 0%, #2a6fd6 100%);">
-                    <div class="card-body">
-                        <i class="fas fa-users card-icon"></i>
-                        <div class="stat-number">{{ totalUsers ?? 0 }}</div>
-                        <div class="stat-label">Utilisateurs</div>
-                        {% if totalUsers > 0 %}
-                            {% set percentage = ((totalUsers / (totalUsers + 10)) * 100)|round(1) %}
-                            <div class="stat-percentage">{{ percentage }}% de la capacité</div>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-md-3 mb-4">
-                <div class="card stat-card" style="background: linear-gradient(135deg, #7ab4ff 0%, #4e9ef8 100%);">
-                    <div class="card-body">
-                        <i class="fas fa-user-plus card-icon"></i>
-                        <div class="stat-number">{{ newUsersThisMonth ?? 0 }}</div>
-                        <div class="stat-label">Nouveaux (mois)</div>
-                        {% if totalUsers > 0 %}
-                            {% set percentage = ((newUsersThisMonth / totalUsers) * 100)|round(1) %}
-                            <div class="stat-percentage">+{{ percentage }}% ce mois</div>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="row">
-            <div class="col-md-6 mb-4">
-                <div class="card h-100">
-                    <div class="card-header bg-light">
-                        <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Réservations par statut</h5>
-                    </div>
-                    <div class="card-body">
-                        <div style="height: 300px;">
-                            <canvas id="reservationsChart"></canvas>
-                        </div>
-                        <div class="text-center mt-3">
-                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#reservationsDetailsModal">
-                                <i class="fas fa-table me-1"></i> Voir le détail
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-md-6 mb-4">
-                <div class="card h-100">
-                    <div class="card-header bg-light">
-                        <h5 class="mb-0"><i class="fas fa-users me-2"></i>Utilisateurs par rôle</h5>
-                    </div>
-                    <div class="card-body">
-                        <div style="height: 300px;">
-                            <canvas id="usersChart"></canvas>
-                        </div>
-                        <div class="text-center mt-3 d-flex justify-content-center gap-2">
-                            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#usersDetailsModal">
-                                <i class="fas fa-table me-1"></i> Voir le détail
-                            </button>
-                            <button type="button" class="btn btn-outline-success" onclick="showUserStats()">
-                                <i class="fas fa-chart-pie me-1"></i> Statistiques
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <div class="kpi-value">{{ totalUsers }}</div>
+        <div class="kpi-sub">+{{ newUsersThisMonth }} ce mois</div>
     </div>
 
-    <!-- Modal pour les détails des réservations -->
-    <div class="modal fade" id="reservationsDetailsModal" tabindex="-1" aria-labelledby="reservationsDetailsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="reservationsDetailsModalLabel">Détails des réservations par statut</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    <div class="kpi-card" style="background:linear-gradient(135deg, #3785D8, #5BA3E6);">
+        <div class="kpi-top">
+            <div class="kpi-label">Événements</div>
+            <div class="kpi-icon-wrap"><i class="fas fa-calendar-alt"></i></div>
+        </div>
+        <div class="kpi-value">{{ eventStats.total }}</div>
+        <div class="kpi-sub">{{ eventStats.upcoming }} à venir</div>
+    </div>
+
+    <div class="kpi-card" style="background:linear-gradient(135deg, #059669, #34d399);">
+        <div class="kpi-top">
+            <div class="kpi-label">Réservations</div>
+            <div class="kpi-icon-wrap"><i class="fas fa-ticket-alt"></i></div>
+        </div>
+        <div class="kpi-value">{{ totalReservations }}</div>
+        <div class="kpi-sub">+{{ reservationsThisMonth }} ce mois</div>
+    </div>
+
+    <div class="kpi-card" style="background:linear-gradient(135deg, #7c3aed, #BF8CE1);">
+        <div class="kpi-top">
+            <div class="kpi-label">Commandes</div>
+            <div class="kpi-icon-wrap"><i class="fas fa-shopping-bag"></i></div>
+        </div>
+        <div class="kpi-value">{{ totalOrders }}</div>
+        <div class="kpi-sub">{{ totalProducts }} produits</div>
+    </div>
+
+    <div class="kpi-card" style="background:linear-gradient(135deg, #db2777, #EBB2C3);">
+        <div class="kpi-top">
+            <div class="kpi-label">Dons</div>
+            <div class="kpi-icon-wrap"><i class="fas fa-hand-holding-heart"></i></div>
+        </div>
+        <div class="kpi-value">{{ totalDonations }}</div>
+        <div class="kpi-sub">+{{ donationsThisMonth }} ce mois</div>
+    </div>
+
+    <div class="kpi-card" style="background:linear-gradient(135deg, #d97706, #fbbf24);">
+        <div class="kpi-top">
+            <div class="kpi-label">Forum</div>
+            <div class="kpi-icon-wrap"><i class="fas fa-comments"></i></div>
+        </div>
+        <div class="kpi-value">{{ totalForumPosts }}</div>
+        <div class="kpi-sub">{{ totalForumReplies }} réponses</div>
+    </div>
+
+    <div class="kpi-card" style="background:linear-gradient(135deg, #dc2626, #f87171);">
+        <div class="kpi-top">
+            <div class="kpi-label">Stock faible</div>
+            <div class="kpi-icon-wrap"><i class="fas fa-exclamation-triangle"></i></div>
+        </div>
+        <div class="kpi-value">{{ lowStockProducts }}</div>
+        <div class="kpi-sub">produits &le; 5 unités</div>
+    </div>
+</div>
+
+{# ===== ROW 1: Events overview + Revenue ===== #}
+<div class="st-grid st-2-1">
+    <div class="st-card">
+        <div class="st-card-title"><i class="fas fa-calendar-check"></i> Événements — Vue globale</div>
+        <div class="ev-stat-grid" style="margin-bottom:.75rem;">
+            <div class="ev-stat-item">
+                <div class="ev-stat-val" style="color:var(--ac-blue);">{{ eventStats.upcoming }}</div>
+                <div class="ev-stat-lbl">À venir</div>
             </div>
-            <div class="modal-body">
-                <div class="table-responsive">
-                    <table class="table table-striped table-hover">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Statut</th>
-                                <th class="text-end">Nombre</th>
-                                <th class="text-end">Pourcentage</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% set total = reservationsByStatus|reduce((sum, item) => sum + item.count, 0) %}
-                            {% for item in reservationsByStatus|sort((a, b) => b.count <=> a.count) %}
-                                <tr>
-                                    <td>{{ item.status }}</td>
-                                    <td class="text-end">{{ item.count|number_format(0, ',', ' ') }}</td>
-                                    <td class="text-end">{{ total > 0 ? ((item.count / total) * 100)|number_format(2, ',', ' ') }}%</td>
-                                </tr>
-                            {% endfor %}
-                            <tr class="table-active fw-bold">
-                                <td>Total</td>
-                                <td class="text-end">{{ total|number_format(0, ',', ' ') }}</td>
-                                <td class="text-end">100%</td>
-                            </tr>
-                        </tbody>
-                    </table>
+            <div class="ev-stat-item">
+                <div class="ev-stat-val" style="color:#059669;">{{ eventStats.ongoing }}</div>
+                <div class="ev-stat-lbl">En cours</div>
+            </div>
+            <div class="ev-stat-item">
+                <div class="ev-stat-val" style="color:#9ca3af;">{{ eventStats.past }}</div>
+                <div class="ev-stat-lbl">Terminés</div>
+            </div>
+            <div class="ev-stat-item">
+                <div class="ev-stat-val" style="color:#ef4444;">{{ eventStats.full }}</div>
+                <div class="ev-stat-lbl">Complets</div>
+            </div>
+        </div>
+        <hr style="margin:.5rem 0; border-color:#eef0f5;">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:.75rem;">
+            <div>
+                <div style="font-size:.68rem; color:#6b7280; font-weight:600; text-transform:uppercase;">Taux d'occupation</div>
+                <div style="display:flex; align-items:center; gap:.5rem; margin-top:.35rem;">
+                    <div class="progress-bar-wrap" style="flex:1;">
+                        <div class="progress-bar-fill" style="width:{{ eventStats.occupancy }}%; background:linear-gradient(90deg,var(--ac-mid),var(--ac-blue));"></div>
+                    </div>
+                    <span style="font-weight:800; font-size:.84rem; color:var(--ac-deep);">{{ eventStats.occupancy }}%</span>
                 </div>
+                <div style="font-size:.65rem; color:#9ca3af; margin-top:.15rem;">{{ eventStats.totalTaken }}/{{ eventStats.totalPlaces }} places</div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+            <div>
+                <div style="font-size:.68rem; color:#6b7280; font-weight:600; text-transform:uppercase;">Revenus événements</div>
+                <div style="font-weight:800; font-size:1.05rem; color:#059669; margin-top:.35rem;">{{ eventStats.revenueActual|number_format(2, '.', ' ') }} TND</div>
+                <div style="font-size:.65rem; color:#9ca3af;">Potentiel: {{ eventStats.revenuePotential|number_format(2, '.', ' ') }} TND</div>
             </div>
+        </div>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:.75rem;">
+        <div class="revenue-box">
+            <div class="rev-label"><i class="fas fa-coins me-1"></i> Chiffre d'affaires boutique</div>
+            <div class="rev-amount">{{ orderRevenue|number_format(2, '.', ' ') }} TND</div>
+            <div class="rev-sub">{{ totalOrders }} commande{{ totalOrders > 1 ? 's' : '' }} · {{ totalProducts }} produit{{ totalProducts > 1 ? 's' : '' }}</div>
+        </div>
+        <div class="st-card" style="flex:1;">
+            <div class="st-card-title"><i class="fas fa-warehouse"></i> Inventaire</div>
+            <div style="display:flex; align-items:baseline; gap:.35rem; margin-bottom:.35rem;">
+                <span style="font-family:'Sora',sans-serif; font-weight:800; font-size:1.15rem; color:var(--ac-deep);">{{ stockValue|number_format(2, '.', ' ') }}</span>
+                <span style="font-size:.72rem; color:#6b7280;">TND valeur stock</span>
+            </div>
+            {% if lowStockProducts > 0 %}
+            <div style="display:inline-flex; align-items:center; gap:.3rem; font-size:.72rem; color:#dc2626; font-weight:600; background:rgba(220,38,38,.08); padding:.25rem .6rem; border-radius:6px;">
+                <i class="fas fa-exclamation-circle"></i> {{ lowStockProducts }} produit{{ lowStockProducts > 1 ? 's' : '' }} en stock faible
+            </div>
+            {% else %}
+            <div style="display:inline-flex; align-items:center; gap:.3rem; font-size:.72rem; color:#059669; font-weight:600; background:rgba(5,150,105,.08); padding:.25rem .6rem; border-radius:6px;">
+                <i class="fas fa-check-circle"></i> Stock suffisant
+            </div>
+            {% endif %}
         </div>
     </div>
 </div>
 
-<!-- Modal pour les statistiques utilisateurs -->
-<div class="modal fade" id="userStatsModal" tabindex="-1" aria-labelledby="userStatsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title" id="userStatsModalLabel">Statistiques des Utilisateurs</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="row mb-4">
-                    <div class="col-md-6 mb-3">
-                        <div class="card bg-light">
-                            <div class="card-body text-center">
-                                <h6 class="card-title text-muted">Total Utilisateurs</h6>
-                                <h3 class="text-primary">{{ totalUsers ?? 0 }}</h3>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <div class="card bg-light">
-                            <div class="card-body text-center">
-                                <h6 class="card-title text-muted">Nouveaux ce mois</h6>
-                                <h3 class="text-success">{{ newUsersThisMonth ?? 0 }}</h3>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-md-6">
-                        <h6>Répartition par rôle</h6>
-                        <div style="height: 250px;">
-                            <canvas id="userRoleChart"></canvas>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <h6>Détails par rôle</h6>
-                        <div class="table-responsive">
-                            <table class="table table-sm">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Rôle</th>
-                                        <th class="text-end">Nombre</th>
-                                        <th class="text-end">Pourcentage</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% set total = usersByRole|reduce((sum, user) => sum + user.count, 0) %}
-                                    {% for user in usersByRole %}
-                                        <tr>
-                                            <td>{{ user.role|replace({'_': ' '})|title }}</td>
-                                            <td class="text-end">{{ user.count }}</td>
-                                            <td class="text-end">
-                                                {% if total > 0 %}
-                                                    {{ ((user.count / total) * 100)|round(1) }}%
-                                                {% else %}
-                                                    0%
-                                                {% endif %}
-                                            </td>
-                                        </tr>
-                                    {% else %}
-                                        <tr>
-                                            <td colspan="3" class="text-center">Aucune donnée disponible</td>
-                                        </tr>
-                                    {% endfor %}
-                                </tbody>
-                                <tfoot>
-                                    <tr class="table-active">
-                                        <th>Total</th>
-                                        <th class="text-end">{{ total }}</th>
-                                        <th class="text-end">100%</th>
-                                    </tr>
-                                </tfoot>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="row mt-4">
-                    <div class="col-12">
-                        <h6>Inscriptions par mois</h6>
-                        <div style="height: 250px;">
-                            <canvas id="userRegistrationsChart"></canvas>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
-            </div>
-        </div>
+{# ===== ROW 2: Charts — Reservations + Registrations ===== #}
+<div class="st-grid st-2">
+    <div class="st-card">
+        <div class="st-card-title"><i class="fas fa-chart-bar"></i> Réservations mensuelles</div>
+        <div style="height:220px;"><canvas id="monthlyResChart"></canvas></div>
+    </div>
+    <div class="st-card">
+        <div class="st-card-title"><i class="fas fa-chart-area"></i> Inscriptions mensuelles</div>
+        <div style="height:220px;"><canvas id="monthlyRegChart"></canvas></div>
     </div>
 </div>
 
-<!-- Modal pour les détails des utilisateurs -->
-<div class="modal fade" id="usersDetailsModal" tabindex="-1" aria-labelledby="usersDetailsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="usersDetailsModalLabel">Détails des utilisateurs par rôle</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="table-responsive">
-                    <table class="table table-striped table-hover">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Rôle</th>
-                                <th class="text-end">Nombre</th>
-                                <th class="text-end">Pourcentage</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% set totalUsers = usersByRole|reduce((sum, item) => sum + item.count, 0) %}
-                            {% for item in usersByRole|sort((a, b) => b.count <=> a.count) %}
-                                <tr>
-                                    <td>{{ item.role|replace({'ROLE_': '', '_': ' '})|title }}</td>
-                                    <td class="text-end">{{ item.count|number_format(0, ',', ' ') }}</td>
-                                    <td class="text-end">{{ totalUsers > 0 ? ((item.count / totalUsers) * 100)|number_format(2, ',', ' ') }}%</td>
-                                </tr>
-                            {% endfor %}
-                            <tr class="table-active fw-bold">
-                                <td>Total</td>
-                                <td class="text-end">{{ totalUsers|number_format(0, ',', ' ') }}</td>
-                                <td class="text-end">100%</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
-            </div>
-        </div>
+{# ===== ROW 3: Revenue chart + Orders + Donations ===== #}
+<div class="st-grid st-3">
+    <div class="st-card">
+        <div class="st-card-title"><i class="fas fa-money-bill-wave"></i> Revenus mensuels</div>
+        <div style="height:200px;"><canvas id="monthlyRevChart"></canvas></div>
     </div>
+    <div class="st-card">
+        <div class="st-card-title"><i class="fas fa-shopping-cart"></i> Commandes par statut</div>
+        <div style="height:180px; margin-bottom:.5rem;"><canvas id="orderStatusChart"></canvas></div>
+        <table class="st-table">
+            <thead><tr><th>Statut</th><th style="text-align:right;">Nb</th></tr></thead>
+            <tbody>
+                {% for o in ordersByStatus %}
+                <tr>
+                    <td>
+                        {% if o.status == 'EN_ATTENTE' %}<span class="badge" style="font-size:.65rem; background:linear-gradient(135deg,#d97706,#fbbf24); color:#fff;">En attente</span>
+                        {% elseif o.status == 'VALIDEE' %}<span class="badge" style="font-size:.65rem; background:linear-gradient(135deg,#059669,#34d399); color:#fff;">Validée</span>
+                        {% elseif o.status == 'ANNULEE' %}<span class="badge" style="font-size:.65rem; background:linear-gradient(135deg,#dc2626,#f87171); color:#fff;">Annulée</span>
+                        {% elseif o.status == 'LIVREE' %}<span class="badge" style="font-size:.65rem; background:linear-gradient(135deg,#3785D8,#5BA3E6); color:#fff;">Livrée</span>
+                        {% else %}<span class="badge bg-secondary" style="font-size:.65rem;">{{ o.status }}</span>
+                        {% endif %}
+                    </td>
+                    <td style="text-align:right; font-weight:700;">{{ o.count }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="st-card">
+        <div class="st-card-title"><i class="fas fa-hand-holding-heart"></i> Dons par type</div>
+        {% if donationsByType|length > 0 %}
+            {% set donColors = ['#BF8CE1','#3785D8','#EBB2C3','#059669','#d97706','#ADC6E5'] %}
+            <div style="height:170px; margin-bottom:.5rem;"><canvas id="donTypeChart"></canvas></div>
+            {% for dt in donationsByType %}
+            <div class="don-type-item">
+                <div class="don-type-dot" style="background:{{ donColors[loop.index0 % donColors|length] }};"></div>
+                <div class="don-type-name">{{ dt.typeName ?? 'Non catégorisé' }}</div>
+                <div class="don-type-count">{{ dt.count }}</div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div style="text-align:center; color:#9ca3af; font-size:.82rem; padding:2rem 0;">
+                <i class="fas fa-heart" style="font-size:1.8rem; opacity:.2; display:block; margin-bottom:.5rem;"></i>
+                Aucun don enregistré
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{# ===== ROW 4: Users by role + Reservations by status + Monthly events ===== #}
+<div class="st-grid st-3">
+    <div class="st-card">
+        <div class="st-card-title"><i class="fas fa-user-tag"></i> Utilisateurs par rôle</div>
+        <div style="height:170px; margin-bottom:.5rem;"><canvas id="usersRoleChart"></canvas></div>
+        <table class="st-table">
+            <thead><tr><th>Rôle</th><th style="text-align:right;">Nb</th><th style="text-align:right;">%</th></tr></thead>
+            <tbody>
+                {% set uTotal = usersByRole|reduce((s,u) => s + u.count, 0) %}
+                {% for u in usersByRole %}
+                <tr>
+                    <td>
+                        {% if u.role == 'ROLE_ADMIN' %}<span class="badge" style="font-size:.65rem; background:linear-gradient(135deg,#dc2626,#f87171); color:#fff;">Admin</span>
+                        {% elseif u.role == 'ROLE_ARTISTE' %}<span class="badge" style="font-size:.65rem; background:linear-gradient(135deg,var(--ac-mid),var(--ac-blue)); color:#fff;">Artiste</span>
+                        {% elseif u.role == 'ROLE_PARTICIPANT' %}<span class="badge" style="font-size:.65rem; background:linear-gradient(135deg,#059669,#34d399); color:#fff;">Participant</span>
+                        {% else %}<span class="badge bg-secondary" style="font-size:.65rem;">{{ u.role|replace({'ROLE_':''})|title }}</span>
+                        {% endif %}
+                    </td>
+                    <td style="text-align:right; font-weight:700;">{{ u.count }}</td>
+                    <td style="text-align:right; color:#6b7280;">{{ uTotal > 0 ? ((u.count / uTotal) * 100)|round(1) : 0 }}%</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 
-    <!-- Section des statistiques détaillées -->
-    <div id="detailedStats" class="card mt-4" style="display: none;">
-    <div class="card mb-4">
-        <div class="card-header bg-primary text-white">
-            <h4 class="mb-0">Statistiques détaillées des réservations</h4>
-        </div>
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-6">
-                    <h5>Répartition par statut</h5>
-                    <canvas id="statusChart"></canvas>
-                </div>
-                <div class="col-md-6">
-                    <h5>Détails des réservations</h5>
-                    <div class="table-responsive">
-                        <table class="table table-striped">
-                            <thead>
-                                <tr>
-                                    <th>Statut</th>
-                                    <th class="text-end">Nombre</th>
-                                    <th class="text-end">Pourcentage</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% set total = reservationsByStatus|reduce((sum, item) => sum + item.count, 0) %}
-                                {% for item in reservationsByStatus %}
-                                <tr>
-                                    <td>{{ item.status }}</td>
-                                    <td class="text-end">{{ item.count }}</td>
-                                    <td class="text-end">{{ total > 0 ? ((item.count / total) * 100)|number_format(1) : 0 }}%</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+    <div class="st-card">
+        <div class="st-card-title"><i class="fas fa-clipboard-list"></i> Réservations par statut</div>
+        <div style="height:170px; margin-bottom:.5rem;"><canvas id="resStatusChart"></canvas></div>
+        <table class="st-table">
+            <thead><tr><th>Statut</th><th style="text-align:right;">Nb</th><th style="text-align:right;">%</th></tr></thead>
+            <tbody>
+                {% set rTotal = reservationsByStatus|reduce((s,r) => s + r.count, 0) %}
+                {% for r in reservationsByStatus %}
+                <tr>
+                    <td>
+                        {% if r.status == 'CONFIRMED' %}<span class="badge" style="font-size:.65rem; background:linear-gradient(135deg,#059669,#34d399); color:#fff;">Confirmé</span>
+                        {% elseif r.status == 'CANCELLED' %}<span class="badge" style="font-size:.65rem; background:linear-gradient(135deg,#dc2626,#f87171); color:#fff;">Annulé</span>
+                        {% elseif r.status == 'PENDING' %}<span class="badge" style="font-size:.65rem; background:linear-gradient(135deg,#d97706,#fbbf24); color:#fff;">En attente</span>
+                        {% else %}<span class="badge bg-secondary" style="font-size:.65rem;">{{ r.status }}</span>
+                        {% endif %}
+                    </td>
+                    <td style="text-align:right; font-weight:700;">{{ r.count }}</td>
+                    <td style="text-align:right; color:#6b7280;">{{ rTotal > 0 ? ((r.count / rTotal) * 100)|round(1) : 0 }}%</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="st-card">
+        <div class="st-card-title"><i class="fas fa-calendar-plus"></i> Événements mensuels</div>
+        <div style="height:170px; margin-bottom:.5rem;"><canvas id="monthlyEvChart"></canvas></div>
+        <table class="st-table">
+            <thead><tr><th>Mois</th><th style="text-align:right;">Créés</th></tr></thead>
+            <tbody>
+                {% for m in monthlyEvents %}
+                <tr>
+                    <td>{{ m.month }}</td>
+                    <td style="text-align:right; font-weight:700;">{{ m.count }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{# ===== ROW 5: Forum + Donations trend + Top Events ===== #}
+<div class="st-grid st-3">
+    <div class="st-card">
+        <div class="st-card-title"><i class="fas fa-comments"></i> Activité Forum</div>
+        <div style="height:190px;"><canvas id="forumChart"></canvas></div>
+        <div style="display:flex; justify-content:center; gap:2rem; margin-top:.7rem; text-align:center;">
+            <div>
+                <div style="font-family:'Sora',sans-serif; font-weight:800; font-size:1.1rem; color:var(--ac-deep);">{{ totalForumPosts }}</div>
+                <div style="font-size:.63rem; color:#6b7280; font-weight:600; text-transform:uppercase;">Sujets</div>
+            </div>
+            <div style="width:1px; background:#e5e7eb;"></div>
+            <div>
+                <div style="font-family:'Sora',sans-serif; font-weight:800; font-size:1.1rem; color:var(--ac-blue);">{{ totalForumReplies }}</div>
+                <div style="font-size:.63rem; color:#6b7280; font-weight:600; text-transform:uppercase;">Réponses</div>
             </div>
         </div>
     </div>
+
+    <div class="st-card">
+        <div class="st-card-title"><i class="fas fa-chart-line"></i> Dons mensuels</div>
+        <div style="height:210px;"><canvas id="monthlyDonChart"></canvas></div>
     </div>
+
+    <div class="st-card">
+        <div class="st-card-title"><i class="fas fa-trophy"></i> Top événements</div>
+        {% if topEvents|length > 0 %}
+            {% for item in topEvents %}
+            <div style="display:flex; align-items:center; gap:.55rem; padding:.5rem .4rem; margin-bottom:.15rem; border-radius:8px; transition:background .15s; {% if not loop.last %}border-bottom:1px solid #f3f4f6;{% endif %}"
+                 onmouseover="this.style.background='#f8f9fc'" onmouseout="this.style.background='transparent'">
+                <span style="width:22px; height:22px; border-radius:50%; background:{% if loop.index == 1 %}linear-gradient(135deg,#d97706,#fbbf24){% elseif loop.index == 2 %}linear-gradient(135deg,#9ca3af,#d1d5db){% elseif loop.index == 3 %}linear-gradient(135deg,#b45309,#d97706){% else %}#e5e7eb{% endif %}; color:{% if loop.index <= 3 %}#fff{% else %}#6b7280{% endif %}; display:flex; align-items:center; justify-content:center; font-size:.62rem; font-weight:800; flex-shrink:0;">{{ loop.index }}</span>
+                <div style="flex:1; min-width:0;">
+                    <div style="font-weight:700; font-size:.78rem; color:#1f2937; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ item.event.titre }}</div>
+                    <div style="font-size:.63rem; color:#9ca3af;">{{ item.event.lieu }}</div>
+                </div>
+                <span class="badge" style="font-size:.63rem; background:linear-gradient(135deg,var(--ac-mid),var(--ac-blue)); color:#fff;">{{ item.reservations }} rés.</span>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div style="color:#9ca3af; font-size:.82rem; text-align:center; padding:1.5rem 0;">
+                <i class="fas fa-calendar-times" style="font-size:1.5rem; opacity:.25; display:block; margin-bottom:.4rem;"></i>
+                Aucun événement
+            </div>
+        {% endif %}
+    </div>
+</div>
+
 {% endblock %}
 
 {% block javascripts %}
-    {{ parent() }}
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        function showUserStats() {
-            const modal = new bootstrap.Modal(document.getElementById('userStatsModal'));
-            
-            // Données réelles des inscriptions mensuelles
-            const monthlyData = {{ monthlyRegistrations|json_encode|raw }};
-            const registrationData = {
-                labels: monthlyData.map(item => item.month),
-                datasets: [{
-                    label: 'Inscriptions',
-                    data: monthlyData.map(item => item.count),
-                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                    borderColor: 'rgba(54, 162, 235, 1)',
-                    borderWidth: 2,
-                    tension: 0.3,
-                    fill: true
-                }]
-            };
-            
-            console.log('Données mensuelles:', registrationData); // Pour le débogage
+{{ parent() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    Chart.defaults.font.family = "'Manrope', sans-serif";
+    Chart.defaults.font.size = 11;
 
-            // Initialiser le graphique des rôles utilisateurs
-            const roleCtx = document.getElementById('userRoleChart').getContext('2d');
-            new Chart(roleCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: {{ usersByRole|map(u => u.role|replace({'_': ' '})|title)|json_encode|raw }},
-                    datasets: [{
-                        data: {{ usersByRole|map(u => u.count)|json_encode|raw }},
-                        backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e'],
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'right',
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    const label = context.label || '';
-                                    const value = context.raw || 0;
-                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                    const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
-                                    return `${label}: ${value} (${percentage}%)`;
-                                }
-                            }
-                        }
-                    }
-                }
-            });
+    var C = {
+        deep:'#1E0F75', mid:'#1C1DAB', blue:'#3785D8', lavender:'#BF8CE1',
+        sky:'#ADC6E5', pink:'#EBB2C3', green:'#059669', greenLight:'#34d399',
+        red:'#dc2626', redLight:'#f87171', amber:'#d97706', amberLight:'#fbbf24',
+        gray:'#9ca3af', purple:'#7c3aed'
+    };
 
-            // Initialiser le graphique des inscriptions par mois
-            const regCtx = document.getElementById('userRegistrationsChart').getContext('2d');
-            new Chart(regCtx, {
-                type: 'line',
-                data: registrationData,
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                stepSize: 5
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            mode: 'index',
-                            intersect: false
-                        }
-                    }
-                }
-            });
-            
-            modal.show();
-        }
-        
-        function toggleStats() {
-            const statsSection = document.getElementById('detailedStats');
-            const button = document.getElementById('toggleStatsBtn');
-            
-            if (statsSection.style.display === 'none') {
-                statsSection.style.display = 'block';
-                button.innerHTML = '<i class="fas fa-times"></i> Masquer les statistiques';
-                // Initialiser le graphique quand il devient visible
-                initStatusChart();
-            } else {
-                statsSection.style.display = 'none';
-                button.innerHTML = '<i class="fas fa-chart-bar"></i> Voir les statistiques';
-            }
-        }
-        
-        function initStatusChart() {
-            const ctx = document.getElementById('statusChart').getContext('2d');
-            const statusData = {{ reservationsByStatus|json_encode|raw }};
-            
-            new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: statusData.map(item => item.status),
-                    datasets: [{
-                        data: statusData.map(item => item.count),
-                        backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b']
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { 
-                            position: 'bottom',
-                            labels: {
-                                padding: 20,
-                                usePointStyle: true,
-                                pointStyle: 'circle'
-                            }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    const label = context.label || '';
-                                    const value = context.raw || 0;
-                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                    const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
-                                    return `${label}: ${value} (${percentage}%)`;
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        }
-        document.addEventListener('DOMContentLoaded', function() {
-            // Graphique des réservations
-            const reservationsCtx = document.getElementById('reservationsChart');
-            if (reservationsCtx) {
-                new Chart(reservationsCtx, {
-                    type: 'doughnut',
-                    data: {
-                        labels: {{ (reservationsByStatus|default([]))|map(r => r.status)|json_encode|raw }},
-                        datasets: [{
-                            data: {{ (reservationsByStatus|default([]))|map(r => r.count)|json_encode|raw }},
-                            backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b']
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: { position: 'bottom' }
-                        }
-                    }
-                });
-            }
+    function makeGradient(ctx, c1, c2) {
+        var g = ctx.createLinearGradient(0, 0, 0, ctx.canvas.height);
+        g.addColorStop(0, c1); g.addColorStop(1, c2);
+        return g;
+    }
 
-            // Graphique des utilisateurs par rôle
-            const usersCtx = document.getElementById('usersChart');
-            if (usersCtx) {
-                new Chart(usersCtx, {
-                    type: 'pie',
-                    data: {
-                        labels: {{ (usersByRole|default([]))|map(u => u.role|replace({'ROLE_': '', '_': ' '})|title)|json_encode|raw }},
-                        datasets: [{
-                            data: {{ (usersByRole|default([]))|map(u => u.count)|json_encode|raw }},
-                            backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e']
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: { position: 'bottom' }
-                        }
-                    }
-                });
-            }
-        });
-    </script>
+    var commonBar = { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+        scales:{y:{beginAtZero:true,ticks:{stepSize:1},grid:{color:'#f3f4f6',drawBorder:false}},x:{grid:{display:false}}} };
+    var commonLine = { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+        scales:{y:{beginAtZero:true,ticks:{stepSize:1},grid:{color:'#f3f4f6',drawBorder:false}},x:{grid:{display:false}}} };
+    var commonDoughnut = { responsive:true, maintainAspectRatio:false, cutout:'65%', plugins:{legend:{display:false}} };
+
+    // Reservations
+    var resCtx = document.getElementById('monthlyResChart').getContext('2d');
+    var resGrad = makeGradient(resCtx, C.blue+'99', C.blue+'33');
+    new Chart(resCtx, {
+        type:'bar',
+        data:{ labels:{{ monthlyReservations|map(m => m.month)|json_encode|raw }},
+            datasets:[{ data:{{ monthlyReservations|map(m => m.count)|json_encode|raw }},
+                backgroundColor:resGrad, borderColor:C.blue, borderWidth:1.5, borderRadius:6, barPercentage:.6 }] },
+        options:commonBar
+    });
+
+    // Registrations
+    var regCtx = document.getElementById('monthlyRegChart').getContext('2d');
+    var regGrad = makeGradient(regCtx, C.lavender+'44', C.lavender+'05');
+    new Chart(regCtx, {
+        type:'line',
+        data:{ labels:{{ monthlyRegistrations|map(m => m.month)|json_encode|raw }},
+            datasets:[{ data:{{ monthlyRegistrations|map(m => m.count)|json_encode|raw }},
+                borderColor:C.lavender, backgroundColor:regGrad, borderWidth:2.5,
+                fill:true, tension:.4, pointBackgroundColor:'#fff', pointBorderColor:C.lavender,
+                pointBorderWidth:2, pointRadius:4, pointHoverRadius:6 }] },
+        options:commonLine
+    });
+
+    // Revenue
+    var revCtx = document.getElementById('monthlyRevChart').getContext('2d');
+    var revGrad = makeGradient(revCtx, C.green+'88', C.greenLight+'22');
+    new Chart(revCtx, {
+        type:'bar',
+        data:{ labels:{{ monthlyRevenue|map(m => m.month)|json_encode|raw }},
+            datasets:[{ data:{{ monthlyRevenue|map(m => m.total)|json_encode|raw }},
+                backgroundColor:revGrad, borderColor:C.green, borderWidth:1.5, borderRadius:6, barPercentage:.6 }] },
+        options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+            scales:{y:{beginAtZero:true,grid:{color:'#f3f4f6',drawBorder:false}},x:{grid:{display:false}}} }
+    });
+
+    // Order status
+    new Chart(document.getElementById('orderStatusChart'), {
+        type:'doughnut',
+        data:{ labels:{{ ordersByStatus|map(o => o.status)|json_encode|raw }},
+            datasets:[{ data:{{ ordersByStatus|map(o => o.count)|json_encode|raw }},
+                backgroundColor:[C.amber, C.green, C.red, C.blue, C.gray],
+                borderWidth:2, borderColor:'#fff', hoverOffset:6 }] },
+        options:commonDoughnut
+    });
+
+    // Donations by type
+    {% if donationsByType|length > 0 %}
+    new Chart(document.getElementById('donTypeChart'), {
+        type:'doughnut',
+        data:{ labels:{{ donationsByType|map(d => d.typeName ?? 'Autre')|json_encode|raw }},
+            datasets:[{ data:{{ donationsByType|map(d => d.count)|json_encode|raw }},
+                backgroundColor:[C.lavender, C.blue, C.pink, C.green, C.amber, C.sky],
+                borderWidth:2, borderColor:'#fff', hoverOffset:6 }] },
+        options:commonDoughnut
+    });
+    {% endif %}
+
+    // Users by role
+    new Chart(document.getElementById('usersRoleChart'), {
+        type:'doughnut',
+        data:{ labels:{{ usersByRole|map(u => u.role|replace({'ROLE_': ''})|title)|json_encode|raw }},
+            datasets:[{ data:{{ usersByRole|map(u => u.count)|json_encode|raw }},
+                backgroundColor:[C.red, C.blue, C.green, C.amber],
+                borderWidth:2, borderColor:'#fff', hoverOffset:6 }] },
+        options:commonDoughnut
+    });
+
+    // Reservations by status
+    new Chart(document.getElementById('resStatusChart'), {
+        type:'doughnut',
+        data:{ labels:{{ reservationsByStatus|map(r => r.status)|json_encode|raw }},
+            datasets:[{ data:{{ reservationsByStatus|map(r => r.count)|json_encode|raw }},
+                backgroundColor:[C.green, C.amber, C.red, C.gray],
+                borderWidth:2, borderColor:'#fff', hoverOffset:6 }] },
+        options:commonDoughnut
+    });
+
+    // Monthly events
+    var evCtx = document.getElementById('monthlyEvChart').getContext('2d');
+    var evGrad = makeGradient(evCtx, C.lavender+'88', C.lavender+'22');
+    new Chart(evCtx, {
+        type:'bar',
+        data:{ labels:{{ monthlyEvents|map(m => m.month)|json_encode|raw }},
+            datasets:[{ data:{{ monthlyEvents|map(m => m.count)|json_encode|raw }},
+                backgroundColor:evGrad, borderColor:C.lavender, borderWidth:1.5, borderRadius:6, barPercentage:.6 }] },
+        options:commonBar
+    });
+
+    // Forum
+    var fCtx = document.getElementById('forumChart').getContext('2d');
+    var fGrad = makeGradient(fCtx, C.amber+'44', C.amberLight+'08');
+    new Chart(fCtx, {
+        type:'line',
+        data:{ labels:{{ monthlyForumPosts|map(m => m.month)|json_encode|raw }},
+            datasets:[{ label:'Sujets', data:{{ monthlyForumPosts|map(m => m.count)|json_encode|raw }},
+                borderColor:C.amber, backgroundColor:fGrad, borderWidth:2.5, fill:true, tension:.4,
+                pointBackgroundColor:'#fff', pointBorderColor:C.amber, pointBorderWidth:2, pointRadius:4 }] },
+        options:commonLine
+    });
+
+    // Monthly donations
+    var dCtx = document.getElementById('monthlyDonChart').getContext('2d');
+    var dGrad = makeGradient(dCtx, C.pink+'44', C.pink+'08');
+    new Chart(dCtx, {
+        type:'line',
+        data:{ labels:{{ monthlyDonations|map(m => m.month)|json_encode|raw }},
+            datasets:[{ data:{{ monthlyDonations|map(m => m.count)|json_encode|raw }},
+                borderColor:'#db2777', backgroundColor:dGrad, borderWidth:2.5, fill:true, tension:.4,
+                pointBackgroundColor:'#fff', pointBorderColor:'#db2777', pointBorderWidth:2, pointRadius:4 }] },
+        options:commonLine
+    });
+});
+</script>
 {% endblock %}

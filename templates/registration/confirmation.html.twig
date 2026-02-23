@@ -1,0 +1,54 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Vérifiez votre email — Art Connect{% endblock %}
+
+{% block guest_wrapper_open %}{% endblock %}
+{% block guest_wrapper_close %}{% endblock %}
+
+{% block body %}
+{% include 'security/_auth_styles.html.twig' %}
+
+<div class="auth-page">
+    <div class="auth-card wide" style="text-align:center;">
+        <div class="auth-icon-circle purple">
+            <i class="fas fa-envelope-open-text"></i>
+        </div>
+
+        <h2>Vérifiez votre email</h2>
+        <p class="auth-sub">Un email de vérification vient de vous être envoyé.</p>
+
+        {% if email %}
+            <div class="email-tag"><i class="fas fa-at"></i> {{ email }}</div>
+        {% endif %}
+
+        <div class="auth-steps" style="margin-top:1.2rem;">
+            <div class="auth-step">
+                <div class="auth-step-num">1</div>
+                <div class="auth-step-text">Consultez votre <strong>boîte de réception</strong> (et le dossier spam)</div>
+            </div>
+            <div class="auth-step">
+                <div class="auth-step-num">2</div>
+                <div class="auth-step-text">Cliquez sur le lien <strong>"Vérifier mon email"</strong></div>
+            </div>
+            <div class="auth-step">
+                <div class="auth-step-num">3</div>
+                <div class="auth-step-text">Un <strong>administrateur</strong> validera ensuite votre compte</div>
+            </div>
+        </div>
+
+        <div class="resend-box">
+            <div class="resend-label">Vous n'avez pas reçu l'email ? Renvoyez-le :</div>
+            <form method="post" action="{{ path('app_resend_verification') }}">
+                <div class="resend-row">
+                    <input type="email" name="email" value="{{ email }}" placeholder="votre@email.com" required>
+                    <button type="submit"><i class="fas fa-redo me-1"></i>Renvoyer</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="auth-footer">
+            <a href="{{ path('login') }}"><i class="fas fa-arrow-left me-1"></i>Retour à la connexion</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

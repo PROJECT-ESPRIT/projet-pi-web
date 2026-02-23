@@ -1,23 +1,34 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Modifier l'événement{% endblock %}
+{% block title %}Modifier — {{ evenement.titre }}{% endblock %}
 
 {% block body %}
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card shadow">
-                <div class="card-header bg-primary text-white">
-                    <h3 class="mb-0">Modifier : {{ evenement.titre }}</h3>
-                </div>
-                <div class="card-body">
-                    {{ include('evenement/_form.html.twig', {'button_label': 'Mettre à jour'}) }}
-                </div>
-                <div class="card-footer d-flex justify-content-between align-items-center">
-                    <a href="{{ path('app_evenement_index') }}" class="btn btn-secondary">Retour à la liste</a>
-                    
-                    {{ include('evenement/_delete_form.html.twig') }}
-                </div>
-            </div>
-        </div>
-    </div>
+<style>
+    .ev-edit-header { margin-bottom:1rem; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:.5rem; }
+    .ev-edit-header h1 { font-family:'Sora',sans-serif; font-weight:700; font-size:1.25rem; color:var(--ac-deep); display:flex; align-items:center; gap:.5rem; margin:0; }
+    .ev-edit-header h1 i { color:var(--ac-lavender); }
+    .ev-edit-header p { color:#6b7280; font-size:.82rem; margin:0; }
+    .ev-delete-zone { margin-top:1rem; padding:.75rem 1rem; border-radius:10px; background:#fef2f2; border:1px solid #fee2e2; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:.5rem; }
+    .ev-delete-zone p { margin:0; font-size:.78rem; color:#9ca3af; }
+    .ev-delete-zone .btn-del { background:#fee2e2; color:#dc2626; border:none; border-radius:8px; padding:.35rem .85rem; font-weight:600; font-size:.78rem; transition:background .15s; }
+    .ev-delete-zone .btn-del:hover { background:#fecaca; }
+</style>
+
+<div class="ev-edit-header">
+    <h1><i class="fas fa-pen-fancy"></i> Modifier l'événement</h1>
+    <p>{{ evenement.titre }}</p>
+</div>
+{{ include('evenement/_form.html.twig', {'button_label': 'Mettre à jour'}) }}
+
+<div class="ev-delete-zone">
+    <p><i class="fas fa-exclamation-triangle me-1"></i> Zone dangereuse</p>
+    {% if evenement.reservations|length > 0 %}
+    <p class="mb-0 small text-muted">Cet événement a des réservations. Vous ne pouvez pas le supprimer ; <a href="{{ path('app_evenement_cancel', {id: evenement.id}) }}">annulez l'événement</a> pour notifier les participants.</p>
+    {% else %}
+    <form method="post" action="{{ path('app_evenement_delete', {id: evenement.id}) }}" data-confirm-title="Supprimer cet événement" data-confirm="Cette action est irréversible. Voulez-vous continuer ?">
+        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ evenement.id) }}">
+        <button class="btn-del"><i class="fas fa-trash me-1"></i> Supprimer</button>
+    </form>
+    {% endif %}
+</div>
 {% endblock %}

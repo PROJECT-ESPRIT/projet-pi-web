@@ -1,159 +1,577 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}{{ evenement.titre }}{% endblock %}
+{% block title %}{{ evenement.titre }} — Art Connect{% endblock %}
 
 {% block body %}
-    <div class="row">
-        <div class="col-md-8">
-            <div class="card shadow mb-4">
-                <div class="card-body">
-                    <h1 class="card-title display-5 mb-4">{{ evenement.titre }}</h1>
-                    
-                    <div class="mb-4 text-muted">
-                        <i class="far fa-calendar-alt me-2"></i>
-                        <strong>Du</strong> {{ evenement.dateDebut|date('d/m/Y H:i') }} 
-                        <strong>au</strong> {{ evenement.dateFin|date('d/m/Y H:i') }}
-                    </div>
+<style>
+    .ev-hero { position:relative; border-radius:20px; overflow:hidden; margin-bottom:1.5rem; }
+    .ev-hero.ev-hero-past { filter:grayscale(50%); opacity:.92; }
+    .ev-hero-img { width:100%; height:320px; object-fit:cover; display:block; }
+    .ev-hero-placeholder { width:100%; height:320px; background:linear-gradient(135deg,var(--ac-sky),var(--ac-lavender),var(--ac-pink)); display:flex; align-items:center; justify-content:center; }
+    .ev-hero-placeholder i { font-size:4rem; color:rgba(255,255,255,.5); }
+    .ev-hero-overlay { position:absolute; bottom:0; left:0; right:0; padding:2rem 2rem 1.5rem; background:linear-gradient(transparent,rgba(0,0,0,.65)); color:#fff; }
+    .ev-hero-overlay h1 { font-family:'Sora',sans-serif; font-weight:700; font-size:1.8rem; margin:0 0 .4rem; text-shadow:0 2px 8px rgba(0,0,0,.3); }
+    .ev-hero-overlay .ev-meta { display:flex; flex-wrap:wrap; gap:.8rem; font-size:.88rem; opacity:.9; }
+    .ev-hero-overlay .ev-meta i { margin-right:.3rem; }
 
-                    <div class="mb-4">
-                        <h5>Description</h5>
-                        <p class="lead">{{ evenement.description }}</p>
-                    </div>
+    .ev-grid { display:grid; grid-template-columns:1fr 340px; gap:1.5rem; }
+    @media(max-width:992px) { .ev-grid { grid-template-columns:1fr; } }
 
-                    <hr>
+    .ev-card { background:#fff; border-radius:16px; padding:1.5rem; box-shadow:0 2px 12px rgba(0,0,0,.05); border:1px solid #f0f0f0; }
 
-                    <div class="row mt-4">
-                        <div class="col-md-6 mb-3">
-                            <div class="d-flex align-items-center">
-                                <div class="bg-light p-3 rounded me-3">
-                                    📍
-                                </div>
-                                <div>
-                                    <small class="text-muted">Lieu</small>
-                                    <h5 class="mb-0">{{ evenement.lieu }}</h5>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <div class="d-flex align-items-center">
-                                <div class="bg-light p-3 rounded me-3">
-                                    👶
-                                </div>
-                                <div>
-                                    <small class="text-muted">Âge</small>
-                                    <h5 class="mb-0">
-                                        {% if evenement.ageMin and evenement.ageMax %}
-                                            {{ evenement.ageMin }} - {{ evenement.ageMax }} ans
-                                        {% elseif evenement.ageMin %}
-                                            Dès {{ evenement.ageMin }} ans
-                                        {% elseif evenement.ageMax %}
-                                            Jusqu'à {{ evenement.ageMax }} ans
-                                        {% else %}
-                                            Pour tous
-                                        {% endif %}
-                                    </h5>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <div class="d-flex align-items-center">
-                                <div class="bg-light p-3 rounded me-3">
-                                    👥
-                                </div>
-                                <div>
-                                    <small class="text-muted">Places disponibles</small>
-                                    <h5 class="mb-0">
-                                        {{ evenement.nbPlaces - evenement.reservations|length }} / {{ evenement.nbPlaces }}
-                                    </h5>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <div class="d-flex align-items-center">
-                                <div class="bg-light p-3 rounded me-3">
-                                    💰
-                                </div>
-                                <div>
-                                    <small class="text-muted">Tarif</small>
-                                    <h5 class="mb-0">{{ evenement.prix ? evenement.prix ~ ' TND' : 'Gratuit' }}</h5>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <div class="d-flex align-items-center">
-                                <div class="bg-light p-3 rounded me-3">
-                                    👤
-                                </div>
-                                <div>
-                                    <small class="text-muted">Organisé par</small>
-                                    <h5 class="mb-0">{{ evenement.organisateur.prenom }} {{ evenement.organisateur.nom }}</h5>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    .ev-info-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+    .ev-info-item { display:flex; align-items:center; gap:.8rem; }
+    .ev-info-icon { width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:1rem; flex-shrink:0; }
+    .ev-info-item .ev-info-label { font-size:.76rem; color:#6b7280; font-weight:600; text-transform:uppercase; letter-spacing:.03em; }
+    .ev-info-item .ev-info-value { font-weight:700; font-size:.95rem; color:#1f2937; }
+
+    .ev-desc { line-height:1.7; color:#374151; font-size:.92rem; }
+    .ev-section-title { font-family:'Sora',sans-serif; font-weight:700; font-size:1rem; color:var(--ac-deep); margin-bottom:.8rem; display:flex; align-items:center; gap:.5rem; }
+
+    .ev-sidebar-card { background:#fff; border-radius:16px; padding:1.25rem; box-shadow:0 2px 12px rgba(0,0,0,.05); border:1px solid #f0f0f0; margin-bottom:1rem; }
+    .ev-sidebar-card h5 { font-family:'Sora',sans-serif; font-weight:700; font-size:.95rem; color:var(--ac-deep); margin-bottom:1rem; }
+
+    .ev-organizer { display:flex; align-items:center; gap:.8rem; }
+    .ev-organizer-avatar { width:42px; height:42px; border-radius:50%; background:linear-gradient(135deg,var(--ac-mid),var(--ac-blue)); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:.85rem; }
+    .ev-organizer-name { font-weight:700; font-size:.9rem; color:#1f2937; }
+    .ev-organizer-role { font-size:.78rem; color:#6b7280; }
+
+    .ev-places-bar { background:#f3f4f6; border-radius:8px; height:8px; overflow:hidden; margin:.5rem 0; }
+    .ev-places-fill { height:100%; border-radius:8px; background:linear-gradient(90deg,var(--ac-mid),var(--ac-blue)); transition:width .3s; }
+
+    .btn-reserve { background:linear-gradient(135deg,var(--ac-deep),var(--ac-mid)); color:#fff; border:none; border-radius:12px; font-weight:700; font-size:.92rem; padding:.7rem; width:100%; transition:transform .15s,box-shadow .2s; }
+    .btn-reserve:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(30,15,117,.25); color:#fff; }
+
+    .ev-admin-actions .btn { border-radius:10px; font-size:.85rem; font-weight:600; }
+
+    .ev-back { display:inline-flex; align-items:center; gap:.4rem; font-size:.88rem; font-weight:600; color:var(--ac-mid); text-decoration:none; margin-bottom:1rem; }
+    .ev-back:hover { color:var(--ac-deep); }
+    .ev-page-wrap.ev-past { position:relative; }
+    .ev-page-wrap.ev-past::before { content:''; position:fixed; inset:0; background:rgba(75,85,99,.35); pointer-events:none; z-index:5; }
+    .ev-banner-past { background:linear-gradient(90deg,#374151,#4b5563); color:#fff; padding:.75rem 1.25rem; border-radius:12px; margin-bottom:1.25rem; display:flex; align-items:center; gap:.75rem; font-weight:600; font-size:.9rem; box-shadow:0 4px 14px rgba(55,65,81,.25); }
+    .ev-banner-past i { font-size:1.2rem; opacity:.9; }
+    .ev-banner-age { background:linear-gradient(90deg,#b45309,#d97706); color:#fff; padding:1rem 1.25rem; border-radius:12px; margin-bottom:1.25rem; display:flex; align-items:flex-start; gap:.75rem; font-size:.9rem; box-shadow:0 4px 14px rgba(181,83,9,.3); }
+    .ev-banner-age i { font-size:1.3rem; margin-top:.15rem; opacity:.95; }
+    .ev-banner-age strong { display:block; font-size:.95rem; }
+</style>
+
+{% set evStartTs = evenement.dateDebut ? evenement.dateDebut|date('U') : 0 %}
+{% set isEventPassed = evenement.dateDebut and evStartTs < "now"|date('U') %}
+
+<div class="ev-page-wrap {{ isEventPassed ? 'ev-past' : '' }}">
+<a href="{{ path('app_evenement_index') }}" class="ev-back"><i class="fas fa-arrow-left"></i> Retour aux événements</a>
+
+{% if isEventPassed %}
+<div class="ev-banner-past" role="alert">
+    <i class="fas fa-info-circle"></i>
+    <span>Cet événement est passé. Les réservations sont closes.</span>
+</div>
+{% endif %}
+
+{% if age_restriction_message is defined and age_restriction_message %}
+<div class="ev-banner-age" role="alert">
+    <i class="fas fa-user-clock"></i>
+    <div>
+        <strong>Réservation non autorisée</strong>
+        <p class="mb-0 mt-1 small">{{ age_restriction_message }}</p>
+        {% if 'date de naissance' in age_restriction_message|lower and is_granted('ROLE_PARTICIPANT') %}
+        <a href="{{ path('participant_profile_edit') }}" class="btn btn-sm btn-outline-light mt-2">Compléter mon profil</a>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+{# ---- HERO ---- #}
+<div class="ev-hero {{ isEventPassed ? 'ev-hero-past' : '' }}">
+    {% if evenement.image %}
+        <img src="{{ evenement.image }}" alt="{{ evenement.titre }}" class="ev-hero-img">
+    {% else %}
+        <div class="ev-hero-placeholder">
+            <i class="fas fa-palette"></i>
+        </div>
+    {% endif %}
+    <div class="ev-hero-overlay">
+        <h1>{{ evenement.titre }}</h1>
+        <div class="ev-meta">
+            <span><i class="fas fa-calendar-alt"></i> {{ evenement.dateDebut|date('d/m/Y') }}{% if evenement.dateFin %} → {{ evenement.dateFin|date('d/m/Y') }}{% endif %}</span>
+            <span><i class="fas fa-clock"></i> {{ evenement.dateDebut|date('H:i') }}{% if evenement.dateFin %} — {{ evenement.dateFin|date('H:i') }}{% endif %}</span>
+            <span><i class="fas fa-map-marker-alt"></i> {{ evenement.lieu }}</span>
+            <span>
+                {% if evenement.prix %}
+                    <i class="fas fa-tag"></i> {{ evenement.prix }} TND
+                {% else %}
+                    <i class="fas fa-gift"></i> Gratuit
+                {% endif %}
+            </span>
+        </div>
+    </div>
+</div>
+
+{# ---- CONTENT GRID ---- #}
+<div class="ev-grid">
+    {# ---- LEFT COLUMN ---- #}
+    <div>
+        <div class="ev-card mb-4">
+            <h4 class="ev-section-title"><i class="fas fa-info-circle"></i> À propos</h4>
+            <div class="ev-desc">{{ evenement.description|nl2br }}</div>
         </div>
 
-        <div class="col-md-4">
-            <div class="card shadow">
-                <div class="card-body">
-                    <h4 class="card-title mb-3">Réserver</h4>
-                    
-                    {% if is_granted('ROLE_ADMIN') %}
-                        <div class="alert alert-info">
-                            <i class="fas fa-info-circle me-2"></i> Les administrateurs ne peuvent pas effectuer de réservations.
-                        </div>
-                    {% elseif is_granted('ROLE_PARTICIPANT') %}
-                        {% set isEventPassed = "now"|date('Y-m-d H:i:s') > evenement.dateDebut|date('Y-m-d H:i:s') %}
-                        
-                        {% if hasReserved %}
-                            <div class="alert alert-success">
-                                <i class="fas fa-check-circle me-2"></i> Vous avez déjà réservé une place.
-                            </div>
-                        {% elseif isEventPassed %}
-                            <div class="alert alert-warning">
-                                <i class="fas fa-calendar-times me-2"></i> Les réservations sont closes pour cet événement.
-                            </div>
-                        {% elseif evenement.nbPlaces - evenement.reservations|length > 0 %}
-                            <p>Réservez votre place dès maintenant !</p>
-                            <form action="{{ path('app_reservation_book', {'id': evenement.id}) }}" method="post">
-                                <div class="d-grid">
-                                    <button type="submit" class="btn btn-success btn-lg">Réserver ma place</button>
-                                </div>
-                            </form>
-                        {% else %}
-                            <div class="alert alert-warning">
-                                <i class="fas fa-exclamation-triangle me-2"></i> Cet événement est complet.
-                            </div>
-                        {% endif %}
-                    {% elseif is_granted('ROLE_ARTISTE') %}
-                        <div class="alert alert-info">
-                            <i class="fas fa-info-circle me-2"></i> Connectez-vous en tant que Participant pour réserver.
-                        </div>
-                    {% else %}
-                        <div class="alert alert-info">
-                            <a href="{{ path('login') }}">Connectez-vous</a> pour réserver.
-                        </div>
-                    {% endif %}
+        <div class="ev-card">
+            <h4 class="ev-section-title"><i class="fas fa-th-large"></i> Détails</h4>
+            <div class="ev-info-grid">
+                <div class="ev-info-item">
+                    <div class="ev-info-icon" style="background:rgba(55,133,216,.1); color:var(--ac-blue);"><i class="fas fa-map-marker-alt"></i></div>
+                    <div>
+                        <div class="ev-info-label">Lieu</div>
+                        <div class="ev-info-value">{{ evenement.lieu }}</div>
+                    </div>
                 </div>
-            </div>
-
-            {% if app.user and (app.user == evenement.organisateur or is_granted('ROLE_ADMIN')) %}
-                <div class="card shadow mt-4">
-                    <div class="card-body">
-                        <h5 class="card-title">Administration</h5>
-                        <div class="d-grid gap-2">
-                            <a href="{{ path('app_evenement_edit', {'id': evenement.id}) }}" class="btn btn-warning">Modifier</a>
-                            {{ include('evenement/_delete_form.html.twig') }}
+                <div class="ev-info-item">
+                    <div class="ev-info-icon" style="background:rgba(191,140,225,.15); color:var(--ac-lavender);"><i class="fas fa-child"></i></div>
+                    <div>
+                        <div class="ev-info-label">Tranche d'âge</div>
+                        <div class="ev-info-value">
+                            {% if evenement.ageMin and evenement.ageMax %}
+                                {{ evenement.ageMin }} — {{ evenement.ageMax }} ans
+                            {% elseif evenement.ageMin %}
+                                Dès {{ evenement.ageMin }} ans
+                            {% elseif evenement.ageMax %}
+                                Jusqu'à {{ evenement.ageMax }} ans
+                            {% else %}
+                                Tous âges
+                            {% endif %}
                         </div>
                     </div>
                 </div>
-            {% endif %}
-            
-            <div class="mt-3 text-center">
-                <a href="{{ path('app_evenement_index') }}" class="text-decoration-none">← Retour à la liste</a>
+                <div class="ev-info-item">
+                    <div class="ev-info-icon" style="background:rgba(34,197,94,.1); color:#22c55e;"><i class="fas fa-users"></i></div>
+                    <div>
+                        <div class="ev-info-label">Places</div>
+                        <div class="ev-info-value">{{ evenement.nbPlaces - evenement.reservations|length }} restantes sur {{ evenement.nbPlaces }}</div>
+                    </div>
+                </div>
+                <div class="ev-info-item">
+                    <div class="ev-info-icon" style="background:rgba(245,158,11,.1); color:#f59e0b;"><i class="fas fa-coins"></i></div>
+                    <div>
+                        <div class="ev-info-label">Tarif</div>
+                        <div class="ev-info-value">{{ evenement.prix ? evenement.prix ~ ' TND' : 'Gratuit' }}</div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
+
+    {# ---- RIGHT SIDEBAR ---- #}
+    <div>
+        {# Organizer #}
+        <div class="ev-sidebar-card">
+            <h5><i class="fas fa-user-tie me-1"></i> Organisateur</h5>
+            <div class="ev-organizer">
+                <div class="ev-organizer-avatar">{{ evenement.organisateur.prenom|first|upper }}{{ evenement.organisateur.nom|first|upper }}</div>
+                <div>
+                    <div class="ev-organizer-name">{{ evenement.organisateur.prenom }} {{ evenement.organisateur.nom }}</div>
+                    <div class="ev-organizer-role">Artiste</div>
+                </div>
+            </div>
+        </div>
+
+        {# Places gauge #}
+        {% set taken = evenement.reservations|length %}
+        {% set remaining = evenement.nbPlaces - taken %}
+        {% set pct = evenement.nbPlaces > 0 ? (taken / evenement.nbPlaces * 100)|round : 0 %}
+        <div class="ev-sidebar-card">
+            <h5><i class="fas fa-ticket-alt me-1"></i> Disponibilité</h5>
+            <div class="d-flex justify-content-between" style="font-size:.84rem;">
+                <span class="text-muted">{{ taken }} réservé{{ taken > 1 ? 's' }}</span>
+                <span class="fw-bold">{{ remaining }} restante{{ remaining > 1 ? 's' }}</span>
+            </div>
+            <div class="ev-places-bar">
+                <div class="ev-places-fill" style="width:{{ pct }}%"></div>
+            </div>
+            <div class="text-end"><small class="text-muted">{{ pct }}% rempli</small></div>
+        </div>
+
+        {# Reservation CTA (no seat map) #}
+        {% if not evenement.layoutType %}
+        <div class="ev-sidebar-card">
+            <h5><i class="fas fa-hand-pointer me-1"></i> Réserver</h5>
+            {% if is_granted('ROLE_ADMIN') %}
+                <div class="alert alert-light mb-0" style="border-radius:10px; font-size:.85rem;">
+                    <i class="fas fa-info-circle me-1 text-muted"></i> Les admins ne peuvent pas réserver.
+                </div>
+            {% elseif is_granted('ROLE_PARTICIPANT') %}
+                {% set isEventPassed = "now"|date('Y-m-d H:i:s') > evenement.dateDebut|date('Y-m-d H:i:s') %}
+                {% if hasReserved %}
+                    {% if userReservation is defined and userReservation and userReservation.status == 'PENDING' and evenement.prix and evenement.prix > 0 %}
+                        <div class="alert alert-warning mb-2" style="border-radius:10px; font-size:.85rem;">
+                            <i class="fas fa-clock me-1"></i> Réservation en attente de paiement. Votre place est réservée ; si vous payez plus tard, l’événement peut être complet.
+                        </div>
+                        <form method="post" action="{{ path('app_reservation_pay', {id: userReservation.id}) }}" class="mb-0">
+                            <input type="hidden" name="_token" value="{{ csrf_token('pay' ~ userReservation.id) }}">
+                            <button type="submit" class="btn-reserve w-100">
+                                <span class="btn-label"><i class="fas fa-credit-card me-1"></i> Payer {{ evenement.prix }} TND</span>
+                            </button>
+                        </form>
+                    {% else %}
+                        <div class="alert alert-success mb-2" style="border-radius:10px; font-size:.85rem;">
+                            <i class="fas fa-check-circle me-1"></i> Vous avez déjà une place !
+                        </div>
+                        {% if userReservation is defined and userReservation %}
+                            <a href="{{ path('app_reservation_ticket', {id: userReservation.id}) }}" class="btn w-100" style="background:linear-gradient(135deg,#8b5cf6,#6d28d9);color:#fff;border:none;border-radius:12px;font-weight:700;font-size:.88rem;padding:.6rem;" target="_blank">
+                                <i class="fas fa-qrcode me-1"></i> Télécharger mon ticket PDF
+                            </a>
+                        {% endif %}
+                    {% endif %}
+                {% elseif isEventPassed %}
+                    <div class="alert alert-warning mb-0" style="border-radius:10px; font-size:.85rem;">
+                        <i class="fas fa-calendar-times me-1"></i> Réservations closes.
+                    </div>
+                {% elseif age_restriction_message is defined and age_restriction_message %}
+                    <div class="alert alert-warning mb-0" style="border-radius:10px; font-size:.85rem;">
+                        <i class="fas fa-user-clock me-1"></i> {{ age_restriction_message }}
+                    </div>
+                {% elseif remaining > 0 %}
+                    <form action="{{ path('app_reservation_book', {id: evenement.id}) }}" method="post">
+                        <button type="submit" class="btn-reserve w-100">
+                            <span class="btn-label"><i class="fas fa-ticket-alt me-1"></i> Réserver ma place{% if evenement.prix and evenement.prix > 0 %} — {{ evenement.prix }} TND{% endif %}</span>
+                            <span class="btn-spinner" style="display:none;" aria-hidden="true"><i class="fas fa-spinner fa-spin me-1"></i></span>
+                        </button>
+                    </form>
+                {% else %}
+                    <div class="alert alert-warning mb-0" style="border-radius:10px; font-size:.85rem;">
+                        <i class="fas fa-exclamation-triangle me-1"></i> Complet.
+                    </div>
+                {% endif %}
+            {% elseif is_granted('ROLE_ARTISTE') %}
+                <div class="alert mb-0" style="border-radius:12px; font-size:.85rem; background: linear-gradient(135deg, rgba(30,15,117,.06), rgba(191,140,225,.08)); border: 1px solid rgba(30,15,117,.12);">
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <i class="fas fa-palette" style="color:var(--ac-mid);"></i>
+                        <strong style="color:var(--ac-deep);">Mode consultation</strong>
+                    </div>
+                    <div class="text-muted" style="font-size:.82rem;">En tant qu'artiste, vous pouvez voir les détails de cet événement mais la réservation est réservée aux participants.</div>
+                </div>
+            {% else %}
+                <div class="alert alert-light mb-0" style="border-radius:10px; font-size:.85rem;">
+                    <a href="{{ path('login') }}">Connectez-vous</a> pour réserver une place.
+                </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {# Admin / Organizer info panel #}
+        {% if is_granted('ROLE_ADMIN') or (app.user and app.user == evenement.organisateur) %}
+            <div class="ev-sidebar-card">
+                <h5><i class="fas fa-chart-pie me-1"></i> Statistiques</h5>
+                <div style="font-size:.82rem;">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="text-muted">ID événement</span>
+                        <span class="fw-bold">#{{ evenement.id }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="text-muted">Créé le</span>
+                        <span class="fw-bold">{{ evenement.createdAt|date('d/m/Y H:i') }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="text-muted">Réservations</span>
+                        <span class="fw-bold">{{ taken }} / {{ evenement.nbPlaces }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="text-muted">Taux remplissage</span>
+                        <span class="fw-bold {% if pct >= 80 %}text-success{% elseif pct >= 40 %}text-warning{% else %}text-danger{% endif %}">{{ pct }}%</span>
+                    </div>
+                    {% if evenement.prix %}
+                    <hr style="margin:.5rem 0;">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="text-muted">Revenu potentiel</span>
+                        <span class="fw-bold">{{ (evenement.prix * evenement.nbPlaces)|number_format(2, '.', ' ') }} TND</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="text-muted">Revenu actuel</span>
+                        <span class="fw-bold text-success">{{ (evenement.prix * taken)|number_format(2, '.', ' ') }} TND</span>
+                    </div>
+                    {% endif %}
+                    {% if evenement.layoutType %}
+                    <hr style="margin:.5rem 0;">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="text-muted">Type de salle</span>
+                        <span class="badge" style="background:var(--ac-lavender); color:#fff;">{{ evenement.layoutType == 'theatre' ? 'Théâtre' : 'Banquet' }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="text-muted">Configuration</span>
+                        <span class="fw-bold">{{ evenement.layoutRows }} × {{ evenement.layoutCols }}</span>
+                    </div>
+                    {% endif %}
+                    <hr style="margin:.5rem 0;">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="text-muted">Statut</span>
+                        {% set isEventPassed = "now"|date('Y-m-d H:i:s') > evenement.dateFin|date('Y-m-d H:i:s') %}
+                        {% set isOngoing = "now"|date('Y-m-d H:i:s') >= evenement.dateDebut|date('Y-m-d H:i:s') and "now"|date('Y-m-d H:i:s') <= evenement.dateFin|date('Y-m-d H:i:s') %}
+                        {% if evenement.annule %}
+                            <span class="badge bg-danger">Annulé</span>
+                        {% elseif isEventPassed %}
+                            <span class="badge bg-secondary">Terminé</span>
+                        {% elseif isOngoing %}
+                            <span class="badge bg-success">En cours</span>
+                        {% elseif remaining == 0 %}
+                            <span class="badge bg-danger">Complet</span>
+                        {% else %}
+                            <span class="badge bg-primary">Ouvert</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="ev-sidebar-card ev-admin-actions">
+                <h5><i class="fas fa-cog me-1"></i> Gestion</h5>
+                <div class="d-grid gap-2">
+                    {% if not evenement.annule %}
+                    <a href="{{ path('app_evenement_edit', {id: evenement.id}) }}" class="btn btn-outline-warning"><i class="fas fa-pen me-1"></i> Modifier</a>
+                    {% if evenement.reservations|length > 0 %}
+                    <a href="{{ path('app_evenement_cancel', {id: evenement.id}) }}" class="btn btn-outline-warning"><i class="fas fa-ban me-1"></i> Annuler l'événement</a>
+                    {% else %}
+                    <form method="post" action="{{ path('app_evenement_delete', {id: evenement.id}) }}" data-confirm-title="Supprimer cet événement" data-confirm="Cette action est irréversible. Voulez-vous continuer ?">
+                        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ evenement.id) }}">
+                        <button type="submit" class="btn btn-outline-danger w-100">
+                            <span class="btn-label"><i class="fas fa-trash me-1"></i> Supprimer</span>
+                            <span class="btn-spinner" style="display:none;" aria-hidden="true"><i class="fas fa-spinner fa-spin me-1"></i></span>
+                        </button>
+                    </form>
+                    {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{# ---- ADMIN PARTICIPANTS TABLE ---- #}
+{% if is_granted('ROLE_ADMIN') or (app.user and app.user == evenement.organisateur) %}
+<div class="ev-card" style="margin-top:1.5rem;">
+    <h4 class="ev-section-title"><i class="fas fa-list-alt"></i> Liste des participants <span class="badge bg-primary bg-opacity-75 ms-1" style="font-size:.72rem;">{{ taken }}</span></h4>
+    {% if evenement.reservations|length > 0 %}
+        <div class="table-responsive">
+            <table class="table table-sm mb-0" style="font-size:.84rem;">
+                <thead style="background:#f9fafb;">
+                    <tr>
+                        <th style="font-weight:700; color:#6b7280; font-size:.75rem; text-transform:uppercase; padding:.5rem .75rem;">#</th>
+                        <th style="font-weight:700; color:#6b7280; font-size:.75rem; text-transform:uppercase; padding:.5rem .75rem;">Participant</th>
+                        <th style="font-weight:700; color:#6b7280; font-size:.75rem; text-transform:uppercase; padding:.5rem .75rem;">Email</th>
+                        <th style="font-weight:700; color:#6b7280; font-size:.75rem; text-transform:uppercase; padding:.5rem .75rem;">Téléphone</th>
+                        {% if evenement.layoutType %}<th style="font-weight:700; color:#6b7280; font-size:.75rem; text-transform:uppercase; padding:.5rem .75rem;">Place</th>{% endif %}
+                        <th style="font-weight:700; color:#6b7280; font-size:.75rem; text-transform:uppercase; padding:.5rem .75rem;">Date réservation</th>
+                        <th style="font-weight:700; color:#6b7280; font-size:.75rem; text-transform:uppercase; padding:.5rem .75rem;">Statut</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for res in evenement.reservations %}
+                    <tr>
+                        <td style="padding:.5rem .75rem; color:#9ca3af;">{{ loop.index }}</td>
+                        <td style="padding:.5rem .75rem;">
+                            <div class="d-flex align-items-center gap-2">
+                                <div style="width:28px; height:28px; border-radius:50%; background:linear-gradient(135deg,var(--ac-sky),var(--ac-lavender)); color:#fff; display:flex; align-items:center; justify-content:center; font-size:.65rem; font-weight:700; flex-shrink:0;">
+                                    {{ res.participant.prenom|first|upper }}{{ res.participant.nom|first|upper }}
+                                </div>
+                                <span class="fw-bold">{{ res.participant.prenom }} {{ res.participant.nom }}</span>
+                            </div>
+                        </td>
+                        <td style="padding:.5rem .75rem;">{{ res.participant.email }}</td>
+                        <td style="padding:.5rem .75rem;">{{ res.participant.telephone ?? '—' }}</td>
+                        {% if evenement.layoutType %}<td style="padding:.5rem .75rem;"><span class="badge bg-info">{{ res.seatLabel ?? '—' }}</span></td>{% endif %}
+                        <td style="padding:.5rem .75rem;">{{ res.dateReservation|date('d/m/Y H:i') }}</td>
+                        <td style="padding:.5rem .75rem;">
+                            {% if res.status == 'CONFIRMED' %}
+                                <span class="badge bg-success">Confirmé</span>
+                            {% elseif res.status == 'CANCELLED' %}
+                                <span class="badge bg-danger">Annulé</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ res.status }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="text-center py-3" style="color:#9ca3af; font-size:.88rem;">
+            <i class="fas fa-inbox" style="font-size:1.5rem; display:block; margin-bottom:.5rem;"></i>
+            Aucune réservation pour le moment
+        </div>
+    {% endif %}
+</div>
+{% endif %}
+
+{% if evenement.layoutType %}
+{# ===================== SEAT MAP ===================== #}
+{% set takenSeats = evenement.takenSeats %}
+{% set canBook = is_granted('ROLE_PARTICIPANT') and not hasReserved and remaining > 0 and ("now"|date('Y-m-d H:i:s') < evenement.dateDebut|date('Y-m-d H:i:s')) and (age_restriction_message is not defined or age_restriction_message is null or age_restriction_message == '') %}
+
+<style>
+    .seatmap-card { background:#fff; border-radius:16px; padding:1.5rem; box-shadow:0 2px 12px rgba(0,0,0,.05); border:1px solid #f0f0f0; margin-top:1.5rem; }
+    .seatmap-card h4 { font-family:'Sora',sans-serif; font-weight:700; font-size:1.1rem; color:var(--ac-deep); margin-bottom:1rem; }
+    .seat-legend { display:flex; gap:1.2rem; flex-wrap:wrap; margin-bottom:1rem; font-size:.82rem; }
+    .seat-legend span { display:flex; align-items:center; gap:.35rem; }
+    .seat-legend-box { width:18px; height:18px; border-radius:4px; }
+    .theatre-stage { text-align:center; margin-bottom:1rem; padding:.5rem; border-bottom:3px solid var(--ac-lavender); color:var(--ac-lavender); font-weight:700; font-size:.85rem; letter-spacing:.1em; }
+    .theatre-row { display:flex; align-items:center; justify-content:center; gap:4px; margin-bottom:4px; }
+    .theatre-row-label { width:28px; text-align:center; font-size:.7rem; font-weight:700; color:#9ca3af; }
+    .seat-radio { position:absolute; opacity:0; width:0; height:0; margin:0; pointer-events:none; }
+    .seat { width:30px; height:28px; border-radius:6px 6px 3px 3px; border:none; font-size:.65rem; font-weight:700; cursor:pointer; transition:all .15s; display:inline-flex; align-items:center; justify-content:center; pointer-events:auto; }
+    .seat .seat-num { pointer-events:none; }
+    .seat-free { background:#fbbf24; color:#92400e; cursor:pointer; }
+    .seat-free:hover { background:#f59e0b; transform:scale(1.15); }
+    .seat-radio:checked + .seat-free,
+    .seat-free:has(.seat-radio:checked) { background:var(--ac-mid); color:#fff; transform:scale(1.15); box-shadow:0 2px 8px rgba(30,15,117,.3); }
+    .seat-taken { background:#d1d5db; color:#6b7280; cursor:not-allowed; }
+    .seat-mine { background:#22c55e; color:#fff; cursor:default; }
+    .seat-selected { background:var(--ac-mid); color:#fff; transform:scale(1.15); box-shadow:0 2px 8px rgba(30,15,117,.3); }
+    .banquet-grid { display:flex; flex-wrap:wrap; gap:2rem; justify-content:center; padding:1rem 0; }
+    .banquet-table { position:relative; width:160px; height:160px; }
+    .banquet-table-circle { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:70px; height:70px; border-radius:50%; background:linear-gradient(135deg,#f3f4f6,#e5e7eb); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:.8rem; color:#6b7280; border:2px solid #d1d5db; }
+    .banquet-seat { position:absolute; width:30px; height:30px; border-radius:50%; font-size:.6rem; font-weight:700; display:flex; align-items:center; justify-content:center; border:none; cursor:pointer; transition:all .15s; }
+    .banquet-seat.seat-free:hover { transform:scale(1.2); }
+    .seat-radio:checked + .banquet-seat.seat-free,
+    .banquet-seat.seat-free:has(.seat-radio:checked) { background:var(--ac-mid); color:#fff; transform:scale(1.2); box-shadow:0 2px 8px rgba(30,15,117,.3); }
+    .seatmap-action { margin-top:1rem; display:flex; align-items:center; gap:1rem; flex-wrap:wrap; }
+    .seatmap-action .selected-label { font-size:.88rem; font-weight:600; color:var(--ac-deep); }
+</style>
+
+<div class="seatmap-card" id="eventSeatmapCard">
+    <h4><i class="fas fa-chair me-2"></i> Plan de salle — {{ evenement.layoutType == 'theatre' ? 'Théâtre' : 'Banquet' }}</h4>
+
+    <div class="seat-legend">
+        <span><span class="seat-legend-box" style="background:#fbbf24;"></span> Libre</span>
+        <span><span class="seat-legend-box" style="background:#d1d5db;"></span> Occupé</span>
+        <span><span class="seat-legend-box" style="background:#22c55e;"></span> Ma place</span>
+        {% if canBook %}<span><span class="seat-legend-box" style="background:var(--ac-mid);"></span> Sélectionné</span>{% endif %}
+    </div>
+
+    {% if canBook %}
+    <form action="{{ path('app_reservation_book_seat', {id: evenement.id}) }}" method="post" id="seatForm">
+        <input type="hidden" name="_token" value="{{ csrf_token('reservation_seat_' ~ evenement.id) }}">
+    {% endif %}
+
+    {% if evenement.layoutType == 'theatre' %}
+        <div class="theatre-stage">SCÈNE</div>
+        <div id="theatreMap">
+        {% for r in 1..evenement.layoutRows %}
+            <div class="theatre-row">
+                <span class="theatre-row-label">R{{ r }}</span>
+                {% for c in 1..evenement.layoutCols %}
+                    {% set label = 'R' ~ r ~ '-S' ~ c %}
+                    {% set isMine = false %}
+                    {% set isTaken = label in takenSeats|keys %}
+                    {% if isTaken %}
+                        {% for res in evenement.reservations %}
+                            {% if res.seatLabel == label and app.user and res.participant == app.user %}
+                                {% set isMine = true %}
+                            {% endif %}
+                        {% endfor %}
+                        <button type="button" class="seat {{ isMine ? 'seat-mine' : 'seat-taken' }}" disabled title="{{ isMine ? 'Votre place' : takenSeats[label] }}">{{ c }}</button>
+                    {% else %}
+                        {% if canBook %}
+                        <label class="seat seat-free" title="{{ label }}">
+                            <input type="radio" name="seat" value="{{ label }}" class="seat-radio" required>
+                            <span class="seat-num">{{ c }}</span>
+                        </label>
+                        {% else %}
+                        <button type="button" class="seat seat-free" disabled>{{ c }}</button>
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+                <span class="theatre-row-label">R{{ r }}</span>
+            </div>
+        {% endfor %}
+        </div>
+    {% else %}
+        <div class="banquet-grid" id="banquetMap">
+        {% for t in 1..evenement.layoutRows %}
+            <div class="banquet-table">
+                <div class="banquet-table-circle">T{{ t }}</div>
+                {% for s in 1..evenement.layoutCols %}
+                    {% set label = 'T' ~ t ~ '-S' ~ s %}
+                    {% set angle = (s - 1) * (360 / evenement.layoutCols) - 90 %}
+                    {% set isMine = false %}
+                    {% set isTaken = label in takenSeats|keys %}
+                    {% if isTaken %}
+                        {% for res in evenement.reservations %}
+                            {% if res.seatLabel == label and app.user and res.participant == app.user %}
+                                {% set isMine = true %}
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                    {% if isTaken %}
+                    <button type="button" class="banquet-seat {{ isMine ? 'seat-mine' : 'seat-taken' }}" disabled title="{{ isMine ? 'Votre place' : takenSeats[label] }}">{{ s }}</button>
+                    {% else %}
+                        {% if canBook %}
+                        <input type="radio" name="seat" value="{{ label }}" id="seat_t{{ t }}_s{{ s }}" class="seat-radio" required>
+                        <label for="seat_t{{ t }}_s{{ s }}" class="banquet-seat seat-free" title="{{ label }}" data-angle="{{ angle }}" data-table="{{ t }}" data-snum="{{ s }}">{{ s }}</label>
+                        {% else %}
+                        <button type="button" class="banquet-seat seat-free" disabled>{{ s }}</button>
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+            </div>
+        {% endfor %}
+        </div>
+
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.banquet-table').forEach(function(tbl) {
+                var seats = tbl.querySelectorAll('.banquet-seat');
+                var total = seats.length;
+                seats.forEach(function(s, i) {
+                    var angle = (i * (360 / total) - 90) * Math.PI / 180;
+                    var r = 60;
+                    s.style.left = (65 + r * Math.cos(angle)) + 'px';
+                    s.style.top = (65 + r * Math.sin(angle)) + 'px';
+                });
+            });
+        });
+        </script>
+    {% endif %}
+
+    {% if canBook %}
+        <div class="seatmap-action">
+            <span class="selected-label">Place sélectionnée : <strong id="selectedSeatLabel">—</strong></span>
+            <button type="submit" class="btn-reserve" style="width:auto; padding:.55rem 1.5rem;" id="seatSubmitBtn" disabled>
+                <span class="btn-label"><i class="fas fa-ticket-alt me-1"></i> Confirmer la réservation{% if evenement.prix and evenement.prix > 0 %} — {{ evenement.prix }} TND{% endif %}</span>
+                <span class="btn-spinner" style="display:none;" aria-hidden="true"><i class="fas fa-spinner fa-spin me-1"></i></span>
+            </button>
+        </div>
+    </form>
+        <script>
+        (function() {
+            var form = document.getElementById('seatForm');
+            var lbl = document.getElementById('selectedSeatLabel');
+            var submitBtn = document.getElementById('seatSubmitBtn');
+            if (!form || !lbl || !submitBtn) return;
+            form.querySelectorAll('input[name=seat]').forEach(function(radio) {
+                radio.addEventListener('change', function() {
+                    lbl.textContent = this.value;
+                    submitBtn.disabled = false;
+                });
+            });
+        })();
+        </script>
+    {% elseif hasReserved %}
+        {% if userReservation is defined and userReservation and userReservation.status == 'PENDING' and evenement.prix and evenement.prix > 0 %}
+            <div class="alert alert-warning mt-3 mb-0" style="border-radius:10px; font-size:.85rem;">
+                <i class="fas fa-clock me-1"></i> Réservation en attente de paiement. <a href="{{ path('app_reservation_my') }}">Payer depuis Mes réservations</a>.
+            </div>
+        {% else %}
+            <div class="alert alert-success mt-3 mb-2" style="border-radius:10px; font-size:.85rem;">
+                <i class="fas fa-check-circle me-1"></i> Vous avez déjà réservé votre place !
+            </div>
+            {% if userReservation is defined and userReservation %}
+                <a href="{{ path('app_reservation_ticket', {id: userReservation.id}) }}" class="btn" style="background:linear-gradient(135deg,#8b5cf6,#6d28d9);color:#fff;border:none;border-radius:12px;font-weight:700;font-size:.85rem;padding:.5rem 1.2rem;" target="_blank">
+                    <i class="fas fa-qrcode me-1"></i> Télécharger mon ticket
+                </a>
+            {% endif %}
+        {% endif %}
+    {% endif %}
+</div>
+{% endif %}
+
+</div>{# .ev-page-wrap #}
 {% endblock %}
