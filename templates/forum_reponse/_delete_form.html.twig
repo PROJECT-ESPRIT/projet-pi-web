@@ -1,4 +1,7 @@
-<form method="post" action="{{ path('app_forum_reponse_delete', {'id': forum_reponse.id}) }}" onsubmit="return confirm('Are you sure you want to delete this item?');">
-    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ forum_reponse.id) }}">
-    <button class="btn">Delete</button>
+{% set entity = reponse is defined ? reponse : forum_reponse %}
+<form method="post" action="{{ path('app_forum_reponse_delete', {'id': entity.id}) }}" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette réponse ?');" style="display: inline;">
+    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ entity.id) }}">
+    <button type="submit" class="dropdown-item text-danger">
+        <i class="fas fa-trash me-1"></i> Supprimer
+    </button>
 </form>

@@ -75,6 +75,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->donations = new ArrayCollection();
         $this->commandes = new ArrayCollection();
         $this->forumReponses = new ArrayCollection();
+        $this->forumLikes = new ArrayCollection();
+        $this->forumDislikes = new ArrayCollection();
+        $this->forumSignalements = new ArrayCollection();
+        $this->forumReponseLikes = new ArrayCollection();
+        $this->forumReponseSignalements = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -309,6 +314,36 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private Collection $forumReponses;
 
     /**
+     * @var Collection<int, ForumLike>
+     */
+    #[ORM\OneToMany(targetEntity: ForumLike::class, mappedBy: 'user')]
+    private Collection $forumLikes;
+
+    /**
+     * @var Collection<int, ForumDislike>
+     */
+    #[ORM\OneToMany(targetEntity: ForumDislike::class, mappedBy: 'user')]
+    private Collection $forumDislikes;
+
+    /**
+     * @var Collection<int, ForumSignalement>
+     */
+    #[ORM\OneToMany(targetEntity: ForumSignalement::class, mappedBy: 'user')]
+    private Collection $forumSignalements;
+
+    /**
+     * @var Collection<int, ForumReponseLike>
+     */
+    #[ORM\OneToMany(targetEntity: ForumReponseLike::class, mappedBy: 'user')]
+    private Collection $forumReponseLikes;
+
+    /**
+     * @var Collection<int, ForumReponseSignalement>
+     */
+    #[ORM\OneToMany(targetEntity: ForumReponseSignalement::class, mappedBy: 'user')]
+    private Collection $forumReponseSignalements;
+
+    /**
      * @return Collection<int, Evenement>
      */
     public function getEvenements(): Collection
@@ -452,6 +487,156 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
             // set the owning side to null (unless already changed)
             if ($forumReponse->getAuteur() === $this) {
                 $forumReponse->setAuteur(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, ForumLike>
+     */
+    public function getForumLikes(): Collection
+    {
+        return $this->forumLikes;
+    }
+
+    public function addForumLike(ForumLike $forumLike): static
+    {
+        if (!$this->forumLikes->contains($forumLike)) {
+            $this->forumLikes->add($forumLike);
+            $forumLike->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeForumLike(ForumLike $forumLike): static
+    {
+        if ($this->forumLikes->removeElement($forumLike)) {
+            // set the owning side to null (unless already changed)
+            if ($forumLike->getUser() === $this) {
+                $forumLike->setUser(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, ForumDislike>
+     */
+    public function getForumDislikes(): Collection
+    {
+        return $this->forumDislikes;
+    }
+
+    public function addForumDislike(ForumDislike $forumDislike): static
+    {
+        if (!$this->forumDislikes->contains($forumDislike)) {
+            $this->forumDislikes->add($forumDislike);
+            $forumDislike->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeForumDislike(ForumDislike $forumDislike): static
+    {
+        if ($this->forumDislikes->removeElement($forumDislike)) {
+            // set the owning side to null (unless already changed)
+            if ($forumDislike->getUser() === $this) {
+                $forumDislike->setUser(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, ForumSignalement>
+     */
+    public function getForumSignalements(): Collection
+    {
+        return $this->forumSignalements;
+    }
+
+    public function addForumSignalement(ForumSignalement $forumSignalement): static
+    {
+        if (!$this->forumSignalements->contains($forumSignalement)) {
+            $this->forumSignalements->add($forumSignalement);
+            $forumSignalement->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeForumSignalement(ForumSignalement $forumSignalement): static
+    {
+        if ($this->forumSignalements->removeElement($forumSignalement)) {
+            // set the owning side to null (unless already changed)
+            if ($forumSignalement->getUser() === $this) {
+                $forumSignalement->setUser(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, ForumReponseLike>
+     */
+    public function getForumReponseLikes(): Collection
+    {
+        return $this->forumReponseLikes;
+    }
+
+    public function addForumReponseLike(ForumReponseLike $forumReponseLike): static
+    {
+        if (!$this->forumReponseLikes->contains($forumReponseLike)) {
+            $this->forumReponseLikes->add($forumReponseLike);
+            $forumReponseLike->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeForumReponseLike(ForumReponseLike $forumReponseLike): static
+    {
+        if ($this->forumReponseLikes->removeElement($forumReponseLike)) {
+            // set the owning side to null (unless already changed)
+            if ($forumReponseLike->getUser() === $this) {
+                $forumReponseLike->setUser(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, ForumReponseSignalement>
+     */
+    public function getForumReponseSignalements(): Collection
+    {
+        return $this->forumReponseSignalements;
+    }
+
+    public function addForumReponseSignalement(ForumReponseSignalement $forumReponseSignalement): static
+    {
+        if (!$this->forumReponseSignalements->contains($forumReponseSignalement)) {
+            $this->forumReponseSignalements->add($forumReponseSignalement);
+            $forumReponseSignalement->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeForumReponseSignalement(ForumReponseSignalement $forumReponseSignalement): static
+    {
+        if ($this->forumReponseSignalements->removeElement($forumReponseSignalement)) {
+            // set the owning side to null (unless already changed)
+            if ($forumReponseSignalement->getUser() === $this) {
+                $forumReponseSignalement->setUser(null);
             }
         }
 

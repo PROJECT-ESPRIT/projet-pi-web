@@ -2,6 +2,7 @@
 
 namespace App\Controller\Forum;
 
+use App\Entity\Forum;
 use App\Entity\ForumReponse;
 use App\Form\Forum\ForumReponseType;
 use App\Repository\ForumReponseRepository;
@@ -52,43 +53,69 @@ final class ForumReponseController extends AbstractController
         ]);
     }
 
-    #[Route('/new', name: 'app_forum_reponse_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $entityManager, MailerInterface $mailer): Response
+    #[Route('/new', name: 'app_forum_reponse_new', methods: ['GET'])]
+    public function new(): Response
     {
-        $forumReponse = new ForumReponse();
-        $form = $this->createForm(ForumReponseType::class, $forumReponse);
-        $form->handleRequest($request);
+        // Rediriger vers la page du forum car les réponses se créent directement depuis là
+        return $this->redirectToRoute('app_forum_index');
+    }
 
-        if ($form->isSubmitted() && $form->isValid()) {
-            $entityManager->persist($forumReponse);
-            $entityManager->flush();
-
-            $forum = $forumReponse->getForum();
-            $to = $forum?->getEmail();
-            $from = $_ENV['MAILER_FROM'] ?? 'no-reply@example.com';
-
-            if (is_string($to) && $to !== '') {
-                try {
-                    $email = (new Email())
-                        ->from($from)
-                        ->to($to)
-                        ->subject('Réponse à votre message : ' . ($forum?->getSujet() ?? ''))
-                        ->text($forumReponse->getContenu() ?? '');
-
-                    $mailer->send($email);
-                    $this->addFlash('success', 'Email envoyé à l\'utilisateur.');
-                } catch (TransportExceptionInterface $e) {
-                    $this->addFlash('error', 'La réponse a été enregistrée, mais l\'envoi de l\'email a échoué.');
-                }
-            }
-
-            return $this->redirectToRoute('app_forum_reponse_index', [], Response::HTTP_SEE_OTHER);
+    #[Route('/create', name: 'app_forum_reponse_create', methods: ['POST'])]
+    public function create(Request $request, EntityManagerInterface $entityManager, MailerInterface $mailer): Response
+    {
+        $forumId = $request->request->get('forum_id');
+        $contenu = $request->request->get('contenu');
+        
+        if (!$forumId || !$contenu) {
+            $this->addFlash('error', 'Veuillez remplir tous les champs.');
+            return $this->redirectToRoute('app_forum_index');
         }
 
-        return $this->render('forum_reponse/new.html.twig', [
-            'forum_reponse' => $forumReponse,
-            'form' => $form,
-        ]);
+        // Récupérer le forum
+        $forum = $entityManager->getRepository(Forum::class)->find($forumId);
+        if (!$forum) {
+            $this->addFlash('error', 'Post non trouvé.');
+            return $this->redirectToRoute('app_forum_index');
+        }
+
+        // Créer la réponse
+        $forumReponse = new ForumReponse();
+        $forumReponse->setContenu($contenu);
+        $forumReponse->setForum($forum);
+        $forumReponse->setDateReponse(new \DateTimeImmutable());
+        
+        // Associer l'utilisateur connecté
+        $user = $this->getUser();
+        if ($user) {
+            $forumReponse->setAuteur($user);
+        }
+
+        $entityManager->persist($forumReponse);
+        $entityManager->flush();
+
+        // Envoyer l'email au posteur original
+        $to = $forum->getEmail();
+        $from = $_ENV['MAILER_FROM'] ?? 'no-reply@example.com';
+
+        if (is_string($to) && $to !== '' && $to !== $user?->getEmail()) {
+            try {
+                $email = (new Email())
+                    ->from($from)
+                    ->to($to)
+                    ->subject('Réponse à votre message : ' . $forum->getSujet())
+                    ->text($contenu . "\n\nRéponse de : " . ($user ? $user->getNom() . ' ' . $user->getPrenom() : 'Anonyme'));
+
+                $mailer->send($email);
+                $this->addFlash('success', 'Réponse publiée avec succès !');
+            } catch (TransportExceptionInterface $e) {
+                $this->addFlash('warning', 'Réponse publiée, mais l\'email de notification n\'a pas pu être envoyé.');
+            }
+        } else {
+            $this->addFlash('success', 'Réponse publiée avec succès !');
+        }
+
+        // Rediriger vers la page du post
+        return $this->redirectToRoute('app_forum_show', ['id' => $forumId]);
     }
 
     #[Route('/{id}', name: 'app_forum_reponse_show', methods: ['GET'])]
@@ -108,7 +135,12 @@ final class ForumReponseController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $entityManager->flush();
 
-            return $this->redirectToRoute('app_forum_reponse_index', [], Response::HTTP_SEE_OTHER);
+            // Ajouter un message flash
+            $this->addFlash('success', 'Réponse modifiée avec succès !');
+
+            // Rediriger vers la page du post parent
+            $forumId = $forumReponse->getForum()->getId();
+            return $this->redirectToRoute('app_forum_show', ['id' => $forumId]);
         }
 
         return $this->render('forum_reponse/edit.html.twig', [
@@ -121,10 +153,17 @@ final class ForumReponseController extends AbstractController
     public function delete(Request $request, ForumReponse $forumReponse, EntityManagerInterface $entityManager): Response
     {
         if ($this->isCsrfTokenValid('delete'.$forumReponse->getId(), $request->getPayload()->getString('_token'))) {
+            $forumId = $forumReponse->getForum()->getId();
             $entityManager->remove($forumReponse);
             $entityManager->flush();
+            
+            // Ajouter un message flash
+            $this->addFlash('success', 'Réponse supprimée avec succès !');
+            
+            // Rediriger vers la page du post parent
+            return $this->redirectToRoute('app_forum_show', ['id' => $forumId]);
         }
 
-        return $this->redirectToRoute('app_forum_reponse_index', [], Response::HTTP_SEE_OTHER);
+        return $this->redirectToRoute('app_forum_index');
     }
 }

@@ -7,6 +7,23 @@ parameters:
     email_verification_ttl_hours: '%env(int:EMAIL_VERIFICATION_TTL_HOURS)%'
     password_reset_ttl_minutes: '%env(int:PASSWORD_RESET_TTL_MINUTES)%'
     stripe_publishable_key: '%env(default::STRIPE_PUBLISHABLE_KEY)%'
+    
+    # Forum Scoring Configuration
+    forum_scoring:
+        weights:
+            likes: 2.0
+            dislikes: -1.0
+            comments: 3.0
+            views: 0.1
+            time_decay_rate: 0.01
+            base_score: 1.0
+        anti_spam:
+            view_cooldown: 300
+            max_likes_per_hour: 10
+            max_comments_per_hour: 20
+        caching:
+            score_update_interval: 300
+            trending_cache_ttl: 600
 
 services:
     # Configuration par défaut
@@ -46,3 +63,26 @@ services:
     App\Service\TicketPdfService:
         arguments:
             $projectDir: '%kernel.project_dir%'
+
+    # Forum Scoring Service
+    App\Service\ForumScoringService:
+        arguments:
+            $forumScoring: '%forum_scoring%'
+
+    # Forum Anti-Spam Service
+    App\Service\ForumAntiSpamService:
+        arguments:
+            $config: '%forum_scoring%'
+
+    # Test Email Commands
+    App\Command\TestEmailSimpleCommand:
+        arguments:
+            $adminEmail: '%mailer_from%'
+    
+    App\Command\TestConnectionCommand:
+        arguments:
+            $mailerDsn: '%env(MAILER_DSN)%'
+    
+    App\Command\TestSmtpConnectionCommand:
+        arguments:
+            $mailerDsn: '%env(MAILER_DSN)%'

@@ -10,6 +10,8 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Dompdf\Dompdf;
+use Dompdf\Options;
 
 #[Route('/forum')]
 final class ForumController extends AbstractController
@@ -86,5 +88,59 @@ final class ForumController extends AbstractController
         }
 
         return $this->redirectToRoute('app_forum_index', [], Response::HTTP_SEE_OTHER);
+    }
+
+    #[Route('/{id<\d+>}/pdf', name: 'post_pdf', methods: ['GET'])]
+    public function generatePdf(Forum $forum): Response
+    {
+        try {
+            // Configure Dompdf
+            $options = new Options();
+            $options->set('defaultFont', 'Arial');
+            $options->set('isRemoteEnabled', true);
+            $options->set('isHtml5ParserEnabled', true);
+            $options->set('isPhpEnabled', true);
+            
+            $dompdf = new Dompdf($options);
+            
+            // Generate HTML content
+            $html = $this->renderView('forum/pdf.html.twig', [
+                'forum' => $forum,
+                'generationDate' => new \DateTimeImmutable(),
+            ]);
+            
+            // Load HTML to Dompdf
+            $dompdf->loadHtml($html);
+            
+            // Set paper size and orientation
+            $dompdf->setPaper('A4', 'portrait');
+            
+            // Render the PDF
+            $dompdf->render();
+            
+            // Generate filename
+            $filename = 'forum_post_' . $forum->getId() . '_' . date('Y-m-d') . '.pdf';
+            
+            // Create response with proper headers
+            $response = new Response($dompdf->output());
+            
+            // Set headers for PDF download
+            $response->headers->set('Content-Type', 'application/pdf');
+            $response->headers->set('Content-Disposition', 'attachment; filename="' . $filename . '"');
+            $response->headers->set('Content-Length', strlen($dompdf->output()));
+            $response->headers->set('Cache-Control', 'private, max-age=0, must-revalidate');
+            $response->headers->set('Pragma', 'public');
+            
+            return $response;
+            
+        } catch (\Exception $e) {
+            // Log error and return error page
+            error_log('PDF Generation Error: ' . $e->getMessage());
+            
+            return $this->render('forum/pdf_error.html.twig', [
+                'forum' => $forum,
+                'error' => $e->getMessage(),
+            ], new Response(null, 500));
+        }
     }
 }

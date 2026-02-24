@@ -112,7 +112,14 @@ final class ForumReponseController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $entityManager->flush();
 
-            return $this->redirectToRoute('app_forum_reponse_index', [], Response::HTTP_SEE_OTHER);
+            // Ajouter un message flash
+            $this->addFlash('success', 'Réponse modifiée avec succès !');
+
+            // Rediriger vers la page du forum parent
+            $forum = $forumReponse->getForum();
+            if ($forum) {
+                return $this->redirectToRoute('app_forum_show', ['id' => $forum->getId()]);
+            }
         }
 
         return $this->render('forum_reponse/edit.html.twig', [
@@ -125,10 +132,22 @@ final class ForumReponseController extends AbstractController
     public function delete(Request $request, ForumReponse $forumReponse, EntityManagerInterface $entityManager): Response
     {
         if ($this->isCsrfTokenValid('delete'.$forumReponse->getId(), $request->getPayload()->getString('_token'))) {
+            // Récupérer l'ID du forum avant suppression
+            $forum = $forumReponse->getForum();
+            $forumId = $forum ? $forum->getId() : null;
+            
             $entityManager->remove($forumReponse);
             $entityManager->flush();
+            
+            // Ajouter un message flash
+            $this->addFlash('success', 'Réponse supprimée avec succès !');
+            
+            // Rediriger vers la page du forum parent
+            if ($forumId) {
+                return $this->redirectToRoute('app_forum_show', ['id' => $forumId]);
+            }
         }
 
-        return $this->redirectToRoute('app_forum_reponse_index', [], Response::HTTP_SEE_OTHER);
+        return $this->redirectToRoute('app_forum_index');
     }
 }

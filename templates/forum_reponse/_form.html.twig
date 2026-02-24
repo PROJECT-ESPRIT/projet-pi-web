@@ -1,4 +1,29 @@
-{{ form_start(form, {'attr': {'novalidate': 'novalidate'}}) }}
-    {{ form_widget(form) }}
-    <button class="btn">{{ button_label|default('Save') }}</button>
+{{ form_start(form, {'attr': {'class': 'edit-form', 'novalidate': 'novalidate'}}) }}
+    <div class="form-group">
+        {{ form_label(form.contenu) }}
+        {{ form_widget(form.contenu, {'attr': {'class': 'form-control'}}) }}
+        {{ form_errors(form.contenu) }}
+    </div>
+    
+    <div class="form-group">
+        {{ form_label(form.dateReponse) }}
+        {{ form_widget(form.dateReponse, {'attr': {'class': 'form-control'}}) }}
+        {{ form_errors(form.dateReponse) }}
+    </div>
+    
+    <div class="form-group">
+        {{ form_label(form.forum) }}
+        {{ form_widget(form.forum, {'attr': {'class': 'form-control'}}) }}
+        {{ form_errors(form.forum) }}
+    </div>
+    
+    <div class="form-group">
+        {{ form_label(form.auteur) }}
+        {{ form_widget(form.auteur, {'attr': {'class': 'form-control'}}) }}
+        {{ form_errors(form.auteur) }}
+    </div>
+    
+    <button type="submit" class="btn-primary">
+        <i class="fas fa-save"></i> {{ button_label|default('Enregistrer') }}
+    </button>
 {{ form_end(form) }}
