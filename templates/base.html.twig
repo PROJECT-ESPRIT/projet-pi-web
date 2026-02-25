@@ -9,101 +9,456 @@
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700&display=swap" rel="stylesheet">
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-        <!-- Font Awesome for Icons -->
         <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-        
+
         <style>
-            body {
-                min-height: 100vh;
-                display: flex;
-                flex-direction: column;
+            :root {
+                --ac-deep: #1E0F75;
+                --ac-mid: #1C1DAB;
+                --ac-blue: #3785D8;
+                --ac-lavender: #BF8CE1;
+                --ac-sky: #ADC6E5;
+                --ac-pink: #EBB2C3;
             }
-            .wrapper {
-                display: flex;
-                width: 100%;
-                flex: 1;
-            }
+
+            body { min-height: 100vh; display: flex; flex-direction: column; font-family: 'Manrope', sans-serif; }
+
+            /* ===== BACKOFFICE (Admin) ===== */
+            .bo-wrapper { display: flex; width: 100%; flex: 1; }
+
             #sidebar {
-                min-width: fit-content;
-                background: linear-gradient(180deg, #1E0F75 0%, #1C1DAB 100%);
+                width: 230px;
+                min-width: 230px;
+                background: linear-gradient(180deg, var(--ac-deep) 0%, #161072 50%, var(--ac-mid) 100%);
                 color: #fff;
                 transition: all 0.3s;
                 display: flex;
                 flex-direction: column;
-                height: 100vh; /* Full height */
-                position: sticky; /* Stick to top */
+                height: 100vh;
+                position: sticky;
                 top: 0;
             }
             #sidebar .sidebar-header {
-                padding: 15px 20px;
-                background: rgba(30, 15, 117, 0.75);
+                padding: 1rem 1.1rem;
+                background: rgba(0,0,0,0.15);
                 display: flex;
                 align-items: center;
-                gap: 10px;
+                gap: 0.7rem;
+                border-bottom: 1px solid rgba(255,255,255,0.08);
             }
             #sidebar .sidebar-header h3 {
-                margin: 0;
-                color: #fff;
+                margin: 0; color: #fff; font-family: 'Sora', sans-serif;
+                font-size: 1rem; font-weight: 700; letter-spacing: -0.3px;
             }
             #sidebar .sidebar-header img {
-                max-width: 100%;
-                height: 35px;
-                width: 35px;
-                border-radius: 50%;
-            }
-            #sidebar ul.components {
-                padding: 20px 0;
-                border-bottom: 1px solid rgba(203, 216, 232, 0.55);
-                overflow-y: auto;
-                flex-grow: 1; /* Ensure it takes available space */
-            }
-            #sidebar ul p {
-                color: #fff;
-                padding: 10px;
-            }
-            #sidebar ul li a {
-                padding: 15px 20px;
-                font-size: 1.1em;
-                display: block;
-                color: rgba(255, 255, 255, 0.8);
-                text-decoration: none;
-            }
-            #sidebar ul li a:hover {
-                color: #fff;
-                background: rgba(173, 198, 229, 0.26);
-            }
-            #sidebar ul li.active > a {
-                color: #fff;
-                background: rgba(191, 140, 225, 0.35);
-            }
-            .content {
-                width: 100%;
-                padding: 20px;
-                background: linear-gradient(180deg, #CBD8E8 0%, #ffffff 100%);
-            }
-            /* Custom Scrollbar for Sidebar */
-            #sidebar ul.components::-webkit-scrollbar {
-                width: 6px;
-            }
-            #sidebar ul.components::-webkit-scrollbar-track {
-                background: #1C1DAB; 
-            }
-            #sidebar ul.components::-webkit-scrollbar-thumb {
-                background: #ADC6E5; 
-                border-radius: 3px;
-            }
-            #sidebar ul.components::-webkit-scrollbar-thumb:hover {
-                background: #BF8CE1; 
+                height: 38px; width: 38px; border-radius: 10px;
+                object-fit: cover; background: #fff; padding: 2px;
+                box-shadow: 0 2px 8px rgba(0,0,0,.2);
             }
 
-            /* Toggle for responsive */
+            #sidebar .sidebar-section-label {
+                font-size: .6rem; font-weight: 700; text-transform: uppercase;
+                letter-spacing: .1em; color: rgba(255,255,255,0.35);
+                padding: .65rem 1.1rem .25rem; margin: 0; list-style:none;
+            }
+
+            #sidebar ul.components {
+                padding: 0.4rem 0; overflow-y: auto; flex-grow: 1;
+                scrollbar-width: thin; scrollbar-color: rgba(173,198,229,0.3) transparent;
+            }
+            #sidebar ul p { color: #fff; padding: 6px 10px; }
+            #sidebar ul li a {
+                padding: 0.45rem 1.1rem; font-size: 0.82rem; font-weight: 500;
+                display: flex; align-items: center; gap: 0.65rem;
+                color: rgba(255,255,255,0.7); text-decoration: none;
+                border-radius: 8px; margin: 1px 0.5rem;
+                transition: all 0.2s;
+            }
+            #sidebar ul li a i { width: 18px; text-align: center; font-size: 0.82rem; opacity: 0.8; }
+            #sidebar ul li a:hover { color: #fff; background: rgba(255,255,255,0.1); }
+            #sidebar ul li.active > a {
+                color: #fff; background: rgba(191,140,225,0.3);
+                box-shadow: 0 0 0 1px rgba(191,140,225,0.25);
+            }
+
+            #sidebar .sidebar-footer {
+                padding: 0.7rem 0.8rem;
+                background: rgba(0,0,0,0.12);
+                border-top: 1px solid rgba(255,255,255,0.07);
+            }
+            #sidebar .sidebar-footer .sidebar-user {
+                display: flex; align-items: center; gap: 0.5rem;
+                margin-bottom: 0.45rem;
+            }
+            #sidebar .sidebar-footer .sidebar-avatar {
+                width: 32px; height: 32px; border-radius: 50%;
+                background: linear-gradient(135deg, var(--ac-lavender), var(--ac-blue));
+                display: flex; align-items: center; justify-content: center;
+                font-weight: 700; font-size: 0.75rem; flex-shrink: 0;
+            }
+            #sidebar .sidebar-footer .sidebar-name {
+                font-size: 0.78rem; font-weight: 600; white-space: nowrap;
+                overflow: hidden; text-overflow: ellipsis;
+            }
+            #sidebar .sidebar-footer .sidebar-role {
+                font-size: 0.6rem; text-transform: uppercase; opacity: 0.55;
+                letter-spacing: 0.5px; font-weight: 600;
+            }
+            #sidebar .sidebar-footer .btn-logout {
+                width: 100%; border-radius: 8px; font-size: 0.75rem;
+                font-weight: 600; padding: 0.3rem 0.6rem;
+                background: rgba(239,68,68,0.15); color: rgba(255,255,255,0.8);
+                border: 1px solid rgba(239,68,68,0.25); transition: all 0.2s;
+            }
+            #sidebar .sidebar-footer .btn-logout:hover {
+                background: rgba(239,68,68,0.3); color: #fff;
+            }
+
+            .bo-content {
+                width: 100%;
+                padding: 1rem 1.25rem;
+                background: linear-gradient(180deg, #eaeff7 0%, #f5f6fa 100%);
+                min-height: 100vh;
+                overflow-x: hidden;
+            }
+
+            #sidebar ul.components::-webkit-scrollbar { width: 4px; }
+            #sidebar ul.components::-webkit-scrollbar-track { background: transparent; }
+            #sidebar ul.components::-webkit-scrollbar-thumb { background: rgba(173,198,229,0.3); border-radius: 2px; }
+            #sidebar ul.components::-webkit-scrollbar-thumb:hover { background: rgba(173,198,229,0.5); }
+
             @media (max-width: 768px) {
-                #sidebar {
-                    margin-left: -250px;
-                }
-                #sidebar.active {
-                    margin-left: 0;
-                }
+                #sidebar { margin-left: -230px; }
+                #sidebar.active { margin-left: 0; }
+            }
+
+            /* ===== ADMIN LIST (shared) ===== */
+            .bo-page-header {
+                display:flex; align-items:flex-end; justify-content:space-between; flex-wrap:wrap; gap:.75rem;
+                margin-bottom:1rem; padding:1rem 1.3rem; border-radius:16px;
+                background:linear-gradient(135deg, var(--ac-deep) 0%, var(--ac-mid) 50%, var(--ac-blue) 100%);
+                color:#fff; position:relative; overflow:hidden;
+            }
+            .bo-page-header::after {
+                content:''; position:absolute; top:-30px; right:-30px;
+                width:100px; height:100px; border-radius:50%; background:rgba(255,255,255,.06);
+            }
+            .bo-page-header h1 {
+                font-family:'Sora',sans-serif; font-weight:700; font-size:1.25rem;
+                color:#fff; margin:0; display:flex; align-items:center; gap:.55rem;
+                position:relative; z-index:1;
+            }
+            .bo-page-header h1 i { color:var(--ac-sky); }
+            .bo-page-header h1 .badge {
+                font-size:.68rem; padding:.35em .7em; vertical-align:middle;
+                background:rgba(255,255,255,.18); color:#fff; backdrop-filter:blur(4px);
+                border-radius:8px;
+            }
+            .bo-page-header .bo-actions { display:flex; gap:.5rem; position:relative; z-index:1; }
+            .bo-page-header .bo-actions .btn {
+                border-radius:10px; font-size:.82rem; font-weight:700; padding:.45rem 1rem;
+                border:1.5px solid rgba(255,255,255,.25); color:#fff;
+                background:rgba(255,255,255,.12); backdrop-filter:blur(4px);
+                transition:all .2s;
+            }
+            .bo-page-header .bo-actions .btn:hover {
+                background:rgba(255,255,255,.22); border-color:rgba(255,255,255,.4);
+                transform:translateY(-1px);
+            }
+            .bo-page-header .bo-actions .btn-primary {
+                background:rgba(255,255,255,.2); border-color:rgba(255,255,255,.3);
+            }
+
+            .bo-filter-bar {
+                background:#fff; border-radius:16px; padding:.9rem 1.2rem;
+                margin-bottom:.85rem; box-shadow:0 2px 12px rgba(30,15,117,.05);
+                border:1px solid rgba(30,15,117,.06);
+            }
+            .bo-filter-bar .form-control,
+            .bo-filter-bar .form-select {
+                border-radius:10px; font-size:.84rem; border:1.5px solid rgba(30,15,117,.1);
+                padding:.45rem .8rem; background:#faf9fe; transition:all .25s;
+            }
+            .bo-filter-bar .form-control:focus,
+            .bo-filter-bar .form-select:focus {
+                border-color:var(--ac-blue); box-shadow:0 0 0 3px rgba(55,133,216,.1); background:#fff;
+            }
+            .bo-filter-bar label {
+                font-size:.72rem; font-weight:700; color:#6b7280;
+                margin-bottom:.2rem; text-transform:uppercase; letter-spacing:.03em;
+            }
+            .bo-filter-bar .btn-primary {
+                border-radius:10px; font-size:.84rem; font-weight:700;
+                background:linear-gradient(135deg, var(--ac-deep), var(--ac-blue));
+                border:none; color:#fff; transition:all .2s;
+            }
+            .bo-filter-bar .btn-primary:hover { filter:brightness(.95); transform:translateY(-1px); }
+            .bo-filter-bar .btn-outline-secondary {
+                border-radius:10px; font-size:.84rem; font-weight:600;
+                border:1.5px solid rgba(30,15,117,.15); color:#6b7280;
+                background:transparent;
+            }
+            .bo-filter-bar .btn-outline-secondary:hover { background:rgba(30,15,117,.04); color:var(--ac-deep); }
+
+            .bo-table-card {
+                background:#fff; border-radius:16px; overflow:hidden;
+                box-shadow:0 2px 14px rgba(30,15,117,.05); border:1px solid rgba(30,15,117,.06);
+            }
+            .bo-table { margin:0; font-size:.86rem; }
+            .bo-table thead {
+                background:linear-gradient(135deg, rgba(30,15,117,.03) 0%, rgba(55,133,216,.04) 100%);
+            }
+            .bo-table thead th {
+                font-weight:700; font-size:.72rem; text-transform:uppercase; letter-spacing:.05em;
+                color:var(--ac-deep); padding:.75rem 1rem; border-bottom:2px solid rgba(30,15,117,.06);
+                white-space:nowrap; opacity:.7;
+            }
+            .bo-table tbody td {
+                padding:.7rem 1rem; vertical-align:middle; color:#374151;
+                border-bottom:1px solid rgba(30,15,117,.04);
+            }
+            .bo-table tbody tr { transition:all .2s; }
+            .bo-table tbody tr:hover { background:rgba(55,133,216,.03); }
+            .bo-table tbody tr:last-child td { border-bottom:none; }
+            .bo-table .badge {
+                font-size:.68rem; font-weight:700; padding:.3em .65em; border-radius:8px;
+                border:none;
+            }
+            .bo-table .badge.bg-success { background:linear-gradient(135deg,#059669,#34d399) !important; }
+            .bo-table .badge.bg-danger { background:linear-gradient(135deg,#dc2626,#f87171) !important; }
+            .bo-table .badge.bg-warning { background:linear-gradient(135deg,#d97706,#fbbf24) !important; color:#fff !important; }
+            .bo-table .badge.bg-info { background:linear-gradient(135deg,var(--ac-mid),var(--ac-blue)) !important; color:#fff !important; }
+            .bo-table .badge.bg-primary { background:linear-gradient(135deg,var(--ac-mid),var(--ac-blue)) !important; }
+            .bo-table .badge.bg-secondary { background:linear-gradient(135deg,#6b7280,#9ca3af) !important; }
+            .bo-table .badge.bg-dark { background:linear-gradient(135deg,#1f2937,#4b5563) !important; }
+            .bo-table .btn-action {
+                width:32px; height:32px; padding:0; border-radius:10px;
+                display:inline-flex; align-items:center; justify-content:center;
+                font-size:.78rem; border:none; transition:all .2s;
+            }
+            .bo-table .btn-view {
+                background:rgba(55,133,216,.08); color:var(--ac-blue);
+            }
+            .bo-table .btn-view:hover {
+                background:linear-gradient(135deg,var(--ac-mid),var(--ac-blue)); color:#fff;
+                transform:translateY(-1px); box-shadow:0 3px 10px rgba(55,133,216,.25);
+            }
+            .bo-table .btn-edit {
+                background:rgba(245,158,11,.08); color:#d97706;
+            }
+            .bo-table .btn-edit:hover {
+                background:linear-gradient(135deg,#d97706,#fbbf24); color:#fff;
+                transform:translateY(-1px); box-shadow:0 3px 10px rgba(245,158,11,.25);
+            }
+            .bo-table .btn-del {
+                background:rgba(239,68,68,.08); color:#dc2626;
+            }
+            .bo-table .btn-del:hover {
+                background:linear-gradient(135deg,#dc2626,#f87171); color:#fff;
+                transform:translateY(-1px); box-shadow:0 3px 10px rgba(239,68,68,.25);
+            }
+            .bo-table .btn-ok {
+                background:rgba(5,150,105,.08); color:#059669;
+            }
+            .bo-table .btn-ok:hover {
+                background:linear-gradient(135deg,#059669,#34d399); color:#fff;
+                transform:translateY(-1px); box-shadow:0 3px 10px rgba(5,150,105,.25);
+            }
+
+            .bo-pagination {
+                display:flex; justify-content:space-between; align-items:center;
+                padding:.85rem 1.25rem; flex-wrap:wrap; gap:.5rem;
+                border-top:1px solid rgba(30,15,117,.04);
+            }
+            .bo-pagination .page-info { font-size:.8rem; color:#6b7280; font-weight:500; }
+            .bo-pagination .pagination { margin:0; gap:0.5rem; list-style:none; padding-left:0; }
+            .bo-pagination .page-link {
+                border-radius:12px; font-size:.8rem; font-weight:600; padding:.45rem .8rem;
+                border:1.5px solid rgba(30,15,117,.12); color:#374151; background:#fff;
+                transition:all .2s ease; text-decoration:none; display:block; min-width:2.25rem; text-align:center;
+            }
+            .bo-pagination .page-item.active .page-link {
+                background:linear-gradient(135deg,var(--ac-deep),var(--ac-blue));
+                border-color:transparent; color:#fff;
+                box-shadow:0 3px 12px rgba(30,15,117,.25);
+            }
+            .bo-pagination .page-item:not(.disabled) .page-link:hover { background:rgba(30,15,117,.06); border-color:rgba(30,15,117,.2); }
+            .bo-pagination .page-item.disabled .page-link { color:#d1d5db; border-color:#f3f4f6; background:#f9fafb; cursor:not-allowed; }
+
+            .bo-empty {
+                text-align:center; padding:3.5rem 1.5rem; color:#9ca3af;
+            }
+            .bo-empty i {
+                font-size:2.5rem; margin-bottom:.6rem; display:block;
+                color:rgba(191,140,225,.35);
+            }
+            .bo-empty p { font-size:.88rem; font-weight:500; }
+
+            /* ===== FRONTOFFICE (Artist / Participant) ===== */
+            .fo-navbar {
+                background: linear-gradient(135deg, var(--ac-deep) 0%, var(--ac-mid) 60%, var(--ac-blue) 100%);
+                padding: 0.6rem 0;
+                box-shadow: 0 4px 20px rgba(30,15,117,0.18);
+                position: sticky;
+                top: 0;
+                z-index: 1030;
+            }
+            .fo-navbar .navbar-brand {
+                font-family: 'Sora', sans-serif;
+                font-weight: 700;
+                font-size: 1.35rem;
+                color: #fff !important;
+                letter-spacing: -0.5px;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+            }
+            .fo-navbar .navbar-brand img { height: 32px; width: 32px; border-radius: 50%; }
+            .fo-navbar .nav-link {
+                color: rgba(255,255,255,0.82) !important;
+                font-weight: 500;
+                font-size: 0.92rem;
+                padding: 0.5rem 0.85rem !important;
+                border-radius: 8px;
+                transition: all 0.2s;
+            }
+            .fo-navbar .nav-link:hover,
+            .fo-navbar .nav-link.active {
+                color: #fff !important;
+                background: rgba(255,255,255,0.12);
+            }
+            .fo-navbar .nav-link i { margin-right: 0.35rem; }
+            .fo-navbar .dropdown-menu {
+                background: #fff;
+                border: none;
+                border-radius: 12px;
+                box-shadow: 0 12px 32px rgba(30,15,117,0.18);
+                padding: 0.5rem;
+                min-width: 200px;
+                margin-top: 0.4rem;
+            }
+            .fo-navbar .dropdown-item {
+                border-radius: 8px;
+                padding: 0.55rem 0.85rem;
+                font-size: 0.9rem;
+                color: #333;
+            }
+            .fo-navbar .dropdown-item:hover { background: rgba(30,15,117,0.06); color: var(--ac-deep); }
+            .fo-navbar .dropdown-item i { width: 20px; text-align: center; margin-right: 0.4rem; color: var(--ac-mid); }
+            .fo-navbar .dropdown-divider { margin: 0.3rem 0.5rem; border-color: rgba(30,15,117,0.1); }
+            .fo-navbar .navbar-toggler { border-color: rgba(255,255,255,0.3); color: #fff; }
+            .fo-navbar .navbar-toggler-icon { filter: invert(1); }
+
+            .fo-user-badge {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                color: #fff;
+                padding: 0.3rem 0.6rem;
+                border-radius: 24px;
+                background: rgba(255,255,255,0.1);
+                cursor: pointer;
+                text-decoration: none;
+                transition: background 0.2s;
+            }
+            .fo-user-badge:hover { background: rgba(255,255,255,0.18); color: #fff; }
+            .fo-user-avatar {
+                width: 30px; height: 30px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, var(--ac-lavender), var(--ac-blue));
+                display: flex; align-items: center; justify-content: center;
+                font-weight: 700; font-size: 0.8rem; color: #fff;
+                overflow: hidden;
+            }
+            .fo-user-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+            .fo-user-name { font-weight: 600; font-size: 0.85rem; }
+            .fo-user-role { font-size: 0.65rem; text-transform: uppercase; opacity: 0.7; letter-spacing: 0.5px; }
+
+            .fo-content {
+                flex: 1;
+                background: #f4f6fb;
+                min-height: 0;
+            }
+            .fo-content > .container-xl { padding-top: 1.5rem; padding-bottom: 2rem; }
+
+            /* ===== FRONTOFFICE FOOTER ===== */
+            .fo-footer { background: var(--ac-deep); color: rgba(255,255,255,.7); padding: 3rem 0 1.5rem; }
+            .fo-footer-brand { font-family:'Sora',sans-serif; font-weight:700; font-size:1.3rem; color:#fff; margin-bottom:.6rem; }
+            .fo-footer-brand i { color:var(--ac-lavender); margin-right:.3rem; }
+            .fo-footer-desc { font-size:.85rem; line-height:1.6; margin-bottom:1rem; }
+            .fo-footer-social { display:flex; gap:.6rem; }
+            .fo-footer-social a { width:34px; height:34px; border-radius:50%; background:rgba(255,255,255,.1); display:flex; align-items:center; justify-content:center; color:rgba(255,255,255,.7); font-size:.85rem; transition:all .2s; text-decoration:none; }
+            .fo-footer-social a:hover { background:var(--ac-lavender); color:#fff; transform:translateY(-2px); }
+            .fo-footer-title { font-family:'Sora',sans-serif; font-weight:700; font-size:.88rem; color:#fff; margin-bottom:.8rem; text-transform:uppercase; letter-spacing:.04em; }
+            .fo-footer-links { list-style:none; padding:0; margin:0; }
+            .fo-footer-links li { margin-bottom:.4rem; }
+            .fo-footer-links a { color:rgba(255,255,255,.65); text-decoration:none; font-size:.85rem; transition:color .2s; }
+            .fo-footer-links a:hover { color:#fff; }
+            .fo-footer-contact-info p { font-size:.85rem; margin-bottom:.4rem; }
+            .fo-footer-contact-info i { width:18px; color:var(--ac-lavender); margin-right:.4rem; font-size:.8rem; }
+            .fo-footer-contact-btn { background:rgba(255,255,255,.1); color:#fff; border:1.5px solid rgba(255,255,255,.2); border-radius:10px; font-size:.84rem; font-weight:600; padding:.45rem 1.2rem; margin-top:.6rem; transition:all .2s; }
+            .fo-footer-contact-btn:hover { background:var(--ac-lavender); border-color:var(--ac-lavender); color:#fff; transform:translateY(-1px); }
+            .fo-footer-hr { border-color:rgba(255,255,255,.12); margin:1.5rem 0 1rem; }
+
+            /* ===== GUEST ===== */
+            .guest-nav {
+                background: #fff;
+                padding: 0.6rem 0;
+                box-shadow: 0 2px 12px rgba(30,15,117,.06);
+                border-bottom: 1px solid rgba(30,15,117,.06);
+            }
+            .guest-brand {
+                font-family: 'Sora', sans-serif;
+                font-weight: 700;
+                font-size: 1.25rem;
+                color: var(--ac-deep) !important;
+                text-decoration: none;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+            }
+            .guest-brand:hover { color: var(--ac-mid) !important; }
+            .guest-nav .nav-link-guest {
+                font-weight: 600;
+                font-size: 0.9rem;
+                color: #374151;
+                padding: 0.5rem 0.85rem;
+                border-radius: 10px;
+                transition: all 0.2s;
+            }
+            .guest-nav .nav-link-guest:hover {
+                color: var(--ac-deep);
+                background: rgba(30,15,117,.06);
+            }
+            .guest-nav .btn-guest-login {
+                border: 2px solid var(--ac-blue);
+                color: var(--ac-mid);
+                font-weight: 700;
+                font-size: 0.88rem;
+                padding: 0.5rem 1.1rem;
+                border-radius: 12px;
+                transition: all 0.2s;
+            }
+            .guest-nav .btn-guest-login:hover {
+                background: rgba(55,133,216,.08);
+                border-color: var(--ac-mid);
+                color: var(--ac-deep);
+            }
+            .guest-nav .btn-guest-register {
+                background: linear-gradient(135deg, var(--ac-deep), var(--ac-mid));
+                color: #fff !important;
+                font-weight: 700;
+                font-size: 0.88rem;
+                padding: 0.5rem 1.25rem;
+                border-radius: 12px;
+                border: none;
+                transition: all 0.2s;
+                box-shadow: 0 4px 14px rgba(30,15,117,.25);
+            }
+            .guest-nav .btn-guest-register:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 6px 20px rgba(30,15,117,.35);
+                color: #fff !important;
             }
         </style>
 
@@ -113,243 +468,691 @@
             {% block importmap %}{{ importmap('app') }}{% endblock %}
         {% endblock %}
     </head>
-    <body class="{{ app.user ? 'back-mode' : 'front-mode' }}">
-        {% if app.user %}
-            {# Back-office / Logged-in Layout #}
-            <div class="wrapper">
-                <!-- Sidebar -->
-                <nav id="sidebar">
-                    <div class="sidebar-header">
-                        <img src="{{ asset('images/logo.png') }}" alt="Logo" class="img-fluid">
-                        <h3>ART CONNECT</h3>
-                    </div>
 
-                    <ul class="list-unstyled components flex-grow-1">
-                        <li>
-                            <a href="{{ path('home') }}"><i class="fas fa-home me-2"></i> Accueil</a>
-                        </li>
-                        
-                        {# Admin Only #}
-                        {% if is_granted('ROLE_ADMIN') %}
-                            <li>
-                                <a href="{{ path('app_user_index') }}"><i class="fas fa-users me-2"></i> Utilisateurs</a>
-                            </li>
-                            <li>
-                                <a href="{{ path('app_type_don_index') }}"><i class="fas fa-tags me-2"></i> Types de Don</a>
-                            </li>
-                            <li>
-                                <a href="{{ path('app_donation_index') }}"><i class="fas fa-hand-holding-heart me-2"></i> Liste des Dons</a>
-                            </li>
-                        {% endif %}
+    {# ---- Determine layout mode ---- #}
+    {% set layout = not app.user ? 'guest' : (is_granted('ROLE_ADMIN') ? 'admin' : 'front') %}
 
-                        {# Artists and Admins #}
-                        {% if is_granted('ROLE_ARTISTE') %}
-                            <li>
-                                <a href="{{ path('app_evenement_index') }}"><i class="fas fa-calendar-alt me-2"></i> Gérer Événements</a>
-                            </li>
-                            <li>
-                                <a href="{{ path('app_produit_admin_index') }}"><i class="fas fa-box me-2"></i> Gérer Produits</a>
-                            </li>
-                            <li>
-                                <a href="{{ path('app_commande_index') }}"><i class="fas fa-shopping-cart me-2"></i> Gérer Commandes</a>
-                            </li>
-                        {% endif %}
+    <body class="{{ layout == 'guest' ? 'front-mode' : (layout == 'admin' ? 'back-mode' : 'fo-mode') }}">
 
-                        {# Everyone #}
-                        {% if not is_granted('ROLE_ARTISTE') %}
-                            <li>
-                                <a href="{{ path('app_evenement_index') }}"><i class="fas fa-search me-2"></i> Voir les Événements</a>
-                            </li>
-                            <li>
-                                <a href="{{ path('app_produit_index') }}"><i class="fas fa-store me-2"></i> Boutique Solidaire</a>
-                            </li>
-                        {% endif %}
-                        <li>
-                            <a href="{{ path('app_reservation_my') }}">
-                                <i class="fas fa-ticket-alt me-2"></i>
-                                {{ is_granted('ROLE_ADMIN') ? 'Gestion des Réservations' : 'Mes Réservations' }}
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{{ path('app_donation_my') }}"><i class="fas fa-hand-holding-heart me-2"></i> Mes Dons</a>
-                        </li>
-                        <li>
-                            <a href="{{ path('app_commande_my') }}"><i class="fas fa-shopping-bag me-2"></i> Mes Commandes</a>
-                        </li>
-                        
-                        {# Forum Section #}
-                        <li>
-                            <a href="{{ path('app_forum_index') }}"><i class="fas fa-comments me-2"></i> Forum / Contact</a>
-                        </li>
-                        {% if is_granted('ROLE_ADMIN') %}
-                            <li>
-                                <a href="{{ path('app_forum_reponse_index') }}"><i class="fas fa-reply me-2"></i> Gérer Réponses</a>
-                            </li>
-                        {% endif %}
-                        
-                        <li>
-                            <a href="#"><i class="fas fa-user me-2"></i> Mon Profil</a>
-                        </li>
+    {# =============================================================== #}
+    {# OPENING WRAPPERS — each branch opens tags, closed after body    #}
+    {# =============================================================== #}
+
+    {% if layout == 'guest' %}
+        {% block guest_wrapper_open %}
+        <nav class="navbar navbar-expand-lg navbar-light guest-nav mb-4">
+            <div class="container public-shell">
+                <a class="navbar-brand guest-brand" href="{{ path('home') }}">ART CONNECT</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#guestNav" aria-controls="guestNav" aria-expanded="false" aria-label="Menu">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="guestNav">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        <li class="nav-item"><a class="nav-link nav-link-guest" href="{{ path('home') }}"><i class="fas fa-home me-1"></i> Accueil</a></li>
+                        <li class="nav-item"><a class="nav-link nav-link-guest" href="{{ path('app_evenement_index') }}"><i class="fas fa-calendar-alt me-1"></i> Événements</a></li>
+                        <li class="nav-item"><a class="nav-link nav-link-guest" href="{{ path('app_produit_index') }}"><i class="fas fa-store me-1"></i> Boutique</a></li>
+                        <li class="nav-item"><a class="nav-link nav-link-guest" href="{{ path('app_donation_new') }}"><i class="fas fa-hand-holding-heart me-1"></i> Faire un Don</a></li>
+                        <li class="nav-item"><a class="nav-link nav-link-guest" href="{{ path('app_forum_index') }}"><i class="fas fa-comments me-1"></i> Forum</a></li>
                     </ul>
+                    <div class="d-flex align-items-center gap-2 flex-shrink-0">
+                        <a href="{{ path('login') }}" class="btn btn-guest-login">Connexion</a>
+                        <a href="{{ path('register') }}" class="btn btn-guest-register">Inscription</a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+        <div class="container public-shell">
+        {% endblock %}
 
-                    <div class="p-3 border-top border-secondary">
-                        <div class="d-flex align-items-center mb-2">
-                            <div class="flex-shrink-0">
-                                <i class="fas fa-user-circle fa-2x text-light"></i>
-                            </div>
-                            <div class="flex-grow-1 ms-3 overflow-hidden">
-                                <h6 class="mb-0 text-truncate" title="{{ app.user.prenom }} {{ app.user.nom }}">
-                                    {{ app.user.prenom }} {{ app.user.nom }}
-                                </h6>
-                                <small class="text-uppercase" style="font-size: 0.7rem;">
-                                    {{ (app.user.roles|first)|default('ROLE_USER')|replace({'ROLE_': ''}) }}
-                                </small>
-                            </div>
+    {% elseif layout == 'admin' %}
+        <div class="bo-wrapper">
+            <nav id="sidebar">
+                <div class="sidebar-header">
+                    <img src="https://i.ibb.co/nszzmdt6/logo.png" alt="Logo">
+                    <h3>ART CONNECT</h3>
+                </div>
+
+                <ul class="list-unstyled components flex-grow-1">
+                    <li class="sidebar-section-label">Analyse</li>
+                    <li><a href="{{ path('admin_stats') }}"><i class="fas fa-chart-pie"></i> Statistiques</a></li>
+
+                    <li class="sidebar-section-label">Gestion</li>
+                    <li><a href="{{ path('app_user_index') }}"><i class="fas fa-users"></i> Utilisateurs</a></li>
+                    <li><a href="{{ path('app_evenement_index') }}"><i class="fas fa-calendar-alt"></i> Événements</a></li>
+                    <li><a href="{{ path('app_reservation_my') }}"><i class="fas fa-ticket-alt"></i> Réservations</a></li>
+
+                    <li class="sidebar-section-label">Commerce</li>
+                    <li><a href="{{ path('app_produit_admin_index') }}"><i class="fas fa-box"></i> Produits</a></li>
+                    <li><a href="{{ path('app_commande_index') }}"><i class="fas fa-shopping-cart"></i> Commandes</a></li>
+
+                    <li class="sidebar-section-label">Communauté</li>
+                    <li><a href="{{ path('app_donation_index') }}"><i class="fas fa-hand-holding-heart"></i> Dons</a></li>
+                    <li><a href="{{ path('app_type_don_index') }}"><i class="fas fa-tags"></i> Types de Don</a></li>
+                    <li><a href="{{ path('app_forum_index') }}"><i class="fas fa-comments"></i> Forum</a></li>
+                    <li><a href="{{ path('app_forum_reponse_index') }}"><i class="fas fa-reply"></i> Réponses Forum</a></li>
+                </ul>
+
+                <div class="sidebar-footer">
+                    <div class="sidebar-user">
+                        <div class="sidebar-avatar">
+                            {{ app.user.prenom|first|upper }}{{ app.user.nom|first|upper }}
                         </div>
-                        <a href="{{ path('logout') }}" class="btn btn-outline-danger btn-sm w-100">
-                            <i class="fas fa-sign-out-alt me-1"></i> Déconnexion
-                        </a>
+                        <div style="min-width:0;">
+                            <div class="sidebar-name" title="{{ app.user.prenom }} {{ app.user.nom }}">
+                                {{ app.user.prenom }} {{ app.user.nom }}
+                            </div>
+                            <div class="sidebar-role">Administrateur</div>
+                        </div>
+                    </div>
+                    <a href="{{ path('logout') }}" class="btn btn-logout btn-sm">
+                        <i class="fas fa-sign-out-alt me-1"></i> Déconnexion
+                    </a>
+                </div>
+            </nav>
+
+            <div class="bo-content">
+                <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm rounded mb-4 d-md-none">
+                    <div class="container-fluid">
+                        <button type="button" id="sidebarCollapse" class="btn btn-primary">
+                            <i class="fas fa-bars"></i>
+                        </button>
                     </div>
                 </nav>
 
-                <!-- Page Content -->
-                <div class="content">
-                    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm rounded mb-4 d-md-none">
-                        <div class="container-fluid">
-                            <button type="button" id="sidebarCollapse" class="btn btn-primary">
-                                <i class="fas fa-bars"></i>
-                            </button>
-                        </div>
-                    </nav>
+    {% else %}
+        <nav class="navbar navbar-expand-lg fo-navbar">
+            <div class="container-xl">
+                <a class="navbar-brand" href="{{ path('home') }}">
+                    <img src="https://i.ibb.co/nszzmdt6/logo.png" alt="Logo">
+                    ART CONNECT
+                </a>
 
-                    {# Flash Messages #}
-                    {% for message in app.flashes('success') %}
-                        <div class="alert alert-success alert-dismissible fade show" role="alert">
-                            {{ message }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>
-                    {% endfor %}
-                    {% for message in app.flashes('error') %}
-                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            {{ message }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>
-                    {% endfor %}
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#foNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
 
-                    {% block body %}{% endblock %}
+                <div class="collapse navbar-collapse" id="foNav">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ path('home') }}"><i class="fas fa-home"></i> Accueil</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ path('app_evenement_index') }}"><i class="fas fa-calendar-alt"></i> Événements</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ path('app_produit_index') }}"><i class="fas fa-store"></i> Boutique</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ path('app_donation_new') }}"><i class="fas fa-hand-holding-heart"></i> Faire un Don</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ path('app_forum_index') }}"><i class="fas fa-comments"></i> Forum</a>
+                        </li>
+                        {% if is_granted('ROLE_ARTISTE') %}
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                                    <i class="fas fa-paint-brush"></i> Gestion
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="{{ path('app_evenement_new') }}"><i class="fas fa-plus-circle"></i> Créer un Événement</a></li>
+                                    <li><a class="dropdown-item" href="{{ path('app_reservation_artist_owner') }}"><i class="fas fa-ticket-alt"></i> Réservations reçues</a></li>
+                                    <li><a class="dropdown-item" href="{{ path('app_artist_event_stats') }}"><i class="fas fa-chart-line"></i> Stats événements</a></li>
+                                    <li><a class="dropdown-item" href="{{ path('app_produit_admin_index') }}"><i class="fas fa-box"></i> Mes Produits</a></li>
+                                    <li><a class="dropdown-item" href="{{ path('app_commande_index') }}"><i class="fas fa-shopping-cart"></i> Commandes reçues</a></li>
+                                </ul>
+                            </li>
+                        {% endif %}
+                    </ul>
+
+                    <ul class="navbar-nav">
+                        <li class="nav-item dropdown">
+                            <a class="fo-user-badge dropdown-toggle" href="#" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                                <div class="fo-user-avatar">
+                                    {% if app.user.profileImageUrl %}
+                                        <img src="{{ app.user.profileImageUrl }}" alt="Avatar">
+                                    {% else %}
+                                        {{ app.user.prenom|first|upper }}{{ app.user.nom|first|upper }}
+                                    {% endif %}
+                                </div>
+                                <div class="d-none d-lg-block">
+                                    <div class="fo-user-name">{{ app.user.prenom }} {{ app.user.nom }}</div>
+                                    <div class="fo-user-role">
+                                        {% if is_granted('ROLE_ARTISTE') %}Artiste{% else %}Participant{% endif %}
+                                    </div>
+                                </div>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li>
+                                    <a class="dropdown-item" href="{{ is_granted('ROLE_ARTISTE') ? path('artist_profile') : path('participant_profile') }}">
+                                        <i class="fas fa-user"></i> Mon Profil
+                                    </a>
+                                </li>
+                                {% if not is_granted('ROLE_ARTISTE') %}
+                                    <li><a class="dropdown-item" href="{{ path('app_reservation_my') }}"><i class="fas fa-ticket-alt"></i> Mes Réservations</a></li>
+                                {% else %}
+                                    <li><a class="dropdown-item" href="{{ path('app_reservation_artist_owner') }}"><i class="fas fa-ticket-alt"></i> Réservations reçues</a></li>
+                                    <li><a class="dropdown-item" href="{{ path('app_artist_event_stats') }}"><i class="fas fa-chart-line"></i> Stats événements</a></li>
+                                {% endif %}
+                                <li><a class="dropdown-item" href="{{ path('app_commande_my') }}"><i class="fas fa-shopping-bag"></i> Mes Commandes</a></li>
+                                <li><a class="dropdown-item" href="{{ path('app_donation_my') }}"><i class="fas fa-heart"></i> Mes Dons</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item text-danger" href="{{ path('logout') }}">
+                                        <i class="fas fa-sign-out-alt"></i> Déconnexion
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
                 </div>
             </div>
-        {% else %}
-            {# Guest Layout (Login/Register/Public Home) #}
-            <nav class="navbar navbar-expand-lg navbar-light guest-nav mb-4 shadow-sm">
-                <div class="container public-shell">
-                    <a class="navbar-brand guest-brand" href="{{ path('home') }}">ART CONNECT</a>
-                    <div class="d-flex">
-                        <a href="{{ path('login') }}" class="btn btn-outline-primary me-2">Connexion</a>
-                        <a href="{{ path('register') }}" class="btn btn-primary">Inscription</a>
+        </nav>
+        <main class="fo-content">
+            <div class="container-xl">
+
+    {% endif %}
+
+    {# =============================================================== #}
+    {# BODY — flash messages handled by global toast system            #}
+    {# =============================================================== #}
+
+    {% block body %}{% endblock %}
+
+    {# =============================================================== #}
+    {# CLOSING WRAPPERS — mirror the opening tags                      #}
+    {# =============================================================== #}
+
+    {% if layout == 'guest' %}
+        {% block guest_wrapper_close %}
+        </div>{# /.container.public-shell #}
+
+        <footer class="fo-footer">
+            <div class="container-xl">
+                <div class="row gy-4">
+                    <div class="col-lg-4">
+                        <div class="fo-footer-brand">
+                            <i class="fas fa-palette"></i> Art Connect
+                        </div>
+                        <p class="fo-footer-desc">Plateforme d'art inclusif dédiée aux enfants. Nous croyons que chaque enfant mérite d'explorer sa créativité.</p>
+                        <div class="fo-footer-social">
+                            <a href="#"><i class="fab fa-facebook-f"></i></a>
+                            <a href="#"><i class="fab fa-instagram"></i></a>
+                            <a href="#"><i class="fab fa-youtube"></i></a>
+                            <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                        </div>
+                    </div>
+
+                    <div class="col-6 col-lg-2">
+                        <h6 class="fo-footer-title">Découvrir</h6>
+                        <ul class="fo-footer-links">
+                            <li><a href="{{ path('home') }}">Accueil</a></li>
+                            <li><a href="{{ path('login') }}">Connexion</a></li>
+                            <li><a href="{{ path('register') }}">Inscription</a></li>
+                        </ul>
+                    </div>
+
+                    <div class="col-6 col-lg-2">
+                        <h6 class="fo-footer-title">La Plateforme</h6>
+                        <ul class="fo-footer-links">
+                            <li><a href="#">Événements</a></li>
+                            <li><a href="#">Boutique</a></li>
+                            <li><a href="#">Forum</a></li>
+                        </ul>
+                    </div>
+
+                    <div class="col-lg-4">
+                        <h6 class="fo-footer-title">Contactez-nous</h6>
+                        <div class="fo-footer-contact-info">
+                            <p><i class="fas fa-map-marker-alt"></i> Tunis, Tunisie</p>
+                            <p><i class="fas fa-envelope"></i> contact@artconnect.tn</p>
+                            <p><i class="fas fa-phone"></i> +216 71 000 000</p>
+                        </div>
+                        <button class="btn fo-footer-contact-btn" data-bs-toggle="modal" data-bs-target="#contactModal">
+                            <i class="fas fa-paper-plane me-1"></i> Envoyer un message
+                        </button>
                     </div>
                 </div>
-            </nav>
-            
-            <div class="container public-shell">
-                {# Flash Messages for Guests #}
-                {% for message in app.flashes('success') %}
-                    <div class="alert alert-success alert-dismissible fade show" role="alert">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                {% endfor %}
-                {% for message in app.flashes('error') %}
-                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                {% endfor %}
-                {% for message in app.flashes('info') %}
-                    <div class="alert alert-info alert-dismissible fade show" role="alert">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                {% endfor %}
-                
-                {% block body_guest %}
-                    {% block body_public %}
-                        {# Fallback if child templates use 'body' block #}
-                        {{ block('body') }}
-                    {% endblock %}
-                {% endblock %}
-            </div>
-        {% endif %}
 
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+                <hr class="fo-footer-hr">
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-2">
+                    <small>&copy; {{ "now"|date("Y") }} Art Connect. Tous droits réservés.</small>
+                    <small>Fait avec <i class="fas fa-heart" style="color:var(--ac-pink);"></i> pour l'inclusion</small>
+                </div>
+            </div>
+        </footer>
+
+        {# ---- Contact Modal (guest) ---- #}
+        <div class="modal fade" id="contactModal" tabindex="-1" aria-labelledby="contactModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content" style="border:none; border-radius:16px; overflow:hidden;">
+                    <div class="modal-header" style="background:linear-gradient(135deg,var(--ac-deep),var(--ac-mid)); color:#fff; border:none; padding:1.2rem 1.5rem;">
+                        <h5 class="modal-title" id="contactModalLabel" style="font-family:'Sora',sans-serif; font-weight:700; font-size:1.1rem;">
+                            <i class="fas fa-envelope me-2"></i>Nous contacter
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                    </div>
+                    <div class="modal-body" style="padding:1.5rem;">
+                        <form id="contactFormGuest">
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold" style="font-size:.85rem;">Votre email</label>
+                                <input type="email" class="form-control" placeholder="votre@email.com" style="border-radius:10px; font-size:.88rem; border:1.5px solid #e5e7eb; padding:.5rem .8rem;" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold" style="font-size:.85rem;">Sujet</label>
+                                <input type="text" class="form-control" placeholder="Objet de votre message" style="border-radius:10px; font-size:.88rem; border:1.5px solid #e5e7eb; padding:.5rem .8rem;" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold" style="font-size:.85rem;">Message</label>
+                                <textarea class="form-control" rows="4" placeholder="Écrivez votre message ici..." style="border-radius:10px; font-size:.88rem; border:1.5px solid #e5e7eb; padding:.6rem .8rem; resize:vertical;" required></textarea>
+                            </div>
+                            <div class="d-grid">
+                                <button type="submit" class="btn" style="background:linear-gradient(135deg,var(--ac-deep),var(--ac-mid)); color:#fff; border:none; border-radius:10px; font-weight:700; font-size:.9rem; padding:.6rem;">
+                                    Envoyer <i class="fas fa-paper-plane ms-1"></i>
+                                </button>
+                            </div>
+                        </form>
+                        <div id="contactSuccessGuest" class="text-center d-none" style="padding:2rem 0;">
+                            <i class="fas fa-check-circle" style="font-size:2.5rem; color:#22c55e;"></i>
+                            <p class="mt-2 mb-0 fw-semibold" style="color:#374151;">Message envoyé avec succès !</p>
+                            <small class="text-muted">Nous vous répondrons dans les plus brefs délais.</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endblock %}
+
+    {% elseif layout == 'admin' %}
+            </div>{# /.bo-content #}
+        </div>{# /.bo-wrapper #}
+
+    {% else %}
+            </div>{# /.container-xl #}
+        </main>
+
+        <footer class="fo-footer">
+            <div class="container-xl">
+                <div class="row gy-4">
+                    <div class="col-lg-4">
+                        <div class="fo-footer-brand">
+                            <i class="fas fa-palette"></i> Art Connect
+                        </div>
+                        <p class="fo-footer-desc">Plateforme d'art inclusif dédiée aux enfants. Nous croyons que chaque enfant mérite d'explorer sa créativité.</p>
+                        <div class="fo-footer-social">
+                            <a href="#"><i class="fab fa-facebook-f"></i></a>
+                            <a href="#"><i class="fab fa-instagram"></i></a>
+                            <a href="#"><i class="fab fa-youtube"></i></a>
+                            <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                        </div>
+                    </div>
+
+                    <div class="col-6 col-lg-2">
+                        <h6 class="fo-footer-title">Navigation</h6>
+                        <ul class="fo-footer-links">
+                            <li><a href="{{ path('home') }}">Accueil</a></li>
+                            <li><a href="{{ path('app_evenement_index') }}">Événements</a></li>
+                            <li><a href="{{ path('app_produit_index') }}">Boutique</a></li>
+                            <li><a href="{{ path('app_forum_index') }}">Forum</a></li>
+                        </ul>
+                    </div>
+
+                    <div class="col-6 col-lg-2">
+                        <h6 class="fo-footer-title">Mon Compte</h6>
+                        <ul class="fo-footer-links">
+                            {% if not is_granted('ROLE_ARTISTE') %}
+                                <li><a href="{{ path('app_reservation_my') }}">Réservations</a></li>
+                            {% else %}
+                                <li><a href="{{ path('app_reservation_artist_owner') }}">Réservations reçues</a></li>
+                                <li><a href="{{ path('app_artist_event_stats') }}">Stats événements</a></li>
+                            {% endif %}
+                            <li><a href="{{ path('app_commande_my') }}">Commandes</a></li>
+                            <li><a href="{{ path('app_donation_my') }}">Mes Dons</a></li>
+                            <li><a href="{{ path('app_donation_new') }}">Faire un Don</a></li>
+                        </ul>
+                    </div>
+
+                    <div class="col-lg-4">
+                        <h6 class="fo-footer-title">Contactez-nous</h6>
+                        <div class="fo-footer-contact-info">
+                            <p><i class="fas fa-map-marker-alt"></i> Tunis, Tunisie</p>
+                            <p><i class="fas fa-envelope"></i> contact@artconnect.tn</p>
+                            <p><i class="fas fa-phone"></i> +216 71 000 000</p>
+                        </div>
+                        <button class="btn fo-footer-contact-btn" data-bs-toggle="modal" data-bs-target="#contactModal">
+                            <i class="fas fa-paper-plane me-1"></i> Envoyer un message
+                        </button>
+                    </div>
+                </div>
+
+                <hr class="fo-footer-hr">
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-2">
+                    <small>&copy; {{ "now"|date("Y") }} Art Connect. Tous droits réservés.</small>
+                    <small>Fait avec <i class="fas fa-heart" style="color:var(--ac-pink);"></i> pour l'inclusion</small>
+                </div>
+            </div>
+        </footer>
+
+        {# ---- Contact Modal ---- #}
+        <div class="modal fade" id="contactModal" tabindex="-1" aria-labelledby="contactModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content" style="border:none; border-radius:16px; overflow:hidden;">
+                    <div class="modal-header" style="background:linear-gradient(135deg,var(--ac-deep),var(--ac-mid)); color:#fff; border:none; padding:1.2rem 1.5rem;">
+                        <h5 class="modal-title" id="contactModalLabel" style="font-family:'Sora',sans-serif; font-weight:700; font-size:1.1rem;">
+                            <i class="fas fa-envelope me-2"></i>Nous contacter
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                    </div>
+                    <div class="modal-body" style="padding:1.5rem;">
+                        <form id="contactForm">
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold" style="font-size:.85rem;">Sujet</label>
+                                <input type="text" class="form-control" placeholder="Objet de votre message" style="border-radius:10px; font-size:.88rem; border:1.5px solid #e5e7eb; padding:.5rem .8rem;" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold" style="font-size:.85rem;">Message</label>
+                                <textarea class="form-control" rows="4" placeholder="Écrivez votre message ici..." style="border-radius:10px; font-size:.88rem; border:1.5px solid #e5e7eb; padding:.6rem .8rem; resize:vertical;" required></textarea>
+                            </div>
+                            <div class="d-grid">
+                                <button type="submit" class="btn" style="background:linear-gradient(135deg,var(--ac-deep),var(--ac-mid)); color:#fff; border:none; border-radius:10px; font-weight:700; font-size:.9rem; padding:.6rem;">
+                                    Envoyer <i class="fas fa-paper-plane ms-1"></i>
+                                </button>
+                            </div>
+                        </form>
+                        <div id="contactSuccess" class="text-center d-none" style="padding:2rem 0;">
+                            <i class="fas fa-check-circle" style="font-size:2.5rem; color:#22c55e;"></i>
+                            <p class="mt-2 mb-0 fw-semibold" style="color:#374151;">Message envoyé avec succès !</p>
+                            <small class="text-muted">Nous vous répondrons dans les plus brefs délais.</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    {% endif %}
+
+    {# =============================================================== #}
+    {# SCRIPTS                                                          #}
+    {# =============================================================== #}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    {% if layout == 'admin' %}
         <script>
-            // Function to update active state
-            function updateActiveState() {
-                const currentPath = window.location.href;
-                console.log('Current URL:', currentPath);
-                
-                // Remove active class from all links first
-                document.querySelectorAll('#sidebar li').forEach(item => {
-                    item.classList.remove('active');
-                });
-                
-                // Find and activate matching link
-                let activeLinkFound = false;
-                document.querySelectorAll('#sidebar a[href]').forEach(link => {
-                    const linkHref = link.getAttribute('href');
-                    // Check if current URL contains the link's path
-                    if (currentPath.includes(linkHref) && linkHref !== '/') {
-                        console.log('Match found:', linkHref);
-                        link.parentElement.classList.add('active');
-                        activeLinkFound = true;
-                    }
-                });
-                
-                // If no match found, try to match the first segment
-                if (!activeLinkFound) {
-                    const firstSegment = window.location.pathname.split('/')[1];
-                    if (firstSegment) {
-                        document.querySelectorAll('#sidebar a[href]').forEach(link => {
-                            const linkPath = link.getAttribute('href');
-                            if (linkPath.includes(firstSegment)) {
-                                console.log('First segment match:', linkPath);
-                                link.parentElement.classList.add('active');
-                            }
-                        });
-                    }
-                }
-            }
-
-            // Run on page load
             document.addEventListener('DOMContentLoaded', function() {
-                // Toggle sidebar on mobile
-                const sidebarCollapse = document.getElementById('sidebarCollapse');
-                const sidebar = document.getElementById('sidebar');
-                if (sidebarCollapse) {
-                    sidebarCollapse.addEventListener('click', function() {
-                        sidebar.classList.toggle('active');
-                    });
-                }
-                
-                // Initial update
-                updateActiveState();
-                
-                // Listen for navigation events (Turbo/HTMX or traditional)
-                document.addEventListener('turbo:load', updateActiveState); // For Turbo
-                document.addEventListener('htmx:afterSettle', updateActiveState); // For HTMX
-                
-                // For traditional navigation
-                window.addEventListener('popstate', updateActiveState);
-                
-                // Intercept all link clicks to handle client-side navigation
-                document.addEventListener('click', function(e) {
-                    const link = e.target.closest('a');
-                    if (link && link.href && link.getAttribute('target') !== '_blank') {
-                        // Small delay to allow the navigation to complete
-                        setTimeout(updateActiveState, 50);
-                    }
+                var btn = document.getElementById('sidebarCollapse');
+                var sb  = document.getElementById('sidebar');
+                if (btn) btn.addEventListener('click', function() { sb.classList.toggle('active'); });
+
+                var cur = window.location.href;
+                document.querySelectorAll('#sidebar li:not(.sidebar-section-label)').forEach(function(li) { li.classList.remove('active'); });
+                document.querySelectorAll('#sidebar li:not(.sidebar-section-label) a[href]').forEach(function(a) {
+                    var h = a.getAttribute('href');
+                    if (cur.includes(h) && h !== '/') a.parentElement.classList.add('active');
                 });
             });
         </script>
+    {% elseif layout == 'front' %}
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                var cur = window.location.pathname;
+                document.querySelectorAll('.fo-navbar .nav-link').forEach(function(a) {
+                    var h = new URL(a.href, window.location.origin).pathname;
+                    if (h !== '/' && cur.startsWith(h)) a.classList.add('active');
+                    else if (h === '/' && cur === '/') a.classList.add('active');
+                });
+
+                var cf = document.getElementById('contactForm');
+                var cs = document.getElementById('contactSuccess');
+                if (cf) {
+                    cf.addEventListener('submit', function(e) {
+                        e.preventDefault();
+                        cf.classList.add('d-none');
+                        cs.classList.remove('d-none');
+                    });
+                }
+                var cm = document.getElementById('contactModal');
+                if (cm) {
+                    cm.addEventListener('hidden.bs.modal', function() {
+                        cf.reset();
+                        cf.classList.remove('d-none');
+                        cs.classList.add('d-none');
+                    });
+                }
+            });
+        </script>
+    {% endif %}
+
+    {% if layout == 'guest' %}
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                var cf = document.getElementById('contactFormGuest');
+                var cs = document.getElementById('contactSuccessGuest');
+                if (cf) {
+                    cf.addEventListener('submit', function(e) {
+                        e.preventDefault();
+                        cf.classList.add('d-none');
+                        cs.classList.remove('d-none');
+                    });
+                }
+                var cm = document.getElementById('contactModal');
+                if (cm) {
+                    cm.addEventListener('hidden.bs.modal', function() {
+                        cf.reset();
+                        cf.classList.remove('d-none');
+                        cs.classList.add('d-none');
+                    });
+                }
+            });
+        </script>
+    {% endif %}
+
+    {# ===== GLOBAL TOAST NOTIFICATIONS ===== #}
+    <div id="toast-container" aria-live="polite" aria-atomic="true" style="position:fixed;top:1.2rem;right:1.2rem;z-index:9999;display:flex;flex-direction:column;gap:.5rem;max-width:400px;">
+        {% for type in ['success','danger','warning','info'] %}
+            {% for flash in app.flashes(type) %}
+                <div class="ac-toast ac-toast-{{ type }}" role="alert">
+                    <div class="ac-toast-icon">
+                        {% if type == 'success' %}<i class="fas fa-check-circle"></i>
+                        {% elseif type == 'danger' %}<i class="fas fa-exclamation-circle"></i>
+                        {% elseif type == 'warning' %}<i class="fas fa-exclamation-triangle"></i>
+                        {% else %}<i class="fas fa-info-circle"></i>{% endif %}
+                    </div>
+                    <div class="ac-toast-body">{{ flash }}</div>
+                    <button class="ac-toast-close" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button>
+                    <div class="ac-toast-progress"></div>
+                </div>
+            {% endfor %}
+        {% endfor %}
+    </div>
+    <style>
+        .ac-toast{display:flex;align-items:flex-start;gap:.6rem;padding:.7rem 1rem;border-radius:12px;background:#fff;box-shadow:0 8px 30px rgba(0,0,0,.12);border-left:4px solid #6b7280;position:relative;overflow:hidden;animation:toastIn .35s ease-out;min-width:280px;}
+        .ac-toast-success{border-left-color:#059669;}.ac-toast-danger{border-left-color:#dc2626;}.ac-toast-warning{border-left-color:#d97706;}.ac-toast-info{border-left-color:#2563eb;}
+        .ac-toast-icon{font-size:1rem;margin-top:1px;flex-shrink:0;}
+        .ac-toast-success .ac-toast-icon{color:#059669;}.ac-toast-danger .ac-toast-icon{color:#dc2626;}.ac-toast-warning .ac-toast-icon{color:#d97706;}.ac-toast-info .ac-toast-icon{color:#2563eb;}
+        .ac-toast-body{flex:1;font-size:.84rem;color:#1f2937;line-height:1.4;font-weight:500;}
+        .ac-toast-close{background:none;border:none;color:#9ca3af;cursor:pointer;padding:0;font-size:.75rem;flex-shrink:0;margin-top:1px;transition:color .2s;}.ac-toast-close:hover{color:#374151;}
+        .ac-toast-progress{position:absolute;bottom:0;left:0;height:3px;border-radius:0 0 0 12px;animation:toastTimer 5s linear forwards;}
+        .ac-toast-success .ac-toast-progress{background:#059669;}.ac-toast-danger .ac-toast-progress{background:#dc2626;}.ac-toast-warning .ac-toast-progress{background:#d97706;}.ac-toast-info .ac-toast-progress{background:#2563eb;}
+        @keyframes toastIn{from{opacity:0;transform:translateX(40px);}to{opacity:1;transform:translateX(0);}}
+        @keyframes toastOut{from{opacity:1;transform:translateX(0);}to{opacity:0;transform:translateX(40px);}}
+        @keyframes toastTimer{from{width:100%;}to{width:0;}}
+    </style>
+    <script>
+        document.addEventListener('DOMContentLoaded',function(){
+            document.querySelectorAll('.ac-toast').forEach(function(t,i){
+                t.style.animationDelay=(i*80)+'ms';
+                setTimeout(function(){
+                    t.style.animation='toastOut .3s ease-in forwards';
+                    setTimeout(function(){t.remove();},300);
+                },5000+i*200);
+            });
+            // Spinner on form submit: disable all submit buttons and previous/back links, show spinner
+            document.querySelectorAll('form').forEach(function(form){
+                form.addEventListener('submit',function(){
+                    form.classList.add('form-loading');
+                    form.querySelectorAll('button, input[type="submit"]').forEach(function(btn){
+                        var t = (btn.getAttribute('type') || 'submit').toLowerCase();
+                        if (t === 'button' || t === 'reset') return;
+                        btn.disabled = true;
+                        btn.setAttribute('aria-busy', 'true');
+                        var label = btn.querySelector('.btn-label');
+                        var spinner = btn.querySelector('.btn-spinner');
+                        if (label) label.style.display = 'none';
+                        if (spinner) spinner.style.display = 'inline-block';
+                    });
+                    form.querySelectorAll('a').forEach(function(link){
+                        link.setAttribute('aria-disabled', 'true');
+                        link.setAttribute('tabindex', '-1');
+                    });
+                });
+            });
+        });
+    </script>
+    <style>
+        button[type="submit"]:disabled, input[type="submit"]:disabled,
+        button:disabled:not([type="button"]):not([type="reset"]) { cursor: wait !important; opacity: 0.85; pointer-events: none; user-select: none; }
+        .btn-spinner { margin-right: 0.35rem; }
+        form.form-loading a { pointer-events: none; cursor: wait; opacity: 0.7; user-select: none; }
+    </style>
+
+    <script>
+    (function() {
+        document.addEventListener('submit', function(e) {
+            var form = e.target;
+            var btns = form.querySelectorAll('button[type="submit"]');
+            btns.forEach(function(btn) {
+                var label = btn.querySelector('.btn-label');
+                var spinner = btn.querySelector('.btn-spinner');
+                if (!label || !spinner) return;
+                var w = btn.offsetWidth;
+                var h = btn.offsetHeight;
+                btn.style.minWidth = w + 'px';
+                btn.style.minHeight = h + 'px';
+                label.style.display = 'none';
+                spinner.style.display = 'inline-flex';
+                btn.disabled = true;
+            });
+        });
+    })();
+    </script>
+
+    {# ---- Global Confirmation Modal ---- #}
+    <style>
+        .confirm-modal .modal-dialog { max-width: 380px; }
+        .confirm-modal .modal-content {
+            border: none; border-radius: 18px; overflow: visible;
+            box-shadow: 0 25px 60px rgba(0,0,0,.12), 0 6px 20px rgba(0,0,0,.06);
+            background: #fff; padding-top: 44px; position: relative;
+        }
+        .confirm-modal-icon-wrap {
+            position: absolute; top: -40px; left: 50%; transform: translateX(-50%);
+            width: 80px; height: 80px; border-radius: 50%;
+            background: linear-gradient(145deg, #f9fafb, #f3f4f6);
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,.07);
+        }
+        .confirm-modal-icon-wrap i {
+            font-size: 1.8rem;
+            background: linear-gradient(135deg, #f87171, #ef4444);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .confirm-modal-close {
+            position: absolute; top: 14px; right: 16px;
+            background: none; border: none; color: #c0c4cc; font-size: 1.15rem;
+            cursor: pointer; padding: 4px; line-height: 1; transition: color .2s;
+            z-index: 1;
+        }
+        .confirm-modal-close:hover { color: #6b7280; }
+        .confirm-modal .modal-body {
+            padding: 1rem 2rem 0; text-align: center;
+        }
+        .confirm-modal-title {
+            font-family: 'Sora', sans-serif; font-weight: 700; font-size: 1.1rem;
+            color: #1f2937; margin: 0 0 .5rem; line-height: 1.35;
+        }
+        .confirm-modal-msg {
+            margin: 0; font-size: .88rem; color: #9ca3af; font-weight: 400; line-height: 1.55;
+        }
+        .confirm-modal .modal-footer {
+            border: none; padding: 1.3rem 2rem 1.6rem;
+            justify-content: flex-end; gap: .5rem;
+        }
+        .confirm-modal-cancel {
+            border-radius: 12px; font-weight: 600; font-size: .9rem; padding: .6rem 1.4rem;
+            background: transparent; color: #6c757d; border: none;
+            transition: all .2s ease; cursor: pointer;
+        }
+        .confirm-modal-cancel:hover { color: #495057; }
+        .confirm-modal-confirm {
+            border-radius: 12px; font-weight: 600; font-size: .9rem; padding: .6rem 1.6rem;
+            background: linear-gradient(180deg, #f87171 0%, #ef4444 50%, #dc2626 100%);
+            color: #fff; border: none;
+            box-shadow: 0 4px 14px rgba(220,38,38,.25);
+            transition: all .25s ease; cursor: pointer;
+        }
+        .confirm-modal-confirm:hover {
+            background: linear-gradient(180deg, #fca5a5 0%, #f87171 50%, #ef4444 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(220,38,38,.35);
+        }
+        @keyframes confirmSlideUp {
+            from { opacity: 0; transform: translateY(20px) scale(.96); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .confirm-modal.show .modal-content { animation: confirmSlideUp .3s ease-out; }
+    </style>
+    <div class="modal fade confirm-modal" id="confirmActionModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="confirm-modal-icon-wrap">
+                    <i class="fas fa-trash-alt"></i>
+                </div>
+                <button type="button" class="confirm-modal-close" data-bs-dismiss="modal" aria-label="Fermer">
+                    <i class="fas fa-times"></i>
+                </button>
+                <div class="modal-body">
+                    <h5 id="confirmActionTitle" class="confirm-modal-title"></h5>
+                    <p id="confirmActionMessage" class="confirm-modal-msg"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="confirmActionCancelBtn" class="btn confirm-modal-cancel" data-bs-dismiss="modal">Annuler</button>
+                    <button type="button" id="confirmActionBtn" class="btn confirm-modal-confirm">Confirmer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+    (function(){
+        var pendingForm=null,modal=null;
+        document.addEventListener('DOMContentLoaded',function(){
+            var el=document.getElementById('confirmActionModal');
+            if(!el)return;
+            modal=new bootstrap.Modal(el);
+            el.addEventListener('hidden.bs.modal',function(){pendingForm=null;});
+            document.getElementById('confirmActionBtn').addEventListener('click',function(){
+                if(pendingForm){pendingForm.removeAttribute('data-confirm');pendingForm.requestSubmit();}
+                modal.hide();
+            });
+            document.addEventListener('submit',function(e){
+                var form=e.target,msg=form.getAttribute('data-confirm');
+                if(!msg)return;
+                e.preventDefault();
+                pendingForm=form;
+                var title=form.getAttribute('data-confirm-title')||'Êtes-vous sûr ?';
+                var btn=form.getAttribute('data-confirm-btn')||'Confirmer';
+                var cancelBtn=form.getAttribute('data-confirm-cancel');
+                var icon=el.querySelector('.confirm-modal-icon-wrap i');
+                if(msg.toLowerCase().indexOf('annuler')!==-1){ icon.className='fas fa-ban'; } else { icon.className='fas fa-trash-alt'; }
+                document.getElementById('confirmActionBtn').textContent=btn;
+                document.getElementById('confirmActionCancelBtn').textContent=(cancelBtn!==null&&cancelBtn!=='')?cancelBtn:'Annuler';
+                document.getElementById('confirmActionTitle').textContent=title;
+                document.getElementById('confirmActionMessage').textContent=msg;
+                modal.show();
+            },true);
+        });
+    })();
+    </script>
+
     </body>
 </html>

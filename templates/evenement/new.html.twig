@@ -1,21 +1,18 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Nouvel Événement{% endblock %}
+{% block title %}Nouvel Événement — Art Connect{% endblock %}
 
 {% block body %}
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card shadow">
-                <div class="card-header bg-primary text-white">
-                    <h3 class="mb-0">Créer un nouvel événement</h3>
-                </div>
-                <div class="card-body">
-                    {{ include('evenement/_form.html.twig') }}
-                </div>
-                <div class="card-footer">
-                    <a href="{{ path('app_evenement_index') }}" class="btn btn-secondary">Retour à la liste</a>
-                </div>
-            </div>
-        </div>
-    </div>
+<style>
+    .ev-create-header { margin-bottom:1rem; display:flex; align-items:center; justify-content:space-between; }
+    .ev-create-header h1 { font-family:'Sora',sans-serif; font-weight:700; font-size:1.25rem; color:var(--ac-deep); display:flex; align-items:center; gap:.5rem; margin:0; }
+    .ev-create-header h1 i { color:var(--ac-lavender); }
+    .ev-create-header p { color:#6b7280; font-size:.82rem; margin:0; }
+</style>
+
+<div class="ev-create-header">
+    <h1><i class="fas fa-plus-circle"></i> Créer un événement</h1>
+    <p>Remplissez les informations pour publier votre événement</p>
+</div>
+{{ include('evenement/_form.html.twig') }}
 {% endblock %}

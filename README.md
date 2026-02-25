@@ -1,113 +1,68 @@
-# 🎨 Plateforme Artistique & Inclusivité - Guide d'Installation
+# Plateforme Artistique & Inclusivité
 
-Ce guide vous explique comment installer et lancer le projet sur votre machine locale.
+## Prérequis
 
-## 📋 Prérequis
+- PHP 8.2+
+- Composer
+- MySQL
 
-Avant de commencer, assurez-vous d'avoir installé :
+## Installation
 
-1. **PHP** (version 8.2 ou supérieure).
-2. **Composer** (Gestionnaire de dépendances PHP).
-3. **MySQL** (Serveur de base de données, via Laragon, XAMPP ou WAMP).
-4. **Symfony CLI** (Recommandé, mais optionnel).
+1. **Dépendances**
 
----
+   ```bash
+   composer install
+   ```
 
-## 🚀 Installation
+2. **Base de données**
 
-### 1. Télécharger le projet
+   Configurer `DATABASE_URL` dans `.env`, puis :
 
-Clone projet depuis git et cree une branche separe
-
-### 2. Installer les dépendances
-
-Ouvrez un terminal dans le dossier du projet et lancez :
-
-```bash
-composer install
-```
-
-*Cette commande va télécharger toutes les bibliothèques nécessaires (Symfony, Doctrine, etc.).*
-
----
-
-## ⚙️ Configuration
-
-### 1. Base de données
-
-Ouvrez le fichier `.env` à la racine du projet et modifiez la ligne `DATABASE_URL` avec vos identifiants MySQL.
-
-**Exemple pour Laragon/WAMP (utilisateur 'root', sans mot de passe) :**
-
-```dotenv
-DATABASE_URL="mysql://root:@127.0.0.1:3306/projet_pi_web?serverVersion=8.0.30&charset=utf8mb4"
-```
-
-**Exemple avec mot de passe (utilisateur 'root', mot de passe 'secret') :**
-
-```dotenv
-DATABASE_URL="mysql://root:secret@127.0.0.1:3306/projet_pi_web?serverVersion=8.0.30&charset=utf8mb4"
-```
-
-### 2. Création de la Base de Données et des Tables
-
-Dans votre terminal, exécutez les commandes suivantes une par une :
-
-1. Créer la base de données :
    ```bash
    php bin/console doctrine:database:create
-   ```
-
-2. Créer les tables (Appliquer les migrations) :
-   ```bash
    php bin/console doctrine:migrations:migrate
    ```
-   *Répondez "yes" si on vous demande confirmation.*
 
----
+3. **Données de démo**
 
-## 👤 Création d'un Administrateur
+   ```bash
+   php bin/console app:seed
+   ```
 
-Pour accéder au Back-Office, vous devez créer un compte administrateur. Une commande spéciale a été créée pour cela.
 
-Exécutez dans le terminal :
+4. **Lancer l'application**
 
-```bash
-php bin/console app:create-admin admin@art.com password123 Admin Super
-```
+   ```bash
+   php -S localhost:8000 -t public
+   ```
 
-*Ceci créera un utilisateur avec :*
+   Ou avec Symfony CLI : `symfony server:start`
 
-* **Email** : `admin@art.com`
-* **Mot de passe** : `password123`
-* **Rôle** : `ROLE_ADMIN`
+   Ouvrir http://localhost:8000
 
----
+## ngrok - Exposer l'application localement
 
-## ▶️ Lancer le Serveur
+Pour tester les webhooks Stripe ou accéder à l'application depuis l'extérieur :
 
-Vous pouvez maintenant lancer le serveur de développement.
+   ```bash
+   ngrok http 8000
+   ```
 
-**Option 1 : Avec Symfony CLI (Recommandé)**
+Cela génère une URL publique (ex: `https://xxxx-xx-xxx-xxx-xx.ngrok.io`) à utiliser pour configurer les webhooks Stripe.
 
-```bash
-symfony server:start
-```
+## Stripe Webhook
 
-**Option 2 : Avec PHP natif**
+Endpoint : `POST /stripe-webhook`
 
-```bash
-php -S localhost:8000 -t public
-```
+**Configuration** :
+1. Exposer l'app avec ngrok : `ngrok http 8000`
+2. Copier l'URL ngrok générée
+3. Dans Stripe Dashboard > Developers > Webhooks, ajouter l'endpoint : `https://votre-url.ngrok.io/stripe-webhook`
+4. Sélectionner l'événement : `checkout.session.completed`
+5. Copier le Signing Secret dans `.env` : `STRIPE_WEBHOOK_SECRET=whsec_...`
 
-Ouvrez ensuite votre navigateur à l'adresse indiquée (généralement `http://localhost:8000`).
+**Flux** :
+- Paiement → Webhook reçu → Réservation confirmée → Emails envoyés + Ticket généré
 
----
+**Logs** : `var/log/dev.log`
 
-## 📚 Fonctionnalités Disponibles
-
-* **Authentification** : Inscription et Connexion (Participant, Artiste, Admin).
-* **Back-Office (Admin)** : Gestion des utilisateurs, événements, dons, produits et commandes.
-* **Événements** : Création par Artistes, Réservation par Participants (avec gestion des places et limite d'âge).
-* **Dons** : Faire un don et consulter l'historique.
-* **Boutique** : Acheter des produits (gestion de stock) et suivi des commandes.

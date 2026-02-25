@@ -11,10 +11,30 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use App\Service\EmailService;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
 #[Route('/donation')]
 class DonationController extends AbstractController
 {
+    #[Route('/test-email', name: 'app_test_email', methods: ['GET'])]
+    public function testEmail(EmailService $emailService): Response
+    {
+        try {
+            $emailService->sendConfirmationEmail(
+                'yasminemaatougui9@gmail.com',
+                'Yasmine Maatougui',
+                'Atelier de peinture',
+                new \DateTime('+3 days'),
+                'Espace Culturel, 123 Rue de l\'Art, 75001 Paris'
+            );
+            
+            return new JsonResponse(['status' => 'success', 'message' => 'Email de test envoyé avec succès !']);
+        } catch (\Exception $e) {
+            return new JsonResponse(['status' => 'error', 'message' => $e->getMessage()], 500);
+        }
+    }
+    
     #[Route('/my-donations', name: 'app_donation_my', methods: ['GET'])]
     #[IsGranted('ROLE_USER')]
     public function myDonations(DonationRepository $donationRepository): Response

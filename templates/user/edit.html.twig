@@ -1,14 +1,30 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Éditer Utilisateur{% endblock %}
+{% block title %}Modifier — {{ user.prenom }} {{ user.nom }}{% endblock %}
 
 {% block body %}
-    <h1>Éditer Utilisateur</h1>
+<style>
+    .usr-header { margin-bottom:1rem; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:.5rem; }
+    .usr-header h1 { font-family:'Sora',sans-serif; font-weight:700; font-size:1.25rem; color:var(--ac-deep); display:flex; align-items:center; gap:.5rem; margin:0; }
+    .usr-header h1 i { color:var(--ac-lavender); }
+    .usr-header p { color:#6b7280; font-size:.82rem; margin:0; }
+    .usr-delete-zone { margin-top:1rem; padding:.75rem 1rem; border-radius:10px; background:#fef2f2; border:1px solid #fee2e2; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:.5rem; }
+    .usr-delete-zone p { margin:0; font-size:.78rem; color:#9ca3af; }
+    .usr-delete-zone .btn-del { background:#fee2e2; color:#dc2626; border:none; border-radius:8px; padding:.35rem .85rem; font-weight:600; font-size:.78rem; transition:background .15s; }
+    .usr-delete-zone .btn-del:hover { background:#fecaca; }
+</style>
 
-    {{ include('user/_form.html.twig', {'button_label': 'Mettre à jour'}) }}
+<div class="usr-header">
+    <h1><i class="fas fa-user-edit"></i> Modifier l'utilisateur</h1>
+    <p>{{ user.prenom }} {{ user.nom }} — {{ user.email }}</p>
+</div>
+{{ include('user/_form.html.twig', {'button_label': 'Mettre à jour'}) }}
 
-    <div class="mt-3">
-        <a href="{{ path('app_user_index') }}">Retour à la liste</a>
-        {{ include('user/_delete_form.html.twig') }}
-    </div>
+<div class="usr-delete-zone">
+    <p><i class="fas fa-exclamation-triangle me-1"></i> Zone dangereuse — action irréversible</p>
+    <form method="post" action="{{ path('app_user_delete', {id: user.id}) }}" data-confirm-title="Supprimer cet utilisateur" data-confirm="Cette action est irréversible. Voulez-vous continuer ?">
+        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ user.id) }}">
+        <button class="btn-del"><i class="fas fa-trash me-1"></i> Supprimer</button>
+    </form>
+</div>
 {% endblock %}

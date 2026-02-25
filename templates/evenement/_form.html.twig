@@ -1,53 +1,222 @@
-{{ form_start(form, {'attr': {'novalidate': 'novalidate'}}) }}
+<style>
+    .ev-form .form-label { font-weight:600; font-size:.78rem; color:#4b5563; text-transform:uppercase; letter-spacing:.03em; margin-bottom:.2rem; }
+    .ev-form .form-control, .ev-form .form-select { border-radius:8px; border:1.5px solid #e5e7eb; padding:.4rem .7rem; font-size:.85rem; transition:border-color .2s, box-shadow .2s; }
+    .ev-form .form-control:focus, .ev-form .form-select:focus { border-color:var(--ac-mid); box-shadow:0 0 0 3px rgba(28,29,171,.08); }
+    .ev-form .form-control.is-invalid, .ev-form .form-select.is-invalid { border-color:#ef4444; }
+    .ev-form .invalid-feedback, .ev-form .form-errors { color:#ef4444; font-size:.75rem; margin-top:.15rem; }
+    .ev-form .form-text { font-size:.72rem; color:#9ca3af; margin-top:.1rem; }
+    .ev-form .input-group-text { font-size:.82rem; padding:.4rem .6rem; }
+    .ev-form .fs { background:#f9fafb; border-radius:10px; padding:.85rem 1rem; margin-bottom:.75rem; border:1px solid #f3f4f6; }
+    .ev-form .fs-title { font-family:'Sora',sans-serif; font-weight:700; font-size:.82rem; color:var(--ac-deep); margin-bottom:.6rem; display:flex; align-items:center; gap:.4rem; }
+    .ev-form .fs-title i { color:var(--ac-lavender); font-size:.85rem; }
+    .ev-form .mb-f { margin-bottom:.6rem; }
+    .ev-form .btn-submit { background:linear-gradient(135deg,var(--ac-mid),var(--ac-blue)); border:none; border-radius:10px; padding:.5rem 1.5rem; font-weight:700; font-size:.88rem; color:#fff; transition:transform .15s, box-shadow .15s; }
+    .ev-form .btn-submit:hover { transform:translateY(-1px); box-shadow:0 4px 14px rgba(28,29,171,.2); color:#fff; }
+    .ev-form .layout-preview { background:#fff; border:1.5px dashed #d1d5db; border-radius:10px; padding:.6rem; text-align:center; color:#9ca3af; font-size:.78rem; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:.2rem; transition:all .3s; }
+    .ev-form .layout-preview.active { border-color:var(--ac-lavender); color:var(--ac-deep); background:#faf5ff; }
+    .ev-form .layout-preview i { font-size:1.1rem; }
+    .ev-form .nbplaces-note { background:linear-gradient(135deg,#eff6ff,#f0f9ff); border-radius:6px; padding:.3rem .5rem; font-size:.72rem; color:var(--ac-mid); display:none; align-items:center; gap:.3rem; margin-top:.15rem; }
+    .ev-form .nbplaces-note.show { display:flex; }
+</style>
+
+{{ form_start(form, {'attr': {'novalidate': 'novalidate', 'class': 'ev-form'}}) }}
+
+{# ---- General + Price ---- #}
+<div class="fs">
+    <div class="fs-title"><i class="fas fa-info-circle"></i> Informations générales</div>
     <div class="row">
-        <div class="col-md-12 mb-3">
+        <div class="col-12 mb-f">
             {{ form_label(form.titre) }}
-            {{ form_widget(form.titre, {'attr': {'class': 'form-control' ~ (form.titre.vars.valid ? '' : ' is-invalid')}}) }}
+            {{ form_widget(form.titre, {'attr': {'class': 'form-control' ~ (form.titre.vars.valid ? '' : ' is-invalid'), 'placeholder': 'Ex: Atelier Aquarelle pour enfants'}}) }}
             {{ form_errors(form.titre) }}
         </div>
-        <div class="col-md-12 mb-3">
+        <div class="col-12 mb-f">
             {{ form_label(form.description) }}
-            {{ form_widget(form.description, {'attr': {'class': 'form-control' ~ (form.description.vars.valid ? '' : ' is-invalid')}}) }}
+            {{ form_widget(form.description, {'attr': {'class': 'form-control' ~ (form.description.vars.valid ? '' : ' is-invalid'), 'rows': 3, 'placeholder': 'Décrivez votre événement...'}}) }}
             {{ form_errors(form.description) }}
         </div>
-        <div class="col-md-6 mb-3">
-            {{ form_label(form.dateDebut) }}
-            {{ form_widget(form.dateDebut, {'attr': {'class': 'form-control' ~ (form.dateDebut.vars.valid ? '' : ' is-invalid')}}) }}
-            {{ form_errors(form.dateDebut) }}
-        </div>
-        <div class="col-md-6 mb-3">
-            {{ form_label(form.dateFin) }}
-            {{ form_widget(form.dateFin, {'attr': {'class': 'form-control' ~ (form.dateFin.vars.valid ? '' : ' is-invalid')}}) }}
-            {{ form_errors(form.dateFin) }}
-        </div>
-        <div class="col-md-6 mb-3">
+        <div class="col-md-8 mb-f">
             {{ form_label(form.lieu) }}
-            {{ form_widget(form.lieu, {'attr': {'class': 'form-control' ~ (form.lieu.vars.valid ? '' : ' is-invalid')}}) }}
+            <div class="input-group">
+                <span class="input-group-text" style="border-radius:8px 0 0 8px; border:1.5px solid #e5e7eb; border-right:0; background:#f9fafb;"><i class="fas fa-map-marker-alt text-muted"></i></span>
+                {{ form_widget(form.lieu, {'attr': {'class': 'form-control' ~ (form.lieu.vars.valid ? '' : ' is-invalid'), 'style': 'border-radius:0 8px 8px 0; border-left:0;', 'placeholder': 'Ex: Salle des fêtes, Tunis'}}) }}
+            </div>
             {{ form_errors(form.lieu) }}
         </div>
-        <div class="col-md-3 mb-3">
-            {{ form_label(form.nbPlaces) }}
-            {{ form_widget(form.nbPlaces, {'attr': {'class': 'form-control' ~ (form.nbPlaces.vars.valid ? '' : ' is-invalid')}}) }}
-            {{ form_errors(form.nbPlaces) }}
-        </div>
-        <div class="col-md-3 mb-3">
+        <div class="col-md-4 mb-f">
             {{ form_label(form.prix) }}
-            {{ form_widget(form.prix, {'attr': {'class': 'form-control' ~ (form.prix.vars.valid ? '' : ' is-invalid')}}) }}
+            {{ form_widget(form.prix, {'attr': {'class': 'form-control' ~ (form.prix.vars.valid ? '' : ' is-invalid'), 'placeholder': '0.00'}}) }}
+            <span class="form-text">Vide = gratuit</span>
             {{ form_errors(form.prix) }}
         </div>
-        <div class="col-md-3 mb-3">
-            {{ form_label(form.ageMin) }}
-            {{ form_widget(form.ageMin, {'attr': {'class': 'form-control' ~ (form.ageMin.vars.valid ? '' : ' is-invalid')}}) }}
-            {{ form_errors(form.ageMin) }}
+    </div>
+</div>
+
+{# ---- Dates + Capacity in one row ---- #}
+<div class="fs">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="fs-title"><i class="fas fa-calendar-alt"></i> Dates</div>
+            <div class="row">
+                <div class="col-6 mb-f">
+                    {{ form_label(form.dateDebut) }}
+                    {{ form_widget(form.dateDebut, {'attr': {'class': 'form-control' ~ (form.dateDebut.vars.valid ? '' : ' is-invalid')}}) }}
+                    {{ form_errors(form.dateDebut) }}
+                </div>
+                <div class="col-6 mb-f">
+                    {{ form_label(form.dateFin) }}
+                    {{ form_widget(form.dateFin, {'attr': {'class': 'form-control' ~ (form.dateFin.vars.valid ? '' : ' is-invalid')}}) }}
+                    {{ form_errors(form.dateFin) }}
+                </div>
+            </div>
         </div>
-        <div class="col-md-3 mb-3">
-            {{ form_label(form.ageMax) }}
-            {{ form_widget(form.ageMax, {'attr': {'class': 'form-control' ~ (form.ageMax.vars.valid ? '' : ' is-invalid')}}) }}
-            {{ form_errors(form.ageMax) }}
+        <div class="col-md-6">
+            <div class="fs-title"><i class="fas fa-users"></i> Capacité & Public</div>
+            <div class="row">
+                <div class="col-4 mb-f">
+                    {{ form_label(form.nbPlaces) }}
+                    {{ form_widget(form.nbPlaces, {'attr': {'class': 'form-control' ~ (form.nbPlaces.vars.valid ? '' : ' is-invalid')}}) }}
+                    {{ form_errors(form.nbPlaces) }}
+                    <div class="nbplaces-note" id="nbplacesNote"><i class="fas fa-info-circle"></i> Auto</div>
+                </div>
+                <div class="col-4 mb-f">
+                    {{ form_label(form.ageMin) }}
+                    {{ form_widget(form.ageMin, {'attr': {'class': 'form-control' ~ (form.ageMin.vars.valid ? '' : ' is-invalid'), 'placeholder': '5'}}) }}
+                    {{ form_errors(form.ageMin) }}
+                </div>
+                <div class="col-4 mb-f">
+                    {{ form_label(form.ageMax) }}
+                    {{ form_widget(form.ageMax, {'attr': {'class': 'form-control' ~ (form.ageMax.vars.valid ? '' : ' is-invalid'), 'placeholder': '16'}}) }}
+                    {{ form_errors(form.ageMax) }}
+                </div>
+            </div>
         </div>
     </div>
-    
-    <div class="d-grid mt-4">
-        <button type="submit" class="btn btn-primary btn-lg">{{ button_label|default('Enregistrer') }}</button>
+</div>
+
+{# ---- Image + Seat Layout in one row ---- #}
+<div class="fs">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="fs-title"><i class="fas fa-image"></i> Visuel</div>
+            <div class="row align-items-center">
+                <div class="col-8 mb-f">
+                    {{ form_label(form.image) }}
+                    <div class="input-group">
+                        <span class="input-group-text" style="border-radius:8px 0 0 8px; border:1.5px solid #e5e7eb; border-right:0; background:#f9fafb;"><i class="fas fa-link text-muted"></i></span>
+                        {{ form_widget(form.image, {'attr': {'class': 'form-control' ~ (form.image.vars.valid ? '' : ' is-invalid'), 'style': 'border-radius:0 8px 8px 0; border-left:0;', 'placeholder': 'https://...'}}) }}
+                    </div>
+                    {{ form_errors(form.image) }}
+                </div>
+                <div class="col-4 mb-f">
+                    <div id="imagePreview" style="width:100%; height:64px; border-radius:8px; overflow:hidden; background:#f3f4f6; display:flex; align-items:center; justify-content:center; border:1.5px dashed #d1d5db;">
+                        <span style="color:#9ca3af; font-size:.7rem;"><i class="fas fa-eye"></i></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="fs-title"><i class="fas fa-chair"></i> Plan de salle <span style="font-weight:400; font-size:.72rem; color:#9ca3af;">(optionnel)</span></div>
+            <div class="row">
+                <div class="col-12 mb-f">
+                    {{ form_widget(form.layoutType, {'attr': {'class': 'form-select'}}) }}
+                </div>
+                <div class="col-6 mb-f" id="layoutRowsWrap">
+                    {{ form_label(form.layoutRows) }}
+                    {{ form_widget(form.layoutRows, {'attr': {'class': 'form-control'}}) }}
+                    {{ form_errors(form.layoutRows) }}
+                </div>
+                <div class="col-6 mb-f" id="layoutColsWrap">
+                    {{ form_label(form.layoutCols) }}
+                    {{ form_widget(form.layoutCols, {'attr': {'class': 'form-control'}}) }}
+                    {{ form_errors(form.layoutCols) }}
+                </div>
+            </div>
+            <div id="layoutPreviewRow" style="display:none;">
+                <div class="layout-preview" id="layoutPreview">
+                    <i class="fas fa-couch"></i>
+                    <span>Choisir un type</span>
+                </div>
+            </div>
+        </div>
     </div>
+</div>
+
+{# ---- Submit ---- #}
+<div class="d-flex justify-content-between align-items-center mt-1">
+    <a href="{{ path('app_evenement_index') }}" class="btn btn-outline-secondary btn-sm" style="border-radius:8px;">
+        <i class="fas fa-arrow-left me-1"></i> Retour
+    </a>
+    <button type="submit" class="btn btn-submit">
+        <span class="btn-label"><i class="fas fa-check me-1"></i> {{ button_label|default('Enregistrer') }}</span>
+        <span class="btn-spinner" style="display:none;" aria-hidden="true"><i class="fas fa-spinner fa-spin me-1"></i> Enregistrement...</span>
+    </button>
+</div>
+
 {{ form_end(form) }}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var lt = document.getElementById('{{ form.layoutType.vars.id }}');
+    var rw = document.getElementById('layoutRowsWrap');
+    var cw = document.getElementById('layoutColsWrap');
+    var pvRow = document.getElementById('layoutPreviewRow');
+    var pv = document.getElementById('layoutPreview');
+    var rowsIn = document.getElementById('{{ form.layoutRows.vars.id }}');
+    var colsIn = document.getElementById('{{ form.layoutCols.vars.id }}');
+    var nbField = document.getElementById('{{ form.nbPlaces.vars.id }}');
+    var nbNote = document.getElementById('nbplacesNote');
+
+    function updateLayout() {
+        var v = lt.value;
+        rw.style.display = v ? '' : 'none';
+        cw.style.display = v ? '' : 'none';
+        pvRow.style.display = v ? '' : 'none';
+        updatePreview();
+    }
+
+    function updatePreview() {
+        var v = lt.value, rows = parseInt(rowsIn.value)||0, cols = parseInt(colsIn.value)||0, total = rows*cols;
+        if (v && rows > 0 && cols > 0) {
+            nbField.value = total;
+            nbNote.classList.add('show');
+            pv.classList.add('active');
+            var icon = v === 'theatre' ? 'fa-theater-masks' : 'fa-circle';
+            var unit1 = v === 'theatre' ? 'rangées' : 'tables';
+            var unit2 = v === 'theatre' ? 'sièges' : 'chaises';
+            pv.innerHTML = '<i class="fas '+icon+'" style="font-size:1.1rem; color:var(--ac-lavender);"></i><strong>'+rows+' '+unit1+' × '+cols+' '+unit2+' = '+total+' places</strong>';
+        } else if (v) {
+            pv.classList.remove('active');
+            pv.innerHTML = '<i class="fas fa-couch" style="color:#d1d5db;"></i><span>Remplir les champs</span>';
+            nbNote.classList.remove('show');
+        } else {
+            nbNote.classList.remove('show');
+        }
+    }
+
+    lt.addEventListener('change', updateLayout);
+    rowsIn.addEventListener('input', updatePreview);
+    colsIn.addEventListener('input', updatePreview);
+    updateLayout();
+
+    var imgInput = document.getElementById('{{ form.image.vars.id }}');
+    var imgPreview = document.getElementById('imagePreview');
+    function refreshImg() {
+        var url = (imgInput.value||'').trim();
+        if (url && url.startsWith('http')) {
+            var img = document.createElement('img');
+            img.src = url;
+            img.style.cssText = 'width:100%;height:64px;object-fit:cover;';
+            img.onerror = function() {
+                imgPreview.innerHTML = '<span style="color:#ef4444;font-size:.7rem;">Image introuvable</span>';
+            };
+            imgPreview.innerHTML = '';
+            imgPreview.appendChild(img);
+        } else {
+            imgPreview.innerHTML = '<span style="color:#9ca3af;font-size:.7rem;"><i class="fas fa-eye"></i></span>';
+        }
+    }
+    imgInput.addEventListener('input', refreshImg);
+    refreshImg();
+});
+</script>

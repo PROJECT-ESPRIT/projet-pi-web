@@ -1,50 +1,293 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Utilisateur{% endblock %}
+{% block title %}{{ user.prenom }} {{ user.nom }} — Art Connect{% endblock %}
 
 {% block body %}
-    <h1>Utilisateur</h1>
+<style>
+    .up-back { display:inline-flex; align-items:center; gap:.4rem; font-size:.85rem; font-weight:600; color:var(--ac-mid); text-decoration:none; margin-bottom:1rem; }
+    .up-back:hover { color:var(--ac-deep); }
 
-    <table class="table">
-        <tbody>
-            <tr>
-                <th>Id</th>
-                <td>{{ user.id }}</td>
-            </tr>
-            <tr>
-                <th>Email</th>
-                <td>{{ user.email }}</td>
-            </tr>
-            <tr>
-                <th>Rôles</th>
-                <td>
-                    {% for role in user.roles %}
-                        <span class="badge bg-secondary">{{ role|replace({'ROLE_': ''}) }}</span>
-                    {% endfor %}
-                </td>
-            </tr>
-            <tr>
-                <th>Nom</th>
-                <td>{{ user.nom }}</td>
-            </tr>
-            <tr>
-                <th>Prénom</th>
-                <td>{{ user.prenom }}</td>
-            </tr>
-            <tr>
-                <th>Téléphone</th>
-                <td>{{ user.telephone }}</td>
-            </tr>
-            <tr>
-                <th>Date de création</th>
-                <td>{{ user.createdAt ? user.createdAt|date('Y-m-d H:i:s') : '' }}</td>
-            </tr>
-        </tbody>
-    </table>
+    .up-hero { display:flex; align-items:center; gap:1.25rem; background:#fff; border-radius:16px; padding:1.25rem 1.5rem; box-shadow:0 2px 12px rgba(0,0,0,.04); border:1px solid #f0f0f0; margin-bottom:1rem; }
+    .up-avatar { width:72px; height:72px; border-radius:50%; background:linear-gradient(135deg,var(--ac-mid),var(--ac-blue)); color:#fff; display:flex; align-items:center; justify-content:center; font-family:'Sora',sans-serif; font-weight:800; font-size:1.5rem; flex-shrink:0; }
+    .up-hero-info h1 { font-family:'Sora',sans-serif; font-weight:700; font-size:1.3rem; color:var(--ac-deep); margin:0 0 .2rem; }
+    .up-hero-meta { display:flex; flex-wrap:wrap; gap:.6rem; font-size:.82rem; color:#6b7280; }
+    .up-hero-meta i { margin-right:.2rem; }
 
-    <div class="mt-3">
-        <a href="{{ path('app_user_index') }}" class="btn btn-secondary">Retour</a>
-        <a href="{{ path('app_user_edit', {'id': user.id}) }}" class="btn btn-warning">Éditer</a>
-        {{ include('user/_delete_form.html.twig') }}
+    .up-grid { display:grid; grid-template-columns:1fr 320px; gap:1rem; }
+    @media(max-width:992px) { .up-grid { grid-template-columns:1fr; } }
+
+    .up-card { background:#fff; border-radius:14px; padding:1.1rem 1.25rem; box-shadow:0 2px 10px rgba(0,0,0,.04); border:1px solid #f0f0f0; margin-bottom:1rem; }
+    .up-card h5 { font-family:'Sora',sans-serif; font-weight:700; font-size:.88rem; color:var(--ac-deep); margin-bottom:.75rem; display:flex; align-items:center; gap:.4rem; }
+    .up-card h5 i { color:var(--ac-lavender); }
+
+    .up-info-row { display:flex; justify-content:space-between; align-items:center; padding:.4rem 0; border-bottom:1px solid #f9fafb; font-size:.82rem; }
+    .up-info-row:last-child { border-bottom:none; }
+    .up-info-row .up-lbl { color:#6b7280; font-weight:600; }
+    .up-info-row .up-val { font-weight:700; color:#1f2937; }
+
+    .up-mini-table { width:100%; font-size:.8rem; }
+    .up-mini-table th { font-weight:700; color:#6b7280; font-size:.7rem; text-transform:uppercase; letter-spacing:.03em; padding:.35rem .5rem; border-bottom:2px solid #f3f4f6; }
+    .up-mini-table td { padding:.4rem .5rem; border-bottom:1px solid #f9fafb; color:#374151; }
+    .up-mini-table tr:last-child td { border-bottom:none; }
+
+    .up-empty { text-align:center; color:#9ca3af; font-size:.82rem; padding:.75rem 0; }
+    .up-empty i { display:block; font-size:1.2rem; margin-bottom:.3rem; }
+
+    .up-actions .btn { border-radius:10px; font-size:.82rem; font-weight:600; }
+</style>
+
+<a href="{{ path('app_user_index') }}" class="up-back"><i class="fas fa-arrow-left"></i> Retour aux utilisateurs</a>
+
+{# ---- HERO ---- #}
+<div class="up-hero">
+    <div class="up-avatar">{{ user.prenom|first|upper }}{{ user.nom|first|upper }}</div>
+    <div class="up-hero-info">
+        <h1>{{ user.prenom }} {{ user.nom }}</h1>
+        <div class="up-hero-meta">
+            <span><i class="fas fa-envelope"></i> {{ user.email }}</span>
+            {% if user.telephone %}<span><i class="fas fa-phone"></i> {{ user.telephone }}</span>{% endif %}
+            <span><i class="fas fa-calendar"></i> Inscrit le {{ user.createdAt ? user.createdAt|date('d/m/Y') : '—' }}</span>
+            {% for role in user.roles %}
+                {% if role == 'ROLE_ADMIN' %}
+                    <span class="badge bg-danger" style="font-size:.72rem;">Admin</span>
+                {% elseif role == 'ROLE_ARTISTE' %}
+                    <span class="badge bg-primary" style="font-size:.72rem;">Artiste</span>
+                {% elseif role == 'ROLE_PARTICIPANT' %}
+                    <span class="badge bg-success" style="font-size:.72rem;">Participant</span>
+                {% elseif role != 'ROLE_USER' %}
+                    <span class="badge bg-secondary" style="font-size:.72rem;">{{ role|replace({'ROLE_':''})|title }}</span>
+                {% endif %}
+            {% endfor %}
+            {% if user.status == 'APPROVED' %}
+                <span class="badge bg-success bg-opacity-75" style="font-size:.72rem;"><i class="fas fa-check me-1"></i>Approuvé</span>
+            {% elseif user.status == 'EMAIL_PENDING' %}
+                <span class="badge bg-secondary bg-opacity-75" style="font-size:.72rem;"><i class="fas fa-envelope me-1"></i>Email non vérifié</span>
+            {% elseif user.status == 'EMAIL_VERIFIED' %}
+                <span class="badge bg-warning text-dark" style="font-size:.72rem;"><i class="fas fa-clock me-1"></i>En attente admin</span>
+            {% elseif user.status == 'REJECTED' %}
+                <span class="badge bg-danger" style="font-size:.72rem;"><i class="fas fa-times me-1"></i>Refusé</span>
+            {% elseif user.status == 'SUSPENDED' %}
+                <span class="badge bg-dark" style="font-size:.72rem;"><i class="fas fa-ban me-1"></i>Suspendu</span>
+            {% endif %}
+        </div>
     </div>
+</div>
+
+{# ---- GRID ---- #}
+<div class="up-grid">
+    {# ---- LEFT COLUMN ---- #}
+    <div>
+        {# Reservations #}
+        <div class="up-card">
+            <h5><i class="fas fa-ticket-alt"></i> Réservations <span class="badge bg-primary bg-opacity-75 ms-1" style="font-size:.68rem;">{{ user.reservations|length }}</span></h5>
+            {% if user.reservations|length > 0 %}
+                <table class="up-mini-table">
+                    <thead><tr><th>Événement</th><th>Date</th><th>Place</th><th>Statut</th></tr></thead>
+                    <tbody>
+                        {% for res in user.reservations %}
+                        <tr>
+                            <td>
+                                <a href="{{ path('app_evenement_show', {id: res.evenement.id}) }}" style="color:var(--ac-mid); font-weight:600; text-decoration:none;">
+                                    {{ res.evenement.titre|length > 30 ? res.evenement.titre|slice(0,30) ~ '…' : res.evenement.titre }}
+                                </a>
+                            </td>
+                            <td>{{ res.evenement.dateDebut|date('d/m/Y') }}</td>
+                            <td>{% if res.seatLabel %}<span class="badge bg-info" style="font-size:.68rem;">{{ res.seatLabel }}</span>{% else %}—{% endif %}</td>
+                            <td>
+                                {% if res.status == 'CONFIRMED' %}<span class="badge bg-success" style="font-size:.65rem;">Confirmé</span>
+                                {% elseif res.status == 'CANCELLED' %}<span class="badge bg-danger" style="font-size:.65rem;">Annulé</span>
+                                {% else %}<span class="badge bg-secondary" style="font-size:.65rem;">{{ res.status }}</span>{% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <div class="up-empty"><i class="fas fa-inbox"></i> Aucune réservation</div>
+            {% endif %}
+        </div>
+
+        {# Events organized (if artiste) #}
+        {% if user.evenements|length > 0 %}
+        <div class="up-card">
+            <h5><i class="fas fa-calendar-alt"></i> Événements organisés <span class="badge bg-primary bg-opacity-75 ms-1" style="font-size:.68rem;">{{ user.evenements|length }}</span></h5>
+            <table class="up-mini-table">
+                <thead><tr><th>Titre</th><th>Date</th><th>Lieu</th><th>Places</th><th>Rés.</th></tr></thead>
+                <tbody>
+                    {% for ev in user.evenements %}
+                    <tr>
+                        <td>
+                            <a href="{{ path('app_evenement_show', {id: ev.id}) }}" style="color:var(--ac-mid); font-weight:600; text-decoration:none;">
+                                {{ ev.titre|length > 25 ? ev.titre|slice(0,25) ~ '…' : ev.titre }}
+                            </a>
+                        </td>
+                        <td>{{ ev.dateDebut|date('d/m/Y') }}</td>
+                        <td style="font-size:.75rem;">{{ ev.lieu|length > 20 ? ev.lieu|slice(0,20) ~ '…' : ev.lieu }}</td>
+                        <td>{{ ev.nbPlaces }}</td>
+                        <td><span class="badge bg-info" style="font-size:.65rem;">{{ ev.reservations|length }}</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+        {# Donations #}
+        {% if user.donations|length > 0 %}
+        <div class="up-card">
+            <h5><i class="fas fa-hand-holding-heart"></i> Donations <span class="badge bg-primary bg-opacity-75 ms-1" style="font-size:.68rem;">{{ user.donations|length }}</span></h5>
+            <table class="up-mini-table">
+                <thead><tr><th>Type</th><th>Description</th><th>Date</th></tr></thead>
+                <tbody>
+                    {% for don in user.donations %}
+                    <tr>
+                        <td><span class="badge bg-warning text-dark" style="font-size:.65rem;">{{ don.type.libelle }}</span></td>
+                        <td>{{ don.description|length > 40 ? don.description|slice(0,40) ~ '…' : don.description }}</td>
+                        <td>{{ don.dateDon|date('d/m/Y') }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+        {# Orders #}
+        {% if user.commandes|length > 0 %}
+        <div class="up-card">
+            <h5><i class="fas fa-shopping-bag"></i> Commandes <span class="badge bg-primary bg-opacity-75 ms-1" style="font-size:.68rem;">{{ user.commandes|length }}</span></h5>
+            <table class="up-mini-table">
+                <thead><tr><th>#</th><th>Total</th><th>Date</th></tr></thead>
+                <tbody>
+                    {% for cmd in user.commandes %}
+                    <tr>
+                        <td class="fw-bold">#{{ cmd.id }}</td>
+                        <td>{{ cmd.total|number_format(2, '.', ' ') }} TND</td>
+                        <td>{{ cmd.createdAt ? cmd.createdAt|date('d/m/Y') : '—' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+    </div>
+
+    {# ---- RIGHT SIDEBAR ---- #}
+    <div>
+        {# Details card #}
+        <div class="up-card">
+            <h5><i class="fas fa-id-card"></i> Informations</h5>
+            <div class="up-info-row">
+                <span class="up-lbl">ID</span>
+                <span class="up-val">#{{ user.id }}</span>
+            </div>
+            <div class="up-info-row">
+                <span class="up-lbl">Prénom</span>
+                <span class="up-val">{{ user.prenom }}</span>
+            </div>
+            <div class="up-info-row">
+                <span class="up-lbl">Nom</span>
+                <span class="up-val">{{ user.nom }}</span>
+            </div>
+            <div class="up-info-row">
+                <span class="up-lbl">Email</span>
+                <span class="up-val" style="font-size:.78rem;">{{ user.email }}</span>
+            </div>
+            <div class="up-info-row">
+                <span class="up-lbl">Téléphone</span>
+                <span class="up-val">{{ user.telephone ?? '—' }}</span>
+            </div>
+            <div class="up-info-row">
+                <span class="up-lbl">Inscription</span>
+                <span class="up-val">{{ user.createdAt ? user.createdAt|date('d/m/Y H:i') : '—' }}</span>
+            </div>
+            <div class="up-info-row">
+                <span class="up-lbl">Statut</span>
+                <span class="up-val">
+                    {% if user.status == 'APPROVED' %}<span class="badge bg-success" style="font-size:.7rem;">Approuvé</span>
+                    {% elseif user.status == 'EMAIL_PENDING' %}<span class="badge bg-secondary" style="font-size:.7rem;">Email non vérifié</span>
+                    {% elseif user.status == 'EMAIL_VERIFIED' %}<span class="badge bg-warning text-dark" style="font-size:.7rem;">En attente admin</span>
+                    {% elseif user.status == 'REJECTED' %}<span class="badge bg-danger" style="font-size:.7rem;">Refusé</span>
+                    {% elseif user.status == 'SUSPENDED' %}<span class="badge bg-dark" style="font-size:.7rem;">Suspendu</span>
+                    {% else %}<span class="badge bg-secondary" style="font-size:.7rem;">{{ user.status }}</span>{% endif %}
+                </span>
+            </div>
+            <div class="up-info-row">
+                <span class="up-lbl">Rôles</span>
+                <span class="up-val">
+                    {% for role in user.roles %}
+                        {% if role == 'ROLE_ADMIN' %}<span class="badge bg-danger" style="font-size:.65rem;">Admin</span>
+                        {% elseif role == 'ROLE_ARTISTE' %}<span class="badge bg-primary" style="font-size:.65rem;">Artiste</span>
+                        {% elseif role == 'ROLE_PARTICIPANT' %}<span class="badge bg-success" style="font-size:.65rem;">Participant</span>
+                        {% elseif role != 'ROLE_USER' %}<span class="badge bg-secondary" style="font-size:.65rem;">{{ role|replace({'ROLE_':''})|title }}</span>{% endif %}
+                    {% endfor %}
+                </span>
+            </div>
+        </div>
+
+        {# Activity summary #}
+        <div class="up-card">
+            <h5><i class="fas fa-chart-pie"></i> Activité</h5>
+            <div class="up-info-row">
+                <span class="up-lbl">Réservations</span>
+                <span class="up-val">{{ user.reservations|length }}</span>
+            </div>
+            <div class="up-info-row">
+                <span class="up-lbl">Événements créés</span>
+                <span class="up-val">{{ user.evenements|length }}</span>
+            </div>
+            <div class="up-info-row">
+                <span class="up-lbl">Donations</span>
+                <span class="up-val">{{ user.donations|length }}</span>
+            </div>
+            <div class="up-info-row">
+                <span class="up-lbl">Commandes</span>
+                <span class="up-val">{{ user.commandes|length }}</span>
+            </div>
+        </div>
+
+        {# Status management #}
+        {% if user.status != 'APPROVED' or true %}
+        <div class="up-card">
+            <h5><i class="fas fa-user-check"></i> Validation</h5>
+            <div class="d-grid gap-2">
+                {% if user.status in ['EMAIL_VERIFIED', 'REJECTED', 'SUSPENDED'] %}
+                    <form method="post" action="{{ path('app_user_approve', {id: user.id}) }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token('approve' ~ user.id) }}">
+                        <button class="btn btn-success btn-sm w-100" style="border-radius:8px;"><i class="fas fa-check me-1"></i> Approuver</button>
+                    </form>
+                {% endif %}
+                {% if user.status == 'EMAIL_VERIFIED' %}
+                    <form method="post" action="{{ path('app_user_reject', {id: user.id}) }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token('reject' ~ user.id) }}">
+                        <button class="btn btn-danger btn-sm w-100" style="border-radius:8px;"><i class="fas fa-times me-1"></i> Refuser</button>
+                    </form>
+                {% endif %}
+                {% if user.status == 'APPROVED' %}
+                    <form method="post" action="{{ path('app_user_suspend', {id: user.id}) }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token('suspend' ~ user.id) }}">
+                        <button class="btn btn-dark btn-sm w-100" style="border-radius:8px;"><i class="fas fa-ban me-1"></i> Suspendre</button>
+                    </form>
+                {% endif %}
+                {% if user.status == 'EMAIL_PENDING' %}
+                    <p class="text-muted text-center mb-0" style="font-size:.8rem;">
+                        <i class="fas fa-info-circle me-1"></i> L'utilisateur n'a pas encore vérifié son email.
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        {# Actions #}
+        <div class="up-card up-actions">
+            <h5><i class="fas fa-cog"></i> Gestion</h5>
+            <div class="d-grid gap-2">
+                <a href="{{ path('app_user_edit', {id: user.id}) }}" class="btn btn-outline-warning"><i class="fas fa-pen me-1"></i> Modifier</a>
+                <form method="post" action="{{ path('app_user_delete', {id: user.id}) }}" data-confirm-title="Supprimer cet utilisateur" data-confirm="Cette action est irréversible. Voulez-vous continuer ?">
+                    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ user.id) }}">
+                    <button class="btn btn-outline-danger w-100"><i class="fas fa-trash me-1"></i> Supprimer</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
