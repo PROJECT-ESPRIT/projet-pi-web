@@ -1,72 +1,106 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Inscription - Plateforme de Réservation{% endblock %}
+{% block title %}Inscription — Art Connect{% endblock %}
+
+{% block guest_wrapper_open %}{% endblock %}
+{% block guest_wrapper_close %}{% endblock %}
 
 {% block body %}
-<div class="row justify-content-center">
-    <div class="col-md-6 col-lg-5">
-        <div class="card shadow">
-            <div class="card-body p-4">
-                <h2 class="card-title text-center mb-4">Inscription</h2>
-                
-                {{ form_start(registrationForm, {'attr': {'novalidate': 'novalidate'}}) }}
-                    {% if return_to is defined and return_to %}
-                        <input type="hidden" name="return_to" value="{{ return_to }}">
-                    {% endif %}
-                    <div class="mb-3">
-                        {{ form_label(registrationForm.email) }}
-                        {{ form_widget(registrationForm.email) }}
-                        {{ form_errors(registrationForm.email) }}
-                    </div>
+{% include 'security/_auth_styles.html.twig' %}
 
-                    <div class="mb-3">
-                        {{ form_label(registrationForm.nom) }}
-                        {{ form_widget(registrationForm.nom) }}
-                        {{ form_errors(registrationForm.nom) }}
-                    </div>
+<div class="auth-page">
+    <div class="auth-card wide">
+        <div class="auth-brand">
+            <i class="fas fa-palette"></i><span>Art Connect</span>
+        </div>
 
-                    <div class="mb-3">
-                        {{ form_label(registrationForm.prenom) }}
-                        {{ form_widget(registrationForm.prenom) }}
-                        {{ form_errors(registrationForm.prenom) }}
-                    </div>
+        <h2>Créer un compte</h2>
+        <p class="auth-sub">Rejoignez la communauté Art Connect</p>
 
-                    <div class="mb-3">
-                        {{ form_label(registrationForm.telephone) }}
-                        {{ form_widget(registrationForm.telephone) }}
-                        {{ form_errors(registrationForm.telephone) }}
-                    </div>
+        <a href="#" class="btn-social" onclick="return false;">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+            S'inscrire avec Google
+        </a>
 
-                    <div class="mb-3">
-                        {{ form_label(registrationForm.role) }}
-                        {{ form_widget(registrationForm.role) }}
-                        {{ form_errors(registrationForm.role) }}
-                    </div>
+        <div class="auth-divider">ou</div>
 
-                    <div class="mb-3">
-                        {{ form_label(registrationForm.plainPassword.first) }}
-                        {{ form_widget(registrationForm.plainPassword.first) }}
-                        {{ form_errors(registrationForm.plainPassword.first) }}
-                    </div>
+        {{ form_start(registrationForm, {'attr': {'novalidate': 'novalidate'}}) }}
 
-                    <div class="mb-4">
-                        {{ form_label(registrationForm.plainPassword.second) }}
-                        {{ form_widget(registrationForm.plainPassword.second) }}
-                        {{ form_errors(registrationForm.plainPassword.second) }}
+            <div class="af-row">
+                <div class="af">
+                    <label for="{{ registrationForm.prenom.vars.id }}">Prénom</label>
+                    <div class="af-wrap">
+                        <i class="fas fa-user af-icon"></i>
+                        {{ form_widget(registrationForm.prenom, {'attr': {'class': 'form-control', 'placeholder': 'Prénom'}}) }}
                     </div>
-
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-primary btn-lg">S'inscrire</button>
+                    {{ form_errors(registrationForm.prenom) }}
+                </div>
+                <div class="af">
+                    <label for="{{ registrationForm.nom.vars.id }}">Nom</label>
+                    <div class="af-wrap">
+                        <i class="fas fa-user af-icon"></i>
+                        {{ form_widget(registrationForm.nom, {'attr': {'class': 'form-control', 'placeholder': 'Nom'}}) }}
                     </div>
-                {{ form_end(registrationForm) }}
-
-                <div class="text-center mt-3">
-                    <p class="mb-0">
-                        Déjà un compte ?
-                        <a href="{{ path('login', return_to is defined and return_to ? {'return_to': return_to} : {}) }}">Connectez-vous</a>
-                    </p>
+                    {{ form_errors(registrationForm.nom) }}
                 </div>
             </div>
+
+            <div class="af">
+                <label for="{{ registrationForm.email.vars.id }}">Email</label>
+                <div class="af-wrap">
+                    <i class="fas fa-envelope af-icon"></i>
+                    {{ form_widget(registrationForm.email, {'attr': {'class': 'form-control', 'placeholder': 'votre@email.com'}}) }}
+                </div>
+                {{ form_errors(registrationForm.email) }}
+            </div>
+
+            <div class="af-row">
+                <div class="af">
+                    <label for="{{ registrationForm.telephone.vars.id }}">Téléphone</label>
+                    <div class="af-wrap">
+                        <i class="fas fa-phone af-icon"></i>
+                        {{ form_widget(registrationForm.telephone, {'attr': {'class': 'form-control', 'placeholder': '+216 XX XXX XXX'}}) }}
+                    </div>
+                    {{ form_errors(registrationForm.telephone) }}
+                </div>
+                <div class="af">
+                    <label for="{{ registrationForm.role.vars.id }}">Je suis</label>
+                    <div class="af-wrap">
+                        <i class="fas fa-masks-theater af-icon"></i>
+                        {{ form_widget(registrationForm.role, {'attr': {'class': 'form-select'}}) }}
+                    </div>
+                    {{ form_errors(registrationForm.role) }}
+                </div>
+            </div>
+
+            <div class="af-row">
+                <div class="af">
+                    <label for="{{ registrationForm.plainPassword.first.vars.id }}">Mot de passe</label>
+                    <div class="af-wrap">
+                        <i class="fas fa-lock af-icon"></i>
+                        {{ form_widget(registrationForm.plainPassword.first, {'attr': {'class': 'form-control', 'placeholder': 'Min. 6 car.'}}) }}
+                    </div>
+                    {{ form_errors(registrationForm.plainPassword.first) }}
+                </div>
+                <div class="af">
+                    <label for="{{ registrationForm.plainPassword.second.vars.id }}">Confirmer</label>
+                    <div class="af-wrap">
+                        <i class="fas fa-lock af-icon"></i>
+                        {{ form_widget(registrationForm.plainPassword.second, {'attr': {'class': 'form-control', 'placeholder': 'Confirmer'}}) }}
+                    </div>
+                    {{ form_errors(registrationForm.plainPassword.second) }}
+                </div>
+            </div>
+
+            <button type="submit" class="btn-auth mt-1">
+                <span class="btn-label">Créer mon compte</span>
+                <span class="btn-spinner" style="display:none;" aria-hidden="true"><i class="fas fa-spinner fa-spin"></i></span>
+            </button>
+
+        {{ form_end(registrationForm) }}
+
+        <div class="auth-footer">
+            Déjà un compte ? <a href="{{ path('login') }}">Se connecter</a>
         </div>
     </div>
 </div>

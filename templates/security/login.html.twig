@@ -1,58 +1,90 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Connexion - Plateforme de Réservation{% endblock %}
+{% block title %}Connexion — Art Connect{% endblock %}
+
+{% block guest_wrapper_open %}{% endblock %}
+{% block guest_wrapper_close %}{% endblock %}
 
 {% block body %}
-<div class="row justify-content-center">
-    <div class="col-md-5 col-lg-4">
-        <div class="card shadow">
-            <div class="card-body p-4">
-                <h2 class="card-title text-center mb-4">Connexion</h2>
+{% include 'security/_auth_styles.html.twig' %}
 
-                <div class="alert alert-info">
-                    Les comptes artistes doivent etre valides par l'admin avant la connexion.
-                </div>
-                
-                {% if error %}
-                    <div class="alert alert-danger">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
-                {% endif %}
+<div class="auth-page">
+    <div class="auth-card narrow">
+        <div class="auth-brand">
+            <i class="fas fa-palette"></i><span>Art Connect</span>
+        </div>
 
-                <form method="post" novalidate>
-                    <div class="mb-3">
-                        <label for="inputEmail" class="form-label">Email</label>
-                        <input type="email" value="{{ last_username }}" name="_username" id="inputEmail" 
-                               class="form-control" autocomplete="email" autofocus
-                               placeholder="votre.email@example.com">
-                    </div>
+        <p class="auth-sub">Connectez-vous à votre espace</p>
 
-                    <div class="mb-4">
-                        <label for="inputPassword" class="form-label">Mot de passe</label>
-                        <input type="password" name="_password" id="inputPassword" 
-                               class="form-control" autocomplete="current-password"
-                               placeholder="Votre mot de passe">
-                        <div class="text-end mt-2">
-                            <a href="{{ path('app_forgot_password') }}" class="small">Mot de passe oublie ?</a>
-                        </div>
-                    </div>
+        <a href="#" class="btn-social" onclick="return false;">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+            Continuer avec Google
+        </a>
 
-                    <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
-                    {% if return_to is defined and return_to %}
-                        <input type="hidden" name="_target_path" value="{{ return_to }}">
-                    {% endif %}
+        <div class="auth-divider">ou</div>
 
-                    <div class="d-grid">
-                        <button class="btn btn-primary btn-lg" type="submit">Se connecter</button>
-                    </div>
-                </form>
-
-                <div class="text-center mt-3">
-                    <p class="mb-0">
-                        Pas encore de compte ?
-                        <a href="{{ path('register', return_to is defined and return_to ? {'return_to': return_to} : {}) }}">Inscrivez-vous</a>
-                    </p>
+        <form method="post" novalidate>
+            <div class="af">
+                <label for="inputEmail">Email</label>
+                <div class="af-wrap">
+                    <i class="fas fa-envelope af-icon"></i>
+                    <input type="email" value="{{ last_username }}" name="_username" id="inputEmail"
+                           class="form-control" autocomplete="email" autofocus placeholder="votre@email.com">
                 </div>
             </div>
+
+            <div class="af">
+                <label for="inputPassword">Mot de passe</label>
+                <div class="af-wrap">
+                    <i class="fas fa-lock af-icon"></i>
+                    <input type="password" name="_password" id="inputPassword"
+                           class="form-control" autocomplete="current-password" placeholder="Votre mot de passe">
+                </div>
+                <div class="text-end mt-1">
+                    <a href="{{ path('app_forgot_password') }}" class="auth-link">Mot de passe oublié ?</a>
+                </div>
+            </div>
+
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+
+            <button type="submit" class="btn-auth mt-1">
+                <span class="btn-label">Se connecter</span>
+                <span class="btn-spinner" style="display:none;" aria-hidden="true"><i class="fas fa-spinner fa-spin"></i></span>
+            </button>
+        </form>
+
+        {% if error %}
+            {% set errMsg = error.messageKey|trans(error.messageData, 'security') %}
+            {% if 'vérifier votre adresse email' in errMsg|lower %}
+                <div class="text-center mt-2">
+                    <a href="{{ path('app_registration_confirmation', {email: last_username}) }}" class="auth-link">
+                        <i class="fas fa-redo me-1"></i>Renvoyer le lien de vérification
+                    </a>
+                </div>
+            {% endif %}
+        {% endif %}
+
+        <div class="auth-footer">
+            Pas encore de compte ? <a href="{{ path('register') }}">Créer un compte</a>
         </div>
     </div>
 </div>
+
+{% if error %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var c = document.getElementById('toast-container');
+        if (!c) return;
+        var t = document.createElement('div');
+        t.className = 'ac-toast ac-toast-danger';
+        t.setAttribute('role', 'alert');
+        t.innerHTML = '<div class="ac-toast-icon"><i class="fas fa-exclamation-circle"></i></div>'
+            + '<div class="ac-toast-body">{{ errMsg|e('js') }}</div>'
+            + '<button class="ac-toast-close" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button>'
+            + '<div class="ac-toast-progress"></div>';
+        c.appendChild(t);
+        setTimeout(function(){ t.style.animation='toastOut .3s ease-in forwards'; setTimeout(function(){t.remove();},300); }, 5000);
+    });
+</script>
+{% endif %}
 {% endblock %}

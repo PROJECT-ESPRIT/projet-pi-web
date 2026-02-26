@@ -20,30 +20,4 @@ class TypeDonRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, TypeDon::class);
     }
-
-    public function findDefaultForCommentDonation(): ?TypeDon
-    {
-        $qb = $this->createQueryBuilder('t')
-            ->andWhere('LOWER(t.libelle) LIKE :money')
-            ->setParameter('money', '%money%')
-            ->setMaxResults(1)
-        ;
-
-        $monetary = $qb->getQuery()->getOneOrNullResult();
-
-        if (!$monetary instanceof TypeDon) {
-            $monetary = $this->createQueryBuilder('t')
-                ->andWhere('LOWER(t.libelle) LIKE :legacyMoney')
-                ->setParameter('legacyMoney', '%argent%')
-                ->setMaxResults(1)
-                ->getQuery()
-                ->getOneOrNullResult();
-        }
-
-        if ($monetary instanceof TypeDon) {
-            return $monetary;
-        }
-
-        return $this->findOneBy([], ['id' => 'ASC']);
-    }
 }

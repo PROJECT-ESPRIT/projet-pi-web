@@ -31,16 +31,13 @@ class DonationRepository extends ServiceEntityRepository
             'dateDon' => 'd.dateDon',
             'donateur' => 'donateur.nom',
             'type' => 'type.libelle',
-            'charity' => 'charity.title',
-            'amount' => 'd.amount',
         ];
         $sortField = $sortMap[$sort] ?? $sortMap['dateDon'];
 
         $qb = $this->createQueryBuilder('d')
             ->leftJoin('d.donateur', 'donateur')
             ->leftJoin('d.type', 'type')
-            ->leftJoin('d.charity', 'charity')
-            ->addSelect('donateur', 'type', 'charity')
+            ->addSelect('donateur', 'type')
             ->orderBy($sortField, $direction);
 
         $search = trim((string) $search);
@@ -49,55 +46,57 @@ class DonationRepository extends ServiceEntityRepository
                 OR LOWER(donateur.nom) LIKE :search
                 OR LOWER(donateur.prenom) LIKE :search
                 OR LOWER(donateur.email) LIKE :search
-                OR LOWER(type.libelle) LIKE :search
-                OR LOWER(charity.title) LIKE :search')
+                OR LOWER(type.libelle) LIKE :search')
                 ->setParameter('search', '%' . mb_strtolower($search) . '%');
         }
 
         return $qb->getQuery()->getResult();
     }
 
-    /**
-     * @param array<int, int> $charityIds
-     * @return array<int, array<int, Donation>>
-     */
-    public function findRecentByCharityIds(array $charityIds, int $perCharity = 5): array
+    public function countThisMonth(): int
     {
-        $charityIds = array_values(array_unique(array_filter($charityIds, static fn ($id) => (int) $id > 0)));
-        if ($charityIds === []) {
-            return [];
+        return (int) $this->createQueryBuilder('d')
+            ->select('COUNT(d.id)')
+            ->where('d.dateDon >= :start')
+            ->setParameter('start', new \DateTimeImmutable('first day of this month midnight'))
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    public function getMonthlyDonations(int $months = 6): array
+    {
+        $conn = $this->getEntityManager()->getConnection();
+        $rows = $conn->executeQuery("
+            SELECT DATE_FORMAT(date_don, '%Y-%m') AS m, COUNT(*) AS c
+            FROM donation
+            WHERE date_don >= DATE_SUB(CURRENT_DATE, INTERVAL :months MONTH)
+            GROUP BY m ORDER BY m
+        ", ['months' => $months])->fetchAllAssociative();
+
+        $data = [];
+        $period = new \DateTimeImmutable("-{$months} months");
+        for ($i = 0; $i < $months; $i++) {
+            $d = $period->modify("+{$i} months");
+            $key = $d->format('Y-m');
+            $data[$key] = ['month' => $d->format('M Y'), 'count' => 0];
+        }
+        foreach ($rows as $r) {
+            if (isset($data[$r['m']])) {
+                $data[$r['m']]['count'] = (int) $r['c'];
+            }
         }
 
-        $donations = $this->createQueryBuilder('d')
-            ->leftJoin('d.donateur', 'u')
-            ->addSelect('u')
+        return array_values($data);
+    }
+
+    public function countByType(): array
+    {
+        return $this->createQueryBuilder('d')
+            ->select('t.libelle AS typeName, COUNT(d.id) AS count')
             ->leftJoin('d.type', 't')
-            ->addSelect('t')
-            ->leftJoin('d.charity', 'c')
-            ->addSelect('c')
-            ->andWhere('d.charity IN (:charityIds)')
-            ->setParameter('charityIds', $charityIds)
-            ->orderBy('d.dateDon', 'DESC')
+            ->groupBy('t.id')
+            ->orderBy('count', 'DESC')
             ->getQuery()
             ->getResult();
-
-        $grouped = [];
-        foreach ($donations as $donation) {
-            $charity = $donation->getCharity();
-            if ($charity === null || $charity->getId() === null) {
-                continue;
-            }
-
-            $charityId = $charity->getId();
-            if (!isset($grouped[$charityId])) {
-                $grouped[$charityId] = [];
-            }
-
-            if (count($grouped[$charityId]) < $perCharity) {
-                $grouped[$charityId][] = $donation;
-            }
-        }
-
-        return $grouped;
     }
 }
