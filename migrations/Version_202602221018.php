@@ -7,7 +7,7 @@ namespace DoctrineMigrations;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\Migrations\AbstractMigration;
 
-final class Version20260220174500 extends AbstractMigration
+final class Version_202602221018 extends AbstractMigration
 {
     public function getDescription(): string
     {
