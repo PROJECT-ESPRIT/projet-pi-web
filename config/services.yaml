@@ -4,6 +4,21 @@
 parameters:
     mailer_from_default: 'no-reply@artconnect.local'
     mailer_from: '%env(default:mailer_from_default:MAILER_FROM)%'
+    donation_ai_python_bin_default: 'python/.venv/bin/python'
+    donation_ai_model_default: 'yolov8n.pt'
+    donation_ai_confidence_default: '0.45'
+    donation_ai_fallback_confidence_default: '0.08'
+    donation_ai_timeout_default: '20'
+    donation_stripe_secret_key_default: ''
+    donation_stripe_currency_default: 'eur'
+    donation_ai_python_bin: '%env(default:donation_ai_python_bin_default:DONATION_AI_PYTHON_BIN)%'
+    donation_ai_model: '%env(default:donation_ai_model_default:DONATION_AI_MODEL)%'
+    donation_ai_confidence: '%env(default:donation_ai_confidence_default:DONATION_AI_CONFIDENCE)%'
+    donation_ai_fallback_confidence: '%env(default:donation_ai_fallback_confidence_default:DONATION_AI_FALLBACK_CONFIDENCE)%'
+    donation_ai_timeout: '%env(default:donation_ai_timeout_default:DONATION_AI_TIMEOUT)%'
+    donation_ai_settings_dir: '%kernel.project_dir%/var/ultralytics'
+    donation_stripe_secret_key: '%env(default:donation_stripe_secret_key_default:STRIPE_SECRET_KEY)%'
+    donation_stripe_currency: '%env(default:donation_stripe_currency_default:STRIPE_CURRENCY)%'
     email_verification_ttl_hours: '%env(int:EMAIL_VERIFICATION_TTL_HOURS)%'
     password_reset_ttl_minutes: '%env(int:PASSWORD_RESET_TTL_MINUTES)%'
     stripe_publishable_key: '%env(default::STRIPE_PUBLISHABLE_KEY)%'
@@ -34,6 +49,30 @@ services:
     App\Service\EmailService:
         arguments:
             $adminEmail: '%mailer_from%'
+
+    App\Service\YoloDonationImageValidator:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+            $pythonBinary: '%donation_ai_python_bin%'
+            $scriptPath: '%kernel.project_dir%/python/image_scanner.py'
+            $modelName: '%donation_ai_model%'
+            $confidenceThreshold: '%donation_ai_confidence%'
+            $fallbackConfidenceThreshold: '%donation_ai_fallback_confidence%'
+            $timeoutSeconds: '%donation_ai_timeout%'
+            $settingsDir: '%donation_ai_settings_dir%'
+            $typeClassMap:
+                fourniture: ['chair', 'couch', 'bed', 'dining table', 'bench', 'tv', 'laptop', 'book', 'refrigerator', 'microwave', 'oven', 'sink', 'potted plant', 'clock', 'vase', 'toaster', 'remote', 'keyboard', 'mouse', 'cell phone', 'bottle', 'cup', 'bowl']
+                clothes: ['person', 'backpack', 'handbag', 'suitcase', 'tie']
+            $typeAliases:
+                fourniture: ['fourniture', 'fournitures', 'meuble', 'meubles', 'furniture']
+                clothes: ['clothes', 'cloth', 'clothing', 'habit', 'habits', 'vetement', 'vetements']
+                money: ['money', 'argent', 'cash']
+            $nonVisualTypes: ['money']
+
+    App\Service\StripeCheckoutService:
+        arguments:
+            $secretKey: '%donation_stripe_secret_key%'
+            $currency: '%donation_stripe_currency%'
 
     App\Service\StripeService:
         arguments:

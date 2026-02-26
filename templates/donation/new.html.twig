@@ -6,8 +6,25 @@
     <h1>Faire un Don</h1>
     <p class="lead">Merci de votre générosité !</p>
 
-    {{ form_start(form, {'attr': {'novalidate': 'novalidate'}}) }}
-        {{ form_widget(form) }}
+    <div class="alert alert-info">
+        Vous pouvez consulter les causes disponibles
+        <a href="{{ path('app_charity_index') }}" class="alert-link">ici</a>.
+    </div>
+    <div class="alert alert-warning">
+        Les dons materiels sont verifies par IA. Si la photo ne correspond pas au type choisi, le don est refuse.
+    </div>
+    <div class="alert alert-info">
+        Les dons de type <strong>money</strong> sont payes via Stripe Checkout.
+    </div>
+
+    {{ form_start(form, {'attr': {'novalidate': 'novalidate', 'data-turbo': 'false'}}) }}
+        {{ form_row(form.charity) }}
+        {{ form_row(form.type) }}
+        {{ form_row(form.amount) }}
+        {{ form_row(form.photoFile) }}
+        {{ form_row(form.isAnonymous) }}
+        {{ form_row(form.description) }}
+
         <button class="btn btn-success mt-3">Confirmer le don</button>
     {{ form_end(form) }}
 
