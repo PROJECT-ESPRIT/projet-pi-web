@@ -510,6 +510,121 @@
 {% endblock %}
 
 {% block body %}
+
+{# ── AI Recommendation Popup (participants only) ──────────────────────────── #}
+{% if app.user and 'ROLE_PARTICIPANT' in app.user.roles %}
+<div id="ai-recommend-modal" class="ai-modal-overlay" style="display:none;" aria-modal="true" role="dialog">
+    <div class="ai-modal-box">
+        <button class="ai-modal-close" id="ai-modal-close-btn" aria-label="Fermer">&times;</button>
+        <div class="ai-modal-header">
+            <span class="ai-modal-icon">&#10024;</span>
+            <div>
+                <h2 class="ai-modal-title">Evenements pour vous</h2>
+                <p class="ai-modal-sub">Selectionnes selon vos reservations precedentes</p>
+            </div>
+        </div>
+        <div id="ai-recommend-body">
+            <div class="ai-loading">
+                <div class="ai-spinner"></div>
+                <span>Analyse en cours…</span>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+.ai-modal-overlay {
+    position:fixed; inset:0; z-index:1055;
+    background:rgba(20,10,80,.55); backdrop-filter:blur(4px);
+    display:flex !important; align-items:center; justify-content:center;
+    padding:1rem; animation:aiFadeIn .25s ease;
+}
+.ai-modal-overlay.hidden { display:none !important; }
+@keyframes aiFadeIn { from{opacity:0} to{opacity:1} }
+.ai-modal-box {
+    background:#fff; border-radius:20px; padding:1.6rem 1.8rem 1.8rem;
+    max-width:560px; width:100%;
+    box-shadow:0 24px 60px rgba(20,10,80,.28);
+    position:relative; animation:aiSlideUp .28s ease;
+    max-height:90vh; overflow-y:auto;
+}
+@keyframes aiSlideUp { from{transform:translateY(30px);opacity:0} to{transform:translateY(0);opacity:1} }
+.ai-modal-close {
+    position:absolute; top:.9rem; right:1rem;
+    background:none; border:none; font-size:1.5rem;
+    color:#888; cursor:pointer; line-height:1; transition:color .15s;
+}
+.ai-modal-close:hover { color:#1E0F75; }
+.ai-modal-header { display:flex; align-items:flex-start; gap:.9rem; margin-bottom:1.2rem; }
+.ai-modal-icon { font-size:2rem; line-height:1; }
+.ai-modal-title { font-size:1.1rem; font-weight:700; color:#1E0F75; margin:0 0 .15rem; }
+.ai-modal-sub   { font-size:.8rem; color:#888; margin:0; }
+.ai-loading { display:flex; align-items:center; gap:.7rem; color:#666; padding:.5rem 0; }
+.ai-spinner {
+    width:22px; height:22px; border:3px solid #e0daf5;
+    border-top-color:#1E0F75; border-radius:50%;
+    animation:aiSpin .7s linear infinite;
+}
+@keyframes aiSpin { to{transform:rotate(360deg)} }
+.ai-event-card {
+    display:flex; align-items:center; gap:.9rem;
+    padding:.75rem .85rem; border-radius:12px;
+    border:1px solid rgba(30,15,117,.1); margin-bottom:.6rem;
+    transition:box-shadow .15s,transform .15s;
+    text-decoration:none; color:inherit; background:#fafafe;
+}
+.ai-event-card:hover { box-shadow:0 6px 18px rgba(30,15,117,.12); transform:translateY(-2px); color:inherit; }
+.ai-event-score {
+    min-width:44px; height:44px; border-radius:50%;
+    background:linear-gradient(135deg,#1C1DAB,#1E0F75);
+    color:#fff; font-weight:700; font-size:.78rem;
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+}
+.ai-event-info { flex:1; min-width:0; }
+.ai-event-titre { font-weight:600; font-size:.9rem; color:#1E0F75; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.ai-event-meta  { font-size:.76rem; color:#888; margin-top:.15rem; }
+.ai-event-badge { font-size:.7rem; font-weight:600; padding:.2rem .55rem; border-radius:999px; background:#eef0ff; color:#1C1DAB; flex-shrink:0; }
+.ai-empty { text-align:center; color:#aaa; padding:1rem 0; font-size:.9rem; }
+.ai-error  { color:#c0392b; font-size:.85rem; padding:.5rem 0; }
+.ai-footer { margin-top:1rem; text-align:right; }
+.ai-footer a { font-size:.82rem; color:#1C1DAB; text-decoration:none; font-weight:600; }
+.ai-footer a:hover { text-decoration:underline; }
+</style>
+<script>
+(function(){
+    var STORAGE_KEY = 'ai_recommend_shown_{{ app.user.id }}';
+    var modal  = document.getElementById('ai-recommend-modal');
+    var close  = document.getElementById('ai-modal-close-btn');
+    var body   = document.getElementById('ai-recommend-body');
+    if (sessionStorage.getItem(STORAGE_KEY)) return;
+    function closeModal(){ modal.classList.add('hidden'); modal.style.display='none'; sessionStorage.setItem(STORAGE_KEY,'1'); }
+    close.addEventListener('click', closeModal);
+    modal.addEventListener('click', function(e){ if(e.target===modal) closeModal(); });
+    function fmtDate(iso){ if(!iso) return ''; var d=new Date(iso); return d.toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'}); }
+    function renderEvents(data){
+        if(!data.success||!data.recommendations||data.recommendations.length===0){
+            body.innerHTML='<p class="ai-empty">Aucune suggestion disponible pour le moment.</p>'; return;
+        }
+        var html='';
+        data.recommendations.forEach(function(ev){
+            var pct=Math.round(ev.score*100);
+            var prix=ev.prix>0?ev.prix.toFixed(0)+' TND':'Gratuit';
+            html+='<a href="/events/'+ev.id+'" class="ai-event-card">'
+                +'<div class="ai-event-score">'+pct+'%</div>'
+                +'<div class="ai-event-info"><div class="ai-event-titre">'+ev.titre+'</div>'
+                +'<div class="ai-event-meta">'+ev.lieu+' &bull; '+fmtDate(ev.date_debut)+' &bull; '+ev.places_restantes+' places</div></div>'
+                +'<span class="ai-event-badge">'+prix+'</span></a>';
+        });
+        html+='<div class="ai-footer"><a href="{{ path('app_evenement_index') }}">Voir tous les evenements &rarr;</a></div>';
+        body.innerHTML=html;
+    }
+    fetch('{{ path('ai_events_recommend') }}')
+        .then(function(r){ return r.json(); })
+        .then(function(data){ renderEvents(data); modal.style.display='flex'; })
+        .catch(function(){ body.innerHTML='<p class="ai-error">Impossible de charger les suggestions.</p>'; modal.style.display='flex'; });
+})();
+</script>
+{% endif %}
+
 {% if app.user %}
     {# ================================================================ #}
     {# FRONTOFFICE — Authenticated User                                  #}

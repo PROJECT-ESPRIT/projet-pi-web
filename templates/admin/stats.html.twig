@@ -217,6 +217,81 @@
     </div>
 </div>
 
+{# ===== AI: HOT EVENTS WIDGET ===== #}
+<div class="st-card" id="hot-events-card" style="margin-bottom:.75rem;">
+    <div class="st-card-title" style="justify-content:space-between;">
+        <span><i class="fas fa-fire" style="background:linear-gradient(135deg,#f97316,#ef4444);"></i> Evenements les plus chauds</span>
+        <span style="font-size:.7rem;font-weight:400;color:#9ca3af;" id="hot-events-updated"></span>
+    </div>
+    <div id="hot-events-body">
+        <div style="display:flex;align-items:center;gap:.6rem;color:#aaa;font-size:.82rem;padding:.3rem 0;">
+            <div style="width:18px;height:18px;border:2px solid #e0daf5;border-top-color:#1E0F75;border-radius:50%;animation:hotSpin .7s linear infinite;flex-shrink:0;"></div>
+            Analyse en cours…
+        </div>
+    </div>
+</div>
+<style>
+@keyframes hotSpin { to{transform:rotate(360deg)} }
+.hot-row {
+    display:grid; grid-template-columns:28px 1fr 72px 72px 80px 90px;
+    align-items:center; gap:.5rem;
+    padding:.45rem .3rem; border-bottom:1px solid #f3f4f6; font-size:.78rem;
+}
+.hot-row:last-child { border-bottom:none; }
+.hot-rank  { font-weight:800; color:#9ca3af; text-align:center; font-size:.72rem; }
+.hot-titre { font-weight:600; color:#1E0F75; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.hot-lieu  { color:#6b7280; font-size:.72rem; }
+.hot-bar-wrap { height:5px; border-radius:3px; background:#f0f1f5; overflow:hidden; }
+.hot-bar-fill { height:100%; border-radius:3px; }
+.hot-label { font-size:.68rem; font-weight:700; padding:.18rem .5rem; border-radius:999px; text-align:center; white-space:nowrap; }
+.hot-label-fire { background:#fef3c7; color:#d97706; }
+.hot-label-pop  { background:#dbeafe; color:#1d4ed8; }
+.hot-label-warm { background:#f3f4f6; color:#6b7280; }
+.hot-label-cold { background:#f9fafb; color:#9ca3af; }
+.hot-pct   { font-weight:700; font-size:.78rem; color:#1E0F75; text-align:right; }
+.hot-header {
+    display:grid; grid-template-columns:28px 1fr 72px 72px 80px 90px;
+    gap:.5rem; padding:.2rem .3rem .4rem;
+    font-size:.65rem; font-weight:700; color:#9ca3af;
+    text-transform:uppercase; letter-spacing:.04em;
+    border-bottom:2px solid #f3f4f6; margin-bottom:.1rem;
+}
+</style>
+<script>
+(function(){
+    var body    = document.getElementById('hot-events-body');
+    var updated = document.getElementById('hot-events-updated');
+    function labelClass(l){ if(l==='En feu') return 'hot-label-fire'; if(l==='Populaire') return 'hot-label-pop'; if(l==='Tiede') return 'hot-label-warm'; return 'hot-label-cold'; }
+    function fmtDate(iso){ if(!iso) return ''; var d=new Date(iso); return d.toLocaleDateString('fr-FR',{day:'2-digit',month:'short'}); }
+    function barColor(pct){ if(pct>=75) return 'linear-gradient(90deg,#f97316,#ef4444)'; if(pct>=50) return 'linear-gradient(90deg,#3785D8,#1C1DAB)'; if(pct>=25) return 'linear-gradient(90deg,#a78bfa,#7c3aed)'; return '#d1d5db'; }
+    fetch('{{ path('ai_events_hotness') }}')
+        .then(function(r){ return r.json(); })
+        .then(function(data){
+            if(!data.success||!data.hot_events||data.hot_events.length===0){
+                body.innerHTML='<p style="color:#aaa;font-size:.82rem;padding:.4rem 0;">Aucun evenement a venir.</p>'; return;
+            }
+            updated.textContent='Mis a jour '+new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+            var html='<div class="hot-header"><span>#</span><span>Evenement</span><span>Lieu / Date</span><span style="text-align:center;">Remplissage</span><span style="text-align:center;">Hotness</span><span style="text-align:center;">Statut</span></div>';
+            data.hot_events.forEach(function(ev,i){
+                var fillPct=Math.round(ev.fill_rate*100);
+                var hotPct=Math.round(ev.hotness*100);
+                var bColor=barColor(hotPct);
+                html+='<div class="hot-row">'
+                    +'<div class="hot-rank">'+(i+1)+'</div>'
+                    +'<div><div class="hot-titre">'+ev.titre+'</div></div>'
+                    +'<div><div class="hot-lieu">'+ev.lieu+'</div><div class="hot-lieu">'+fmtDate(ev.date_debut)+'</div></div>'
+                    +'<div><div class="hot-bar-wrap"><div class="hot-bar-fill" style="width:'+fillPct+'%;background:'+bColor+';"></div></div>'
+                    +'<div style="font-size:.65rem;color:#6b7280;margin-top:.15rem;text-align:center;">'+fillPct+'%</div></div>'
+                    +'<div class="hot-pct" style="text-align:center;">'+hotPct+'%</div>'
+                    +'<div style="text-align:center;"><span class="hot-label '+labelClass(ev.label)+'">'+ev.label+'</span></div>'
+                    +'</div>';
+            });
+            body.innerHTML=html;
+        })
+        .catch(function(){ body.innerHTML='<p style="color:#c0392b;font-size:.82rem;">Impossible de charger les donnees.</p>'; });
+})();
+</script>
+
 {# ===== ROW 1: Events overview + Revenue ===== #}
 <div class="st-grid st-2-1">
     <div class="st-card">
