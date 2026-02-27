@@ -70,11 +70,20 @@ class AiEvenementController extends AbstractController
 
         $escapedCmd = implode(' ', array_map('escapeshellarg', $cmd));
 
+        // Run with a 30-second hard timeout so the page never hangs
+        $timedCmd = PHP_OS_FAMILY === 'Windows'
+            ? $escapedCmd . ' 2>&1'
+            : 'timeout 30 ' . $escapedCmd . ' 2>&1';
+
         $output   = [];
         $exitCode = 0;
-        exec($escapedCmd . ' 2>&1', $output, $exitCode);
+        exec($timedCmd, $output, $exitCode);
 
         $raw = trim(implode("\n", $output));
+
+        if ($exitCode === 124) {
+            return ['success' => false, 'error' => 'Script timed out after 30 s'];
+        }
 
         if ($raw === '') {
             return ['success' => false, 'error' => 'Script produced no output (exit ' . $exitCode . ')'];

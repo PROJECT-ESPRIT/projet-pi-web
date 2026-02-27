@@ -1,165 +1,207 @@
 #!/usr/bin/env python3
 """
-Feature 2 — Hot Event Predictor (Admin)
-========================================
-Scores every upcoming event with a "hotness" index that predicts
-which events are likely to sell out or generate the most buzz.
+Hot Event Predictor — ML (RandomForestRegressor)
+=================================================
+Fetches past events as training data, trains a Random Forest model,
+then predicts a hotness score for every upcoming event.
 
-Score factors (no ML library needed — pure maths):
-  - Fill rate          : reservations / total seats           (40 %)
-  - Recency of bookings: how many reservations in last 7 days (25 %)
-  - Days until event   : urgency — closer = hotter            (20 %)
-  - Price signal       : paid events score slightly higher    (15 %)
-
-Usage:
-    python event_hotness.py
-    python event_hotness.py --limit 10 --db_url "mysql+pymysql://root:@127.0.0.1:3306/projet_pi_web"
-
-Output (stdout) — JSON:
-    {
-      "success": true,
-      "hot_events": [
-        {
-          "id": 3,
-          "titre": "Festival Printemps",
-          "lieu": "Sousse",
-          "date_debut": "2026-03-20T18:00:00",
-          "prix": 30.0,
-          "nb_places": 500,
-          "reservations_total": 420,
-          "reservations_last_7d": 85,
-          "fill_rate": 0.84,
-          "days_until": 22,
-          "hotness": 0.91,
-          "label": "🔥 En feu"
-        }
-      ]
-    }
+If there are no past events yet, scores all upcoming events as 0.5
+and returns ml_mode: false so the UI can show a message.
 """
 
 import argparse
 import json
 
 
-def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Predict hot upcoming events for the admin.")
-    parser.add_argument("--limit", type=int, default=10, help="Max events to return")
-    parser.add_argument(
-        "--db_url",
-        default="mysql+pymysql://root:@127.0.0.1:3306/projet_pi_web",
-        help="SQLAlchemy-compatible DB URL",
-    )
-    return parser.parse_args()
+def load_db_url_from_env(env_path=None):
+    """Read DATABASE_URL from the nearest .env file and convert to SQLAlchemy format."""
+    import os, re
+    if env_path is None:
+        # Walk up from this script's directory to find .env
+        current = os.path.dirname(os.path.abspath(__file__))
+        for _ in range(5):
+            candidate = os.path.join(current, ".env")
+            if os.path.isfile(candidate):
+                env_path = candidate
+                break
+            current = os.path.dirname(current)
+
+    if env_path and os.path.isfile(env_path):
+        with open(env_path, encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line.startswith("DATABASE_URL="):
+                    value = line[len("DATABASE_URL="):].strip().strip('"').strip("'")
+                    # Convert mysql:// → mysql+pymysql:// and strip Doctrine query params
+                    value = re.sub(r"^mysql://", "mysql+pymysql://", value)
+                    value = re.sub(r"\?.*$", "", value)
+                    return value
+
+    return "mysql+pymysql://root:@127.0.0.1:3306/projet_pi_web"
 
 
-def fetch_events(conn) -> list:
+def parse_args():
+    p = argparse.ArgumentParser()
+    p.add_argument("--limit",  type=int, default=5)
+    p.add_argument("--db_url", default=None)
+    return p.parse_args()
+
+
+def fetch_past_events(conn):
     from sqlalchemy import text
-    result = conn.execute(text("""
+    rows = conn.execute(text("""
+        SELECT e.id,
+               COALESCE(e.prix, 0)   AS prix,
+               e.nb_places,
+               COUNT(r.id)           AS reservations_total,
+               SUM(CASE WHEN r.date_reservation >= DATE_SUB(e.date_debut, INTERVAL 7 DAY)
+                        THEN 1 ELSE 0 END) AS reservations_last_7d
+        FROM   evenement e
+        LEFT JOIN reservation r ON r.evenement_id = e.id AND r.status = 'CONFIRMED'
+        WHERE  e.annule = 0
+          AND  e.date_debut <= NOW()
+          AND  e.nb_places > 0
+        GROUP  BY e.id, e.prix, e.nb_places, e.date_debut
+    """))
+    return [dict(r._mapping) for r in rows.fetchall()]
+
+
+def fetch_upcoming_events(conn):
+    from sqlalchemy import text
+    rows = conn.execute(text("""
         SELECT e.id,
                e.titre,
                e.lieu,
-               COALESCE(e.prix, 0)                              AS prix,
+               COALESCE(e.prix, 0)   AS prix,
                e.nb_places,
                e.date_debut,
-               DATEDIFF(e.date_debut, NOW())                    AS days_until,
-               COUNT(r.id)                                       AS reservations_total,
-               SUM(CASE
-                     WHEN r.date_reservation >= DATE_SUB(NOW(), INTERVAL 7 DAY)
-                     THEN 1 ELSE 0
-                   END)                                          AS reservations_last_7d
+               DATEDIFF(e.date_debut, NOW())  AS days_until,
+               COUNT(r.id)                    AS reservations_total,
+               SUM(CASE WHEN r.date_reservation >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+                        THEN 1 ELSE 0 END)    AS reservations_last_7d
         FROM   evenement e
-        LEFT JOIN reservation r
-               ON r.evenement_id = e.id AND r.status = 'CONFIRMED'
+        LEFT JOIN reservation r ON r.evenement_id = e.id AND r.status = 'CONFIRMED'
         WHERE  e.annule = 0
           AND  e.date_debut > NOW()
         GROUP  BY e.id, e.titre, e.lieu, e.prix, e.nb_places, e.date_debut
         ORDER  BY e.date_debut ASC
     """))
-    return [dict(row._mapping) for row in result.fetchall()]
+    return [dict(r._mapping) for r in rows.fetchall()]
 
 
-def compute_hotness(event: dict, max_recent: int) -> float:
-    seats       = max(int(event["nb_places"]), 1)
-    reserved    = int(event["reservations_total"] or 0)
-    recent      = int(event["reservations_last_7d"] or 0)
-    days_until  = max(int(event["days_until"] or 0), 0)
-    prix        = float(event["prix"])
+def to_features(event, max_recent):
+    """5 numeric features for one event."""
+    seats   = max(int(event["nb_places"]), 1)
+    reserved = int(event["reservations_total"] or 0)
+    recent  = int(event["reservations_last_7d"] or 0)
+    days    = max(int(event.get("days_until") or 0), 0)
+    prix    = float(event["prix"])
 
-    # Fill rate score  [0-1]
-    fill_score = min(reserved / seats, 1.0)
-
-    # Recent bookings score  [0-1]  — normalised against the busiest event
-    recent_score = (recent / max_recent) if max_recent > 0 else 0.0
-
-    # Urgency score  [0-1]  — events in ≤7 days = 1.0, ≥90 days = 0.0
-    urgency_score = max(0.0, 1.0 - days_until / 90.0)
-
-    # Price signal  [0-1]  — paid events (prix > 0) get a small boost
-    price_score = 0.8 if prix > 0 else 0.3
-
-    hotness = (
-        0.40 * fill_score
-        + 0.25 * recent_score
-        + 0.20 * urgency_score
-        + 0.15 * price_score
-    )
-    return round(hotness, 4)
+    return [
+        min(reserved / seats, 1.0),              # fill_rate
+        recent / max_recent if max_recent else 0, # recent_bookings (normalised)
+        max(0.0, 1.0 - days / 90.0),             # urgency
+        1.0 if prix > 0 else 0.0,                # price_signal
+        min(seats / 1000.0, 1.0),                # capacity
+    ]
 
 
-def hotness_label(score: float) -> str:
-    if score >= 0.75:
-        return "En feu"
-    if score >= 0.50:
-        return "Populaire"
-    if score >= 0.25:
-        return "Tiede"
+def hotness_label(score):
+    if score >= 0.75: return "En feu"
+    if score >= 0.50: return "Populaire"
+    if score >= 0.25: return "Tiede"
     return "Calme"
 
 
-def main() -> int:
+def main():
     args = parse_args()
+
+    db_url = args.db_url or load_db_url_from_env()
 
     try:
         from sqlalchemy import create_engine
-        engine = create_engine(args.db_url)
-    except Exception as exc:
-        print(json.dumps({"success": False, "error": f"DB connection failed: {exc}", "hot_events": []}))
+        engine = create_engine(db_url)
+    except Exception as e:
+        print(json.dumps({"success": False, "error": str(e), "hot_events": []}))
         return 1
 
     try:
         with engine.connect() as conn:
-            events = fetch_events(conn)
-    except Exception as exc:
-        print(json.dumps({"success": False, "error": f"Query failed: {exc}", "hot_events": []}))
+            past     = fetch_past_events(conn)
+            upcoming = fetch_upcoming_events(conn)
+    except Exception as e:
+        print(json.dumps({"success": False, "error": str(e), "hot_events": []}))
         return 1
 
-    if not events:
-        print(json.dumps({"success": True, "hot_events": []}))
+    if not upcoming:
+        print(json.dumps({"success": True, "ml_mode": False, "ml_info": {}, "hot_events": []}))
         return 0
 
-    max_recent = max(int(ev["reservations_last_7d"] or 0) for ev in events) or 1
+    # Normalisation reference across all events
+    all_events  = past + upcoming
+    max_recent  = max(int(ev["reservations_last_7d"] or 0) for ev in all_events) or 1
 
-    scored = []
-    for ev in events:
-        h = compute_hotness(ev, max_recent)
-        scored.append({
+    ml_mode             = len(past) > 0
+    feature_importances = {}
+
+    if ml_mode:
+        import numpy as np
+        from sklearn.ensemble import RandomForestRegressor
+
+        # Training: past events, target = how full they got
+        X = np.array([to_features(ev, max_recent) for ev in past])
+        y = np.array([
+            min(int(ev["reservations_total"] or 0) / max(int(ev["nb_places"]), 1), 1.0)
+            for ev in past
+        ])
+
+        model = RandomForestRegressor(n_estimators=100, random_state=42)
+        model.fit(X, y)
+
+        feature_importances = {
+            name: round(float(v), 4)
+            for name, v in zip(
+                ["fill_rate", "recent_bookings", "urgency", "price_signal", "capacity"],
+                model.feature_importances_
+            )
+        }
+
+        X_pred = np.array([to_features(ev, max_recent) for ev in upcoming])
+        raw_scores = [max(0.0, min(1.0, float(s))) for s in model.predict(X_pred)]
+    else:
+        # No past data — neutral score so upcoming events still appear
+        raw_scores = [0.5] * len(upcoming)
+
+    results = []
+    for ev, score in zip(upcoming, raw_scores):
+        score = round(score, 4)
+        seats = max(int(ev["nb_places"]), 1)
+        results.append({
             "id":                   ev["id"],
             "titre":                ev["titre"],
             "lieu":                 ev["lieu"],
             "date_debut":           ev["date_debut"].isoformat() if hasattr(ev["date_debut"], "isoformat") else str(ev["date_debut"]),
             "prix":                 float(ev["prix"]),
-            "nb_places":            int(ev["nb_places"]),
+            "nb_places":            seats,
             "reservations_total":   int(ev["reservations_total"] or 0),
             "reservations_last_7d": int(ev["reservations_last_7d"] or 0),
-            "fill_rate":            round(int(ev["reservations_total"] or 0) / max(int(ev["nb_places"]), 1), 4),
+            "fill_rate":            round(int(ev["reservations_total"] or 0) / seats, 4),
             "days_until":           max(int(ev["days_until"] or 0), 0),
-            "hotness":              h,
-            "label":                hotness_label(h),
+            "hotness":              score,
+            "label":                hotness_label(score),
         })
 
-    scored.sort(key=lambda x: x["hotness"], reverse=True)
+    results.sort(key=lambda x: x["hotness"], reverse=True)
 
-    print(json.dumps({"success": True, "hot_events": scored[: args.limit]}))
+    print(json.dumps({
+        "success":   True,
+        "ml_mode":   ml_mode,
+        "ml_info": {
+            "training_samples":    len(past),
+            "feature_importances": feature_importances,
+        },
+        "hot_events": results[: args.limit],
+    }))
     return 0
 
 
