@@ -48,6 +48,21 @@
 
    Ouvrir http://localhost:8000
 
+## Tests
+
+```bash
+# Tests unitaires (PHPUnit)
+php bin/phpunit tests/Entity/
+
+# Analyse statique — vérifie les types sans exécuter le code (PHPStan)
+vendor/bin/phpstan analyse --no-progress
+
+# Vérifie la cohérence entre les entités et la base de données (Doctrine)
+php bin/console doctrine:schema:validate
+```
+
+---
+
 ## ngrok - Exposer l'application localement
 
 Pour tester les webhooks Stripe ou accéder à l'application depuis l'extérieur :
