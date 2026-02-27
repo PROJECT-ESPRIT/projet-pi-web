@@ -48,6 +48,37 @@
 
    Ouvrir http://localhost:8000
 
+## Tests
+
+### Tests PHP (PHPUnit)
+
+Les tests unitaires couvrent les entités `Evenement` et `Reservation`.
+
+**Lancer tous les tests :**
+
+```bash
+php bin/phpunit tests/Entity/
+```
+
+**Lancer un fichier spécifique :**
+
+```bash
+php bin/phpunit tests/Entity/EvenementTest.php
+php bin/phpunit tests/Entity/ReservationTest.php
+```
+
+| Fichier | Classe testée | Nombre de tests |
+|---|---|---|
+| `tests/Entity/EvenementTest.php` | `Evenement` | 15 |
+| `tests/Entity/ReservationTest.php` | `Reservation` | 15 |
+
+**Ce qui est testé :**
+
+- `EvenementTest` — création automatique de `createdAt`, valeur par défaut de `annule`, annulation avec motif, `getTakenSeats()` (sièges confirmés, format du nom, siège null), setters/getters, restrictions d'âge, ajout de réservations.
+- `ReservationTest` — création automatique de `dateReservation`, statut par défaut `CONFIRMED`, changement de statut, `seatLabel`, `amountPaid`, `scannedAt`, liaison participant/événement, session Stripe.
+
+---
+
 ## ngrok - Exposer l'application localement
 
 Pour tester les webhooks Stripe ou accéder à l'application depuis l'extérieur :
