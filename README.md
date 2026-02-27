@@ -5,6 +5,7 @@
 - PHP 8.2+
 - Composer
 - MySQL
+- Python 3.10+
 
 ## Installation
 
@@ -23,14 +24,21 @@
    php bin/console doctrine:migrations:migrate
    ```
 
-3. **Données de démo**
+3. **Dépendances Python** (moteurs de recommandation et hotness)
+
+   ```cmd
+   pip install -r python\requirements.txt
+   ```
+
+   Dépendances installées : `sqlalchemy`, `pymysql`, `scikit-learn`, `numpy`.
+
+4. **Données de démo**
 
    ```bash
    php bin/console app:seed
    ```
 
-
-4. **Lancer l'application**
+5. **Lancer l'application**
 
    ```bash
    php -S localhost:8000 -t public

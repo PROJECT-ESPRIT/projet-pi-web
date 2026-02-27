@@ -511,120 +511,6 @@
 
 {% block body %}
 
-{# ── AI Recommendation Popup (participants only) ──────────────────────────── #}
-{% if app.user and 'ROLE_PARTICIPANT' in app.user.roles %}
-<div id="ai-recommend-modal" class="ai-modal-overlay" style="display:none;" aria-modal="true" role="dialog">
-    <div class="ai-modal-box">
-        <button class="ai-modal-close" id="ai-modal-close-btn" aria-label="Fermer">&times;</button>
-        <div class="ai-modal-header">
-            <span class="ai-modal-icon">&#10024;</span>
-            <div>
-                <h2 class="ai-modal-title">Evenements pour vous</h2>
-                <p class="ai-modal-sub">Selectionnes selon vos reservations precedentes</p>
-            </div>
-        </div>
-        <div id="ai-recommend-body">
-            <div class="ai-loading">
-                <div class="ai-spinner"></div>
-                <span>Analyse en cours…</span>
-            </div>
-        </div>
-    </div>
-</div>
-<style>
-.ai-modal-overlay {
-    position:fixed; inset:0; z-index:1055;
-    background:rgba(20,10,80,.55); backdrop-filter:blur(4px);
-    display:flex !important; align-items:center; justify-content:center;
-    padding:1rem; animation:aiFadeIn .25s ease;
-}
-.ai-modal-overlay.hidden { display:none !important; }
-@keyframes aiFadeIn { from{opacity:0} to{opacity:1} }
-.ai-modal-box {
-    background:#fff; border-radius:20px; padding:1.6rem 1.8rem 1.8rem;
-    max-width:560px; width:100%;
-    box-shadow:0 24px 60px rgba(20,10,80,.28);
-    position:relative; animation:aiSlideUp .28s ease;
-    max-height:90vh; overflow-y:auto;
-}
-@keyframes aiSlideUp { from{transform:translateY(30px);opacity:0} to{transform:translateY(0);opacity:1} }
-.ai-modal-close {
-    position:absolute; top:.9rem; right:1rem;
-    background:none; border:none; font-size:1.5rem;
-    color:#888; cursor:pointer; line-height:1; transition:color .15s;
-}
-.ai-modal-close:hover { color:#1E0F75; }
-.ai-modal-header { display:flex; align-items:flex-start; gap:.9rem; margin-bottom:1.2rem; }
-.ai-modal-icon { font-size:2rem; line-height:1; }
-.ai-modal-title { font-size:1.1rem; font-weight:700; color:#1E0F75; margin:0 0 .15rem; }
-.ai-modal-sub   { font-size:.8rem; color:#888; margin:0; }
-.ai-loading { display:flex; align-items:center; gap:.7rem; color:#666; padding:.5rem 0; }
-.ai-spinner {
-    width:22px; height:22px; border:3px solid #e0daf5;
-    border-top-color:#1E0F75; border-radius:50%;
-    animation:aiSpin .7s linear infinite;
-}
-@keyframes aiSpin { to{transform:rotate(360deg)} }
-.ai-event-card {
-    display:flex; align-items:center; gap:.9rem;
-    padding:.75rem .85rem; border-radius:12px;
-    border:1px solid rgba(30,15,117,.1); margin-bottom:.6rem;
-    transition:box-shadow .15s,transform .15s;
-    text-decoration:none; color:inherit; background:#fafafe;
-}
-.ai-event-card:hover { box-shadow:0 6px 18px rgba(30,15,117,.12); transform:translateY(-2px); color:inherit; }
-.ai-event-score {
-    min-width:44px; height:44px; border-radius:50%;
-    background:linear-gradient(135deg,#1C1DAB,#1E0F75);
-    color:#fff; font-weight:700; font-size:.78rem;
-    display:flex; align-items:center; justify-content:center; flex-shrink:0;
-}
-.ai-event-info { flex:1; min-width:0; }
-.ai-event-titre { font-weight:600; font-size:.9rem; color:#1E0F75; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.ai-event-meta  { font-size:.76rem; color:#888; margin-top:.15rem; }
-.ai-event-badge { font-size:.7rem; font-weight:600; padding:.2rem .55rem; border-radius:999px; background:#eef0ff; color:#1C1DAB; flex-shrink:0; }
-.ai-empty { text-align:center; color:#aaa; padding:1rem 0; font-size:.9rem; }
-.ai-error  { color:#c0392b; font-size:.85rem; padding:.5rem 0; }
-.ai-footer { margin-top:1rem; text-align:right; }
-.ai-footer a { font-size:.82rem; color:#1C1DAB; text-decoration:none; font-weight:600; }
-.ai-footer a:hover { text-decoration:underline; }
-</style>
-<script>
-(function(){
-    var STORAGE_KEY = 'ai_recommend_shown_{{ app.user.id }}';
-    var modal  = document.getElementById('ai-recommend-modal');
-    var close  = document.getElementById('ai-modal-close-btn');
-    var body   = document.getElementById('ai-recommend-body');
-    if (sessionStorage.getItem(STORAGE_KEY)) return;
-    function closeModal(){ modal.classList.add('hidden'); modal.style.display='none'; sessionStorage.setItem(STORAGE_KEY,'1'); }
-    close.addEventListener('click', closeModal);
-    modal.addEventListener('click', function(e){ if(e.target===modal) closeModal(); });
-    function fmtDate(iso){ if(!iso) return ''; var d=new Date(iso); return d.toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'}); }
-    function renderEvents(data){
-        if(!data.success||!data.recommendations||data.recommendations.length===0){
-            body.innerHTML='<p class="ai-empty">Aucune suggestion disponible pour le moment.</p>'; return;
-        }
-        var html='';
-        data.recommendations.forEach(function(ev){
-            var pct=Math.round(ev.score*100);
-            var prix=ev.prix>0?ev.prix.toFixed(0)+' TND':'Gratuit';
-            html+='<a href="/events/'+ev.id+'" class="ai-event-card">'
-                +'<div class="ai-event-score">'+pct+'%</div>'
-                +'<div class="ai-event-info"><div class="ai-event-titre">'+ev.titre+'</div>'
-                +'<div class="ai-event-meta">'+ev.lieu+' &bull; '+fmtDate(ev.date_debut)+' &bull; '+ev.places_restantes+' places</div></div>'
-                +'<span class="ai-event-badge">'+prix+'</span></a>';
-        });
-        html+='<div class="ai-footer"><a href="{{ path('app_evenement_index') }}">Voir tous les evenements &rarr;</a></div>';
-        body.innerHTML=html;
-    }
-    fetch('{{ path('ai_events_recommend') }}')
-        .then(function(r){ return r.json(); })
-        .then(function(data){ renderEvents(data); modal.style.display='flex'; })
-        .catch(function(){ body.innerHTML='<p class="ai-error">Impossible de charger les suggestions.</p>'; modal.style.display='flex'; });
-})();
-</script>
-{% endif %}
-
 {% if app.user %}
     {# ================================================================ #}
     {# FRONTOFFICE — Authenticated User                                  #}
@@ -730,8 +616,46 @@
     </div>
     {% endif %}
 
-    {# ---------- EVENTS SECTION WITH FILTERS ---------- #}
+    {# ---------- EVENTS SECTION ---------- #}
     <section class="mb-5">
+
+        {# ── AI banner (participants only) ── #}
+        {% if not isArtist and ai_recommendations is not null %}
+        <style>
+        .ai-banner {
+            display: flex; align-items: center; justify-content: space-between;
+            background: linear-gradient(120deg, #1C1DAB 0%, #4f35c2 60%, #7c3aed 100%);
+            border-radius: 16px; padding: 1.1rem 1.5rem;
+            margin-bottom: 1.6rem;
+            box-shadow: 0 8px 28px rgba(28,29,171,.22);
+        }
+        .ai-banner-title {
+            font-family: 'Sora', sans-serif; font-weight: 700; font-size: 1.2rem;
+            color: #fff; margin: 0;
+        }
+        .ai-banner-sub { font-size: .8rem; color: rgba(255,255,255,.65); margin: .1rem 0 0; }
+        .ai-banner-btn {
+            display: inline-flex; align-items: center; gap: .4rem;
+            background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.3);
+            color: #fff; font-size: .82rem; font-weight: 600;
+            padding: .45rem 1rem; border-radius: 10px; text-decoration: none;
+            transition: background .2s; white-space: nowrap;
+        }
+        .ai-banner-btn:hover { background: rgba(255,255,255,.25); color: #fff; }
+        </style>
+        <div class="ai-banner">
+            <div>
+                <h2 class="ai-banner-title">✨ Événements pour vous</h2>
+                <p class="ai-banner-sub">
+                    {% if ai_has_history %}Basés sur vos réservations{% else %}Sélectionnés pour votre profil{% endif %}
+                </p>
+            </div>
+            <a href="{{ path('app_evenement_index') }}" class="ai-banner-btn">
+                Voir tout <i class="fas fa-arrow-right" style="font-size:.7rem;"></i>
+            </a>
+        </div>
+
+        {% else %}
         <div class="section-head">
             {% if isArtist %}
                 <h2><i class="fas fa-palette me-2" style="color:var(--ac-mid)"></i>Mes Événements</h2>
@@ -746,8 +670,224 @@
                 <a href="{{ path('app_evenement_index') }}" class="see-all">Voir tout <i class="fas fa-arrow-right"></i></a>
             {% endif %}
         </div>
+        {% endif %}
 
-        {# --- Event preview only; full filter is on /events page --- #}
+        {# ── AI cards for participants ── #}
+        {% if not isArtist and ai_recommendations is not null %}
+        <style>
+        /* responsive column width: fills row evenly based on count */
+        .ai-grid { display: grid; gap: 1.1rem; }
+        .ai-grid.count-1 { grid-template-columns: 1fr; }
+        .ai-grid.count-2 { grid-template-columns: repeat(2, 1fr); }
+        .ai-grid.count-3 { grid-template-columns: repeat(3, 1fr); }
+        .ai-grid.count-4 { grid-template-columns: repeat(2, 1fr); }
+        .ai-grid.count-5 { grid-template-columns: repeat(3, 1fr); }
+        .ai-grid.count-6 { grid-template-columns: repeat(3, 1fr); }
+        @media (max-width: 991px) {
+            .ai-grid.count-3,
+            .ai-grid.count-5,
+            .ai-grid.count-6 { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 575px) {
+            .ai-grid { grid-template-columns: 1fr !important; }
+        }
+
+        /* card */
+        .ai-ev-card {
+            background: #fff;
+            border-radius: 18px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(30,15,117,.08);
+            border: 1px solid rgba(30,15,117,.07);
+            display: flex; flex-direction: column;
+            position: relative;
+            transition: transform .28s cubic-bezier(.4,0,.2,1), box-shadow .28s;
+            animation: fadeInUp .45s ease both;
+        }
+        .ai-ev-card:nth-child(1){animation-delay:.04s}
+        .ai-ev-card:nth-child(2){animation-delay:.10s}
+        .ai-ev-card:nth-child(3){animation-delay:.16s}
+        .ai-ev-card:nth-child(4){animation-delay:.22s}
+        .ai-ev-card:nth-child(5){animation-delay:.28s}
+        .ai-ev-card:nth-child(6){animation-delay:.34s}
+        .ai-ev-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 16px 40px rgba(30,15,117,.15);
+        }
+        .ai-ev-card::after {
+            content: ''; position: absolute; top: 0; left: 0; right: 0;
+            height: 3px; z-index: 3;
+            background: linear-gradient(90deg,#1C1DAB,#7c3aed,#3785D8);
+            opacity: 0; transition: opacity .25s;
+        }
+        .ai-ev-card:hover::after { opacity: 1; }
+
+        /* image */
+        .ai-ev-img { height: 185px; position: relative; overflow: hidden; flex-shrink: 0; }
+        .ai-ev-img img { width:100%; height:100%; object-fit:cover; transition:transform .4s; }
+        .ai-ev-card:hover .ai-ev-img img { transform: scale(1.06); }
+        .ai-ev-img .ai-placeholder {
+            width:100%; height:100%;
+            display:flex; align-items:center; justify-content:center; font-size:3rem;
+        }
+        .ai-ev-img::after {
+            content:''; position:absolute; inset:0;
+            background: linear-gradient(to top, rgba(15,10,60,.58) 0%, transparent 52%);
+            pointer-events:none;
+        }
+
+        /* image overlays */
+        .ai-date-badge {
+            position:absolute; top:.7rem; left:.7rem; z-index:2;
+            background:rgba(255,255,255,.93); backdrop-filter:blur(8px);
+            border-radius:11px; padding:.35rem .55rem;
+            text-align:center; line-height:1;
+            box-shadow:0 3px 10px rgba(0,0,0,.12);
+        }
+        .ai-date-badge .day { display:block; font-size:1.15rem; font-weight:800; color:#1E0F75; }
+        .ai-date-badge .mon { display:block; font-size:.6rem; font-weight:700; color:#3785D8; text-transform:uppercase; }
+
+        .ai-price-tag {
+            position:absolute; top:.7rem; right:.7rem; z-index:2;
+            padding:.26rem .6rem; border-radius:9px;
+            font-size:.72rem; font-weight:700; backdrop-filter:blur(8px);
+        }
+        .ai-price-tag.free { background:rgba(25,135,84,.9); color:#fff; }
+        .ai-price-tag.paid { background:rgba(255,193,7,.95); color:#1E0F75; }
+
+        .ai-score-pill {
+            position:absolute; bottom:.65rem; left:.7rem; z-index:2;
+            display:inline-flex; align-items:center; gap:.28rem;
+            background:rgba(255,255,255,.16); backdrop-filter:blur(10px);
+            border:1px solid rgba(255,255,255,.32);
+            color:#fff; font-size:.7rem; font-weight:700;
+            padding:.25rem .6rem; border-radius:999px;
+        }
+
+        /* body */
+        .ai-ev-body { padding:1rem 1.15rem 1.1rem; flex:1; display:flex; flex-direction:column; }
+
+        .ai-chip {
+            display:inline-flex; align-items:center; gap:.28rem;
+            font-size:.65rem; font-weight:700; color:#7c3aed;
+            background:#f3f0ff; border:1px solid rgba(124,58,237,.15);
+            border-radius:999px; padding:.18rem .55rem;
+            margin-bottom:.5rem; width:fit-content;
+        }
+        .ai-ev-title {
+            font-size:.97rem; font-weight:700; color:#1E0F75;
+            margin-bottom:.3rem; line-height:1.3;
+            display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+        }
+        .ai-ev-desc {
+            font-size:.76rem; color:#777; line-height:1.45; margin-bottom:.6rem;
+            display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+        }
+        .ai-meta-row { display:flex; flex-wrap:wrap; gap:.3rem; margin-bottom:.7rem; }
+        .ai-meta-pill {
+            display:inline-flex; align-items:center; gap:.25rem;
+            font-size:.7rem; color:#555; background:#f6f5fc;
+            border-radius:7px; padding:.2rem .5rem;
+        }
+        .ai-meta-pill i { color:#3785D8; font-size:.66rem; }
+        .ai-meta-pill.age-pill { background:#fff4e6; color:#b45309; }
+        .ai-meta-pill.age-pill i { color:#f59e0b; }
+
+        .ai-ev-footer {
+            margin-top:auto;
+            display:flex; justify-content:space-between; align-items:center;
+            padding-top:.65rem; border-top:1px solid rgba(30,15,117,.06);
+        }
+        .ai-places-wrap { display:flex; align-items:center; gap:.38rem; font-size:.71rem; color:#888; }
+        .ai-places-bar  { width:48px; height:4px; background:#eee; border-radius:4px; overflow:hidden; }
+        .ai-places-bar-fill { height:100%; border-radius:4px; transition:width .4s; }
+        .ai-places-bar-fill.low    { background:linear-gradient(90deg,#198754,#20c997); }
+        .ai-places-bar-fill.medium { background:linear-gradient(90deg,#ffc107,#fd7e14); }
+        .ai-places-bar-fill.high   { background:linear-gradient(90deg,#dc3545,#e74c3c); }
+
+        .ai-cta-btn {
+            display:inline-flex; align-items:center; gap:.28rem;
+            font-size:.71rem; font-weight:700; color:#1C1DAB;
+            background:#eef0ff; border-radius:8px;
+            padding:.26rem .6rem; text-decoration:none;
+            transition:background .2s, color .2s;
+        }
+        .ai-ev-card:hover .ai-cta-btn {
+            background:linear-gradient(135deg,#1C1DAB,#7c3aed); color:#fff;
+        }
+        </style>
+
+        {% set count = ai_recommendations|length %}
+        {% set icons = ['🎨','🎭','🎵','🎪','🎬','🎤','🖼️','✨','🎻'] %}
+        <div class="ai-grid count-{{ count > 6 ? 6 : count }}">
+            {% for rec in ai_recommendations %}
+                {% set pct     = (rec.score * 100)|round %}
+                {% set filled  = rec.nb_places - rec.places_restantes %}
+                {% set fillPct = rec.nb_places > 0 ? ((filled / rec.nb_places) * 100)|round : 0 %}
+                {% set fillCls = fillPct < 50 ? 'low' : (fillPct < 80 ? 'medium' : 'high') %}
+                <a href="{{ path('app_evenement_show', {id: rec.id}) }}" class="text-decoration-none">
+                    <div class="ai-ev-card">
+                        <div class="ai-ev-img">
+                            {% if rec.image %}
+                                <img src="{{ rec.image }}" alt="{{ rec.titre }}" loading="lazy">
+                            {% else %}
+                                <div class="ai-placeholder" style="background:linear-gradient({{ loop.index*55+110 }}deg,rgba(30,15,117,.08),rgba(55,133,216,.13),rgba(191,140,225,.1));">
+                                    {{ icons[loop.index0 % icons|length] }}
+                                </div>
+                            {% endif %}
+                            <div class="ai-date-badge">
+                                <span class="day">{{ rec.date_debut|date('d') }}</span>
+                                <span class="mon">{{ rec.date_debut|date('M') }}</span>
+                            </div>
+                            <div class="ai-price-tag {{ rec.prix > 0 ? 'paid' : 'free' }}">
+                                {{ rec.prix > 0 ? rec.prix|number_format(0)~' TND' : 'Gratuit' }}
+                            </div>
+                            <div class="ai-score-pill">
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                                {{ pct }}% match
+                            </div>
+                        </div>
+                        <div class="ai-ev-body">
+                            <div class="ai-chip">
+                                <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                                Recommandé
+                            </div>
+                            <div class="ai-ev-title">{{ rec.titre }}</div>
+                            <div class="ai-ev-desc">{{ rec.description|length > 85 ? rec.description|slice(0,85)~'…' : rec.description }}</div>
+                            <div class="ai-meta-row">
+                                <span class="ai-meta-pill"><i class="fas fa-map-marker-alt"></i>{{ rec.lieu }}</span>
+                                <span class="ai-meta-pill"><i class="fas fa-calendar-alt"></i>{{ rec.date_debut|date('d/m/Y') }}</span>
+                                <span class="ai-meta-pill"><i class="fas fa-clock"></i>{{ rec.date_debut|date('H\\hi') }}</span>
+                                {% if rec.age_min or rec.age_max %}
+                                    <span class="ai-meta-pill age-pill"><i class="fas fa-child"></i>
+                                        {% if rec.age_min and rec.age_max %}{{ rec.age_min }}–{{ rec.age_max }} ans
+                                        {% elseif rec.age_min %}Dès {{ rec.age_min }} ans
+                                        {% else %}Jusqu'à {{ rec.age_max }} ans{% endif %}
+                                    </span>
+                                {% endif %}
+                            </div>
+                            <div class="ai-ev-footer">
+                                <div class="ai-places-wrap">
+                                    <div class="ai-places-bar">
+                                        <div class="ai-places-bar-fill {{ fillCls }}" style="width:{{ fillPct }}%"></div>
+                                    </div>
+                                    <span>{{ rec.places_restantes }} place{{ rec.places_restantes > 1 ? 's' : '' }}</span>
+                                </div>
+                                <span class="ai-cta-btn">Réserver <i class="fas fa-arrow-right" style="font-size:.58rem;"></i></span>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            {% else %}
+                <div class="empty-state" style="grid-column:1/-1">
+                    <i class="fas fa-calendar-times"></i>
+                    <p>Aucun événement disponible pour le moment.</p>
+                </div>
+            {% endfor %}
+        </div>
+
+        {# ── Regular grid for artists / guests ── #}
+        {% else %}
         <div class="row g-3" id="eventsGrid">
             {% for event in latestEvents %}
                 {% set reservedCount = event.reservations|length %}
@@ -755,10 +895,8 @@
                 {% set isMine = isArtist and event.organisateur and event.organisateur.id == app.user.id %}
                 {% set isRegistered = event.id in (registered_event_ids|default([])) %}
                 <div class="col-sm-6 col-lg-4 event-card-col"
-                     data-title="{{ event.titre|lower }}"
-                     data-lieu="{{ event.lieu|lower }}"
+                     data-title="{{ event.titre|lower }}" data-lieu="{{ event.lieu|lower }}"
                      data-date="{{ event.dateDebut ? event.dateDebut|date('Y-m-d') : '' }}"
-                     data-date-end="{{ event.dateFin ? event.dateFin|date('Y-m-d') : '' }}"
                      data-price="{{ event.prix ?? 0 }}"
                      data-free="{{ (event.prix is null or event.prix == 0) ? '1' : '0' }}"
                      data-owner="{{ isMine ? 'mine' : 'others' }}"
@@ -769,8 +907,8 @@
                                 {% if event.image %}
                                     <img src="{{ event.image }}" alt="{{ event.titre }}" loading="lazy">
                                 {% else %}
-                                    <div class="placeholder-art" style="background: linear-gradient({{ loop.index * 50 + 120 }}deg, rgba(30,15,117,0.1), rgba(55,133,216,0.15), rgba(191,140,225,0.1));">
-                                        {% set icons = ['🎨', '🎭', '🎵', '🎪', '🎬', '🎤', '🖼️', '✨', '🎻'] %}
+                                    <div class="placeholder-art" style="background:linear-gradient({{ loop.index*50+120 }}deg,rgba(30,15,117,.1),rgba(55,133,216,.15),rgba(191,140,225,.1));">
+                                        {% set icons = ['🎨','🎭','🎵','🎪','🎬','🎤','🖼️','✨','🎻'] %}
                                         {{ icons[loop.index0 % icons|length] }}
                                     </div>
                                 {% endif %}
@@ -781,32 +919,28 @@
                                     </div>
                                 {% endif %}
                                 <div class="ev-card-price-tag {{ event.prix ? 'paid' : 'free' }}">
-                                    {{ event.prix ? event.prix ~ ' TND' : 'Gratuit' }}
+                                    {{ event.prix ? event.prix~' TND' : 'Gratuit' }}
                                 </div>
                             </div>
                             <div class="ev-card-body">
                                 <h3>{{ event.titre }}</h3>
-                                <div class="ev-card-desc">{{ event.description|length > 80 ? event.description|slice(0, 80) ~ '...' : event.description }}</div>
+                                <div class="ev-card-desc">{{ event.description|length > 80 ? event.description|slice(0,80)~'...' : event.description }}</div>
                                 <div class="ev-card-info">
                                     <div><i class="fas fa-map-marker-alt"></i> {{ event.lieu }}</div>
-                                    <div><i class="fas fa-calendar-alt"></i> {{ event.dateDebut ? event.dateDebut|date('d/m/Y') : 'TBD' }}{% if event.dateFin %} → {{ event.dateFin|date('d/m/Y') }}{% endif %}</div>
-                                    <div><i class="fas fa-clock"></i> {{ event.dateDebut ? event.dateDebut|date('H\\hi') : '' }}{% if event.dateFin %} — {{ event.dateFin|date('H\\hi') }}{% endif %}</div>
+                                    <div><i class="fas fa-calendar-alt"></i> {{ event.dateDebut ? event.dateDebut|date('d/m/Y') : 'TBD' }}</div>
+                                    <div><i class="fas fa-clock"></i> {{ event.dateDebut ? event.dateDebut|date('H\\hi') : '' }}</div>
                                     {% if event.ageMin or event.ageMax %}
                                         <div><i class="fas fa-child"></i>
-                                            {% if event.ageMin and event.ageMax %}
-                                                {{ event.ageMin }} - {{ event.ageMax }} ans
-                                            {% elseif event.ageMin %}
-                                                Dès {{ event.ageMin }} ans
-                                            {% else %}
-                                                Jusqu'à {{ event.ageMax }} ans
-                                            {% endif %}
+                                            {% if event.ageMin and event.ageMax %}{{ event.ageMin }} - {{ event.ageMax }} ans
+                                            {% elseif event.ageMin %}Dès {{ event.ageMin }} ans
+                                            {% else %}Jusqu'à {{ event.ageMax }} ans{% endif %}
                                         </div>
                                     {% endif %}
                                 </div>
                                 <div class="ev-card-footer">
                                     {% if isMine %}
                                         <div class="ev-card-organizer">
-                                            <div class="avatar" style="background:linear-gradient(135deg, #059669, #10b981);"><i class="fas fa-chart-line" style="font-size:.5rem;"></i></div>
+                                            <div class="avatar" style="background:linear-gradient(135deg,#059669,#10b981);"><i class="fas fa-chart-line" style="font-size:.5rem;"></i></div>
                                             <span>{{ reservedCount }} résa</span>
                                         </div>
                                     {% elseif event.organisateur %}
@@ -814,27 +948,20 @@
                                             <div class="avatar">{{ event.organisateur.prenom|first }}{{ event.organisateur.nom|first }}</div>
                                             <span>{{ event.organisateur.prenom }}</span>
                                         </div>
-                                    {% else %}
-                                        <div></div>
-                                    {% endif %}
+                                    {% else %}<div></div>{% endif %}
                                     <div class="ev-card-places">
                                         <div class="places-bar">
-                                            <div class="places-bar-fill {% if fillPct < 50 %}low{% elseif fillPct < 80 %}medium{% else %}high{% endif %}"
-                                                 style="width: {{ fillPct }}%"></div>
+                                            <div class="places-bar-fill {% if fillPct < 50 %}low{% elseif fillPct < 80 %}medium{% else %}high{% endif %}" style="width:{{ fillPct }}%"></div>
                                         </div>
                                         <span class="text-muted">{{ event.nbPlaces - reservedCount }} / {{ event.nbPlaces }}</span>
                                     </div>
                                 </div>
                             </div>
                             {% if isMine %}
-                                <div class="ev-card-mine" title="Mon événement"></div>
-                                <div class="ev-card-owner-badge mine-badge">
-                                    <i class="fas fa-palette"></i> Mon événement
-                                </div>
+                                <div class="ev-card-mine"></div>
+                                <div class="ev-card-owner-badge mine-badge"><i class="fas fa-palette"></i> Mon événement</div>
                             {% elseif isArtist %}
-                                <div class="ev-card-owner-badge other-badge">
-                                    <i class="fas fa-eye"></i> Consultation
-                                </div>
+                                <div class="ev-card-owner-badge other-badge"><i class="fas fa-eye"></i> Consultation</div>
                             {% endif %}
                         </div>
                     </a>
@@ -848,6 +975,7 @@
                 </div>
             {% endfor %}
         </div>
+        {% endif %}
     </section>
 
     {# ---------- PRODUCTS SECTION ---------- #}

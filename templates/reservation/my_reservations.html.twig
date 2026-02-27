@@ -208,10 +208,10 @@
         <div class="col-6 col-md-3">
             <label><i class="fas fa-sort me-1"></i>Tri</label>
             <select name="sort" class="form-select">
-                <option value="date_desc" {{ filter_input.sort|default('date_desc') == 'date_desc' ? 'selected' : '' }}>Résa récent → ancien</option>
-                <option value="date_asc" {{ filter_input.sort|default('date_desc') == 'date_asc' ? 'selected' : '' }}>Résa ancien → récent</option>
-                <option value="event_date_desc" {{ filter_input.sort|default('date_desc') == 'event_date_desc' ? 'selected' : '' }}>Event récent → ancien</option>
-                <option value="event_date_asc" {{ filter_input.sort|default('date_desc') == 'event_date_asc' ? 'selected' : '' }}>Event ancien → récent</option>
+                <option value="event_date_asc" {{ filter_input.sort|default('event_date_asc') == 'event_date_asc' ? 'selected' : '' }}>Event proche → lointain</option>
+                <option value="event_date_desc" {{ filter_input.sort|default('event_date_asc') == 'event_date_desc' ? 'selected' : '' }}>Event lointain → proche</option>
+                <option value="date_desc" {{ filter_input.sort|default('event_date_asc') == 'date_desc' ? 'selected' : '' }}>Résa récent → ancien</option>
+                <option value="date_asc" {{ filter_input.sort|default('event_date_asc') == 'date_asc' ? 'selected' : '' }}>Résa ancien → récent</option>
             </select>
         </div>
         <div class="col-12 col-md-4 d-flex gap-2">
@@ -343,9 +343,6 @@
             <i class="fas fa-ticket-alt" style="color:var(--ac-mid);"></i> {{ pageTitle }}
             <span class="badge bg-primary bg-opacity-75">{{ total }}</span>
         </h1>
-        <a href="{{ path('app_evenement_index') }}" class="btn btn-primary" style="border-radius:12px; font-weight:700; font-size:.85rem;">
-            <i class="fas fa-plus me-1"></i> Réserver
-        </a>
     </div>
 
     {% set hasAdvResFilters = filter_input.date_start|default('') or filter_input.date_end|default('') %}
@@ -363,10 +360,10 @@
                     <option value="CANCELLED" {{ filter_input.status|default('') == 'CANCELLED' ? 'selected' : '' }}>Annulé</option>
                 </select>
                 <select name="sort" class="fo-filter-select">
-                    <option value="date_desc" {{ filter_input.sort|default('date_desc') == 'date_desc' ? 'selected' : '' }}>Récent</option>
-                    <option value="date_asc" {{ filter_input.sort|default('date_desc') == 'date_asc' ? 'selected' : '' }}>Ancien</option>
-                    <option value="event_date_desc" {{ filter_input.sort|default('date_desc') == 'event_date_desc' ? 'selected' : '' }}>Event récent</option>
-                    <option value="event_date_asc" {{ filter_input.sort|default('date_desc') == 'event_date_asc' ? 'selected' : '' }}>Event ancien</option>
+                    <option value="event_date_asc" {{ filter_input.sort|default('event_date_asc') == 'event_date_asc' ? 'selected' : '' }}>Event proche → lointain</option>
+                    <option value="event_date_desc" {{ filter_input.sort|default('event_date_asc') == 'event_date_desc' ? 'selected' : '' }}>Event lointain → proche</option>
+                    <option value="date_desc" {{ filter_input.sort|default('event_date_asc') == 'date_desc' ? 'selected' : '' }}>Résa récent</option>
+                    <option value="date_asc" {{ filter_input.sort|default('event_date_asc') == 'date_asc' ? 'selected' : '' }}>Résa ancien</option>
                 </select>
                 <input type="hidden" name="page" value="1">
                 <button type="submit" class="fo-filter-btn">
@@ -476,13 +473,20 @@
                                         </button>
                                     </form>
                                 {% endif %}
-                                <form method="post" action="{{ path('app_reservation_cancel', {id: reservation.id}) }}" class="d-inline" data-confirm-title="Annuler cette réservation" data-confirm="Vous allez annuler votre réservation. Voulez-vous continuer ?" data-confirm-btn="Oui, annuler" data-confirm-cancel="Fermer">
-                                    <input type="hidden" name="_token" value="{{ csrf_token('cancel' ~ reservation.id) }}">
-                                    <button type="submit" class="btn btn-sm btn-outline-danger">
-                                        <span class="btn-label"><i class="fas fa-times me-1"></i> Annuler</span>
-                                        <span class="btn-spinner" style="display:none;"><i class="fas fa-spinner fa-spin"></i></span>
-                                    </button>
-                                </form>
+                                {% set isPastEvent = reservation.evenement.dateDebut and reservation.evenement.dateDebut < date() %}
+                                {% if reservation.status != 'CANCELLED' and not isPastEvent %}
+                                    <form method="post" action="{{ path('app_reservation_cancel', {id: reservation.id}) }}" class="d-inline" data-confirm-title="Annuler cette réservation" data-confirm="Vous allez annuler votre réservation. Voulez-vous continuer ?" data-confirm-btn="Oui, annuler" data-confirm-cancel="Fermer">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('cancel' ~ reservation.id) }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                            <span class="btn-label"><i class="fas fa-times me-1"></i> Annuler</span>
+                                            <span class="btn-spinner" style="display:none;"><i class="fas fa-spinner fa-spin"></i></span>
+                                        </button>
+                                    </form>
+                                {% elseif isPastEvent %}
+                                    <span class="btn btn-sm btn-outline-secondary disabled" title="Événement passé" style="cursor:not-allowed; opacity:.55;">
+                                        <i class="fas fa-ban me-1"></i> Passé
+                                    </span>
+                                {% endif %}
                             </div>
                         </div>
                     </article>
