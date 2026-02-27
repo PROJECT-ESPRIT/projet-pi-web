@@ -56,6 +56,9 @@ php bin/phpunit tests/Entity/
 
 # Analyse statique — vérifie les types sans exécuter le code (PHPStan)
 vendor/bin/phpstan analyse --no-progress
+
+# Vérifie la cohérence entre les entités et la base de données (Doctrine)
+php bin/console doctrine:schema:validate
 ```
 
 ---
