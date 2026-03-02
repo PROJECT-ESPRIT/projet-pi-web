@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nouveau commentaire sur votre post</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: #fff;
+            padding: 0;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 26px;
+            font-weight: 600;
+        }
+        .header .subtitle {
+            margin: 10px 0 0 0;
+            opacity: 0.9;
+            font-size: 16px;
+        }
+        .content {
+            padding: 30px;
+        }
+        .post-info {
+            background-color: #e3f2fd;
+            border-left: 5px solid #2196f3;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        .post-info h3 {
+            margin: 0 0 15px 0;
+            color: #1976d2;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .post-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1565c0;
+            margin-bottom: 10px;
+            line-height: 1.4;
+        }
+        .post-content {
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #bbdefb;
+            font-style: italic;
+            color: #555;
+            white-space: pre-wrap;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        .comment-section {
+            background-color: #f1f8e9;
+            border-left: 5px solid #4caf50;
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 8px;
+        }
+        .comment-section h3 {
+            margin: 0 0 15px 0;
+            color: #2e7d32;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .comment-meta {
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #c8e6c9;
+            margin-bottom: 15px;
+        }
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        .meta-item:last-child {
+            margin-bottom: 0;
+        }
+        .meta-label {
+            font-weight: 600;
+            color: #2e7d32;
+            min-width: 80px;
+        }
+        .comment-content {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid #a5d6a7;
+            white-space: pre-wrap;
+            font-size: 16px;
+            line-height: 1.6;
+            color: #1b5e20;
+        }
+        .footer {
+            background-color: #f5f5f5;
+            padding: 25px 30px;
+            text-align: center;
+            color: #666;
+            font-size: 13px;
+            border-top: 1px solid #e0e0e0;
+        }
+        .footer p {
+            margin: 5px 0;
+        }
+        .highlight {
+            background-color: #fff3cd;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+        .icon {
+            font-size: 18px;
+        }
+        .action-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 500;
+            margin-top: 15px;
+            transition: transform 0.2s;
+        }
+        .action-button:hover {
+            transform: translateY(-2px);
+        }
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            .header, .content, .footer {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔔 Nouveau commentaire sur votre post</h1>
+            <div class="subtitle">Votre publication a reçu une nouvelle réponse</div>
+        </div>
+
+        <div class="content">
+            <div class="post-info">
+                <h3><span class="icon">📋</span> Informations sur le post</h3>
+                <div class="post-title">{{ post_title }}</div>
+                <div class="post-content">{{ post_content }}</div>
+            </div>
+
+            <div class="comment-section">
+                <h3><span class="icon">💬</span> Nouveau commentaire</h3>
+                
+                <div class="comment-meta">
+                    <div class="meta-item">
+                        <span class="meta-label">Auteur:</span>
+                        <span class="highlight">{{ comment_author_name }}</span>
+                        {% if comment_author_email %}
+                            <span style="color: #666; font-size: 12px;">({{ comment_author_email }})</span>
+                        {% endif %}
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">Date:</span>
+                        <span>{{ comment_date|date('d/m/Y à H:i') }}</span>
+                    </div>
+                </div>
+
+                <div class="comment-content">{{ comment_content|nl2br }}</div>
+                
+                <div style="text-align: center; margin-top: 20px;">
+                    <a href="#" class="action-button">Voir le commentaire sur le forum</a>
+                </div>
+            </div>
+
+            <div style="background-color: #fff3e0; border-left: 5px solid #ff9800; padding: 15px; border-radius: 6px; margin: 20px 0;">
+                <p style="margin: 0; color: #e65100; font-size: 14px;">
+                    <strong>💡 Astuce:</strong> Vous pouvez répondre directement à ce commentaire depuis le forum.
+                </p>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p><strong>Cet email a été envoyé automatiquement par le système de notification du forum.</strong></p>
+            <p>Post ID: {{ forum_id }} | Commentaire ID: {{ comment_id }}</p>
+            <p>Pour ne plus recevoir ces notifications, veuillez contacter l'administrateur du site.</p>
+            <p style="margin-top: 15px; font-size: 11px; color: #999;">
+                Cet email a été envoyé à {{ post_author_name }} 
+                {% if comment_author_email and comment_author_email != forum.email %}et en copie à {{ comment_author_name }}{% endif %}.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

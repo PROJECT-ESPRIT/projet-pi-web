@@ -1,11 +1,463 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}New Forum{% endblock %}
+{% block title %}Nouvelle Publication{% endblock %}
 
 {% block body %}
-    <h1>Create new Forum</h1>
+<div class="forum-new-container">
+    <!-- Header -->
+    <header class="forum-new-header">
+        <div class="header-content">
+            <div class="header-icon">
+                <i class="fas fa-pen-to-square"></i>
+            </div>
+            <div class="header-text">
+                <h1>Créer une nouvelle publication</h1>
+                <p>Partagez vos pensées avec la communauté ArtConnect</p>
+            </div>
+        </div>
+        <a href="{{ path('app_forum_index') }}" class="back-btn">
+            <i class="fas fa-arrow-left"></i>
+            Retour au forum
+        </a>
+    </header>
 
-    {{ include('forum/_form.html.twig') }}
+    <!-- Formulaire -->
+    <main class="forum-new-main">
+        <div class="form-container">
+            {{ form_start(form, {'attr': {'novalidate': 'novalidate', 'class': 'forum-form'}}) }}
+                
+                <!-- Champs du formulaire -->
+                <div class="form-grid">
+                    <!-- Nom -->
+                    <div class="form-group">
+                        <label for="{{ form.nom.vars.id }}" class="form-label">
+                            <i class="fas fa-user"></i>
+                            Nom
+                        </label>
+                        {{ form_widget(form.nom, {
+                            'attr': {
+                                'class': 'form-input',
+                                'placeholder': 'Votre nom'
+                            }
+                        }) }}
+                        <div class="form-error">
+                            {{ form_errors(form.nom) }}
+                        </div>
+                    </div>
 
-    <a href="{{ path('app_forum_index') }}">back to list</a>
+                    <!-- Prénom -->
+                    <div class="form-group">
+                        <label for="{{ form.prenom.vars.id }}" class="form-label">
+                            <i class="fas fa-user"></i>
+                            Prénom
+                        </label>
+                        {{ form_widget(form.prenom, {
+                            'attr': {
+                                'class': 'form-input',
+                                'placeholder': 'Votre prénom'
+                            }
+                        }) }}
+                        <div class="form-error">
+                            {{ form_errors(form.prenom) }}
+                        </div>
+                    </div>
+
+                    <!-- Email -->
+                    <div class="form-group">
+                        <label for="{{ form.email.vars.id }}" class="form-label">
+                            <i class="fas fa-envelope"></i>
+                            Email
+                        </label>
+                        {{ form_widget(form.email, {
+                            'attr': {
+                                'class': 'form-input',
+                                'placeholder': 'votre.email@exemple.com'
+                            }
+                        }) }}
+                        <div class="form-error">
+                            {{ form_errors(form.email) }}
+                        </div>
+                    </div>
+
+                    <!-- Sujet -->
+                    <div class="form-group full-width">
+                        <label for="{{ form.sujet.vars.id }}" class="form-label">
+                            <i class="fas fa-heading"></i>
+                            Sujet
+                        </label>
+                        {{ form_widget(form.sujet, {
+                            'attr': {
+                                'class': 'form-input',
+                                'placeholder': 'Quel est le sujet de votre publication ?'
+                            }
+                        }) }}
+                        <div class="form-error">
+                            {{ form_errors(form.sujet) }}
+                        </div>
+                    </div>
+
+                    <!-- Message -->
+                    <div class="form-group full-width">
+                        <label for="{{ form.message.vars.id }}" class="form-label">
+                            <i class="fas fa-message"></i>
+                            Message
+                        </label>
+                        {{ form_widget(form.message, {
+                            'attr': {
+                                'class': 'form-textarea',
+                                'placeholder': 'Écrivez votre message ici...',
+                                'rows': '8'
+                            }
+                        }) }}
+                        <div class="form-error">
+                            {{ form_errors(form.message) }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bouton de soumission -->
+                <div class="form-actions">
+                    <button type="submit" class="submit-btn">
+                        <i class="fas fa-paper-plane"></i>
+                        <span>Publier</span>
+                    </button>
+                </div>
+
+                <!-- Champs cachés -->
+                {{ form_rest(form) }}
+
+            {{ form_end(form) }}
+        </div>
+    </main>
+</div>
+
+<style>
+/* ===== VARIABLES ===== */
+:root {
+    --ac-deep: #1E0F75;
+    --ac-mid: #3785D8;
+    --ac-lavender: #BF8CE1;
+    --ac-sky: #ADC6E5;
+    --ac-pink: #EBB2C3;
+    --text-primary: #1a1a1a;
+    --text-secondary: #6b7280;
+    --text-muted: #9ca3af;
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8fafc;
+    --bg-tertiary: #f1f5f9;
+    --border-primary: #e2e8f0;
+    --border-secondary: #f3f4f6;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.06);
+    --shadow-lg: 0 10px 25px rgba(0,0,0,0.1), 0 6px 10px rgba(0,0,0,0.08);
+    --shadow-xl: 0 20px 40px rgba(30,15,117,0.15);
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+    --radius-2xl: 24px;
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ===== CONTAINER ===== */
+.forum-new-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+    font-family: 'Sora', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+    padding: 2rem;
+    position: relative;
+}
+
+.forum-new-container::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 300px;
+    background: linear-gradient(135deg, var(--ac-deep) 0%, var(--ac-mid) 50%, var(--ac-lavender) 100%);
+    opacity: 0.05;
+    z-index: -1;
+}
+
+/* ===== HEADER ===== */
+.forum-new-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding: 2rem;
+    background: var(--bg-primary);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--border-primary);
+    backdrop-filter: blur(10px);
+    position: relative;
+    overflow: hidden;
+}
+
+.forum-new-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--ac-deep), var(--ac-mid), var(--ac-lavender));
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.header-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: var(--radius-lg);
+    background: linear-gradient(135deg, var(--ac-deep), var(--ac-mid));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    box-shadow: var(--shadow-md);
+}
+
+.header-text h1 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.header-text p {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.back-btn {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--radius-lg);
+    text-decoration: none;
+    font-weight: 600;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: 1px solid var(--border-primary);
+}
+
+.back-btn:hover {
+    background: var(--ac-deep);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+/* ===== MAIN ===== */
+.forum-new-main {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+/* ===== FORM CONTAINER ===== */
+.form-container {
+    background: var(--bg-primary);
+    border-radius: var(--radius-xl);
+    padding: 2.5rem;
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--border-primary);
+    position: relative;
+    overflow: hidden;
+}
+
+.form-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--ac-sky), var(--ac-mid), var(--ac-lavender));
+}
+
+/* ===== FORM GRID ===== */
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+/* ===== FORM GROUP ===== */
+.form-group {
+    position: relative;
+}
+
+.form-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+    font-size: 0.9rem;
+}
+
+.form-label i {
+    width: 20px;
+    text-align: center;
+    color: var(--ac-mid);
+}
+
+.form-input {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    border: 2px solid var(--border-primary);
+    border-radius: var(--radius-lg);
+    font-size: 1rem;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    transition: var(--transition);
+    font-family: inherit;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--ac-mid);
+    box-shadow: 0 0 0 3px rgba(55,133,216,0.1);
+    background: var(--bg-primary);
+}
+
+.form-textarea {
+    width: 100%;
+    padding: 1rem;
+    border: 2px solid var(--border-primary);
+    border-radius: var(--radius-lg);
+    font-size: 1rem;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    transition: var(--transition);
+    font-family: inherit;
+    resize: vertical;
+    min-height: 120px;
+    line-height: 1.5;
+}
+
+.form-textarea:focus {
+    outline: none;
+    border-color: var(--ac-mid);
+    box-shadow: 0 0 0 3px rgba(55,133,216,0.1);
+    background: var(--bg-primary);
+}
+
+.form-error {
+    margin-top: 0.5rem;
+    color: #ef4444;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+/* ===== FORM ACTIONS ===== */
+.form-actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 2rem;
+}
+
+.submit-btn {
+    background: linear-gradient(135deg, var(--ac-deep), var(--ac-mid));
+    color: white;
+    border: none;
+    padding: 1rem 2.5rem;
+    border-radius: var(--radius-lg);
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    box-shadow: var(--shadow-md);
+    position: relative;
+    overflow: hidden;
+}
+
+.submit-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s;
+}
+
+.submit-btn:hover::before {
+    left: 100%;
+}
+
+.submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.submit-btn:active {
+    transform: translateY(0);
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+    .forum-new-container {
+        padding: 1rem;
+    }
+    
+    .forum-new-header {
+        flex-direction: column;
+        gap: 1rem;
+        padding: 1.5rem;
+    }
+    
+    .header-content {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+    }
+    
+    .header-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.2rem;
+    }
+    
+    .header-text h1 {
+        font-size: 1.25rem;
+    }
+    
+    .form-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .form-container {
+        padding: 1.5rem;
+    }
+    
+    .submit-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+</style>
 {% endblock %}

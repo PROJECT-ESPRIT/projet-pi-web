@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nouveau commentaire sur le forum</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px 8px 0 0;
+            margin: -30px -30px 30px -30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .info-box {
+            background-color: #f8f9fa;
+            border-left: 4px solid #007bff;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .info-box h3 {
+            margin: 0 0 10px 0;
+            color: #007bff;
+            font-size: 16px;
+        }
+        .info-box p {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        .comment-content {
+            background-color: #e9ecef;
+            padding: 20px;
+            border-radius: 6px;
+            margin: 20px 0;
+            border-left: 4px solid #28a745;
+        }
+        .comment-content h3 {
+            margin: 0 0 15px 0;
+            color: #28a745;
+            font-size: 18px;
+        }
+        .comment-text {
+            white-space: pre-wrap;
+            font-style: italic;
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 4px;
+            border: 1px solid #dee2e6;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #dee2e6;
+            text-align: center;
+            color: #6c757d;
+            font-size: 12px;
+        }
+        .highlight {
+            background-color: #fff3cd;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔔 Nouveau commentaire sur le forum</h1>
+        </div>
+
+        <div class="info-box">
+            <h3>📋 Informations sur le post</h3>
+            <p><strong>Titre du post:</strong> <span class="highlight">{{ post_title }}</span></p>
+        </div>
+
+        <div class="info-box">
+            <h3>👤 Auteur du commentaire</h3>
+            <p><strong>Nom:</strong> {{ author_name }}</p>
+            <p><strong>Date:</strong> {{ comment_date|date('d/m/Y à H:i') }}</p>
+        </div>
+
+        <div class="comment-content">
+            <h3>💬 Contenu du commentaire</h3>
+            <div class="comment-text">{{ comment_content|nl2br }}</div>
+        </div>
+
+        <div class="footer">
+            <p><em>Cet email a été envoyé automatiquement par le système de notification du forum.</em></p>
+            <p><em>Pour ne plus recevoir ces notifications, veuillez contacter l'administrateur.</em></p>
+        </div>
+    </div>
+</body>
+</html>

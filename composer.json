@@ -12,6 +12,7 @@
         "doctrine/orm": "^3.6",
         "dompdf/dompdf": "^3.1",
         "endroid/qr-code": "^6.0",
+        "guzzlehttp/guzzle": "^7.10",
         "phpdocumentor/reflection-docblock": "^5.2",
         "phpstan/phpdoc-parser": "^2.3",
         "stripe/stripe-php": "^19.3",

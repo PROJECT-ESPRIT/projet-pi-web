@@ -23,111 +23,235 @@
             <a href="{{ path('app_forum_index', {'sort': 'dateCreation'}) }}" class="filter-tab {% if sortBy == 'dateCreation' %}active{% endif %}">
                 Récents
             </a>
-            <a href="{{ path('app_forum_index', {'sort': 'likes'}) }}" class="filter-tab {% if sortBy == 'likes' %}active{% endif %}">
+            <a href="{{ path('app_forum_index', {'sort': 'score'}) }}" class="filter-tab {% if sortBy == 'score' %}active{% endif %}">
                 Populaires
             </a>
-            <a href="{{ path('app_forum_index', {'sort': 'sujet'}) }}" class="filter-tab {% if sortBy == 'sujet' %}active{% endif %}">
-                Discussions
+            <a href="{{ path('app_forum_index', {'sort': 'likes'}) }}" class="filter-tab {% if sortBy == 'likes' %}active{% endif %}">
+                Aimés
             </a>
         </div>
         
-        <div class="filter-search-wrap">
-            <div class="filter-search">
-                <i class="fas fa-search"></i>
-                <input type="text" name="search" placeholder="Rechercher..." value="{{ search }}">
+        <form method="get" action="{{ path('app_forum_index') }}" class="filter-search-form">
+            <div class="search-input-wrapper-aligned">
+                <i class="fas fa-search search-icon-aligned"></i>
+                <input type="text" name="search" placeholder="Chercher un post, un artiste..." value="{{ search }}" class="search-input-aligned">
+                <button type="submit" class="search-submit-btn-aligned" title="Lancer la recherche">
+                    <i class="fas fa-arrow-right"></i>
+                </button>
             </div>
-            <select name="sort" class="filter-sort">
-                <option value="dateCreation" {% if sortBy == 'dateCreation' %}selected{% endif %}>Plus récents</option>
-                <option value="sujet" {% if sortBy == 'sujet' %}selected{% endif %}>Populaires</option>
-                <option value="likes" {% if sortBy == 'likes' %}selected{% endif %}>Plus aimés</option>
-            </select>
-        </div>
+        </form>
         
-        <a href="{{ path('app_forum_new') }}" class="filter-btn-submit">
+        <select name="sort" class="filter-sort-aligned">
+            <option value="dateCreation" {% if sortBy == 'dateCreation' %}selected{% endif %}>Plus récents</option>
+            <option value="score" {% if sortBy == 'score' %}selected{% endif %}>Plus populaires</option>
+            <option value="likes" {% if sortBy == 'likes' %}selected{% endif %}>Plus aimés</option>
+        </select>
+        
+        <a href="{{ path('app_forum_new') }}" class="filter-btn-submit-aligned">
             <i class="fas fa-plus"></i>
             Nouveau post
         </a>
     </div>
-
-    <!-- Main Content -->
     <main class="forum-main">
         <!-- Posts Feed -->
         <div class="posts-feed">
             {% for forum in forums %}
                 <article class="post-card" data-forum-id="{{ forum.id }}">
-                    <!-- Post Header -->
+                    <!-- Header : Auteur et date en haut à gauche -->
                     <header class="post-header">
-                        <div class="post-author">
+                        <div class="post-author-info">
                             <div class="author-avatar">
                                 <div class="avatar-placeholder">
-                                    <i class="fas fa-user"></i>
-                                    <span>{{ forum.nom|first }}{{ forum.prenom|first }}</span>
+                                    {{ forum.nom|first }}{{ forum.prenom|first }}
                                 </div>
                             </div>
-                            <div class="author-info">
-                                <div class="author-name">{{ forum.nom }} {{ forum.prenom }}</div>
-                                <div class="author-meta">
-                                    <span class="post-date">{{ forum.dateCreation ? forum.dateCreation|date('d M \à H:i') : '' }}</span>
-                                    <span class="author-badge {% if loop.index0 == 0 %}featured{% endif %}">
-                                        {% if loop.index0 == 0 %}🔥{% endif %} 
-                                        {% if loop.index0 == 0 %}Populaire{% endif %}
+                            <div class="author-details">
+                                <div class="author-name">
+                                    {{ forum.nom }} {{ forum.prenom }}
+                                    <span class="author-score-badge" title="Score du post">
+                                        <i class="fas fa-star"></i>
+                                        {{ forum.getScore() }}
                                     </span>
                                 </div>
+                                <div class="post-date">{{ forum.dateCreation ? forum.dateCreation|date('d/m/Y') : '' }}</div>
                             </div>
                         </div>
-                        <div class="post-actions">
-                            {% if is_granted('ROLE_ADMIN') %}
-                                <div class="dropdown">
-                                    <button class="action-btn" data-bs-toggle="dropdown">
-                                        <i class="fas fa-ellipsis-h"></i>
+                        {% if is_granted('ROLE_ADMIN') or (app.user and app.user.email == forum.email) %}
+                            <div class="post-menu-dropdown">
+                                <button class="post-menu-btn" onclick="togglePostMenu({{ forum.id }})" aria-label="Options">
+                                    <i class="fas fa-ellipsis-h"></i>
+                                </button>
+                                <div class="post-menu-content" id="post-menu-{{ forum.id }}">
+                                    <a href="{{ path('app_forum_edit', {'id': forum.id, 'search': search, 'sort': sortBy, 'order': order}) }}" class="post-menu-item">
+                                        <i class="fas fa-edit"></i>
+                                        Modifier
+                                    </a>
+                                    <form method="post" action="{{ path('app_forum_delete', {'id': forum.id, 'search': search, 'sort': sortBy, 'order': order}) }}" 
+                                          onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce post ?');" 
+                                          style="display: contents;">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ forum.id) }}">
+                                        <button type="submit" class="post-menu-item post-menu-item-danger">
+                                            <i class="fas fa-trash"></i>
+                                            Supprimer
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </header>
+
+                    <!-- Corps : Contenu du post -->
+                    <div class="post-body">
+                        <h2 class="post-title">{{ forum.sujet }}</h2>
+                        <div class="post-content">{{ forum.message|nl2br }}</div>
+                    </div>
+
+                    <!-- Actions : Barre horizontale style Facebook -->
+                    <div class="post-actions-bar">
+                        <button class="action-btn like-btn {% if app.user and (forum.likes|filter(like => like.user == app.user)|length > 0) %}liked{% endif %}" 
+                                type="button"
+                                data-forum-id="{{ forum.id }}"
+                                data-liked="{{ app.user ? (forum.likes|filter(like => like.user == app.user)|length > 0 ? 'true' : 'false') : 'false' }}">
+                            <i class="{% if app.user and (forum.likes|filter(like => like.user == app.user)|length > 0) %}fas{% else %}far{% endif %} fa-heart"></i>
+                            <span>Like</span>
+                            <span class="count">{{ forum.getLikesCount() }}</span>
+                        </button>
+                        <button class="action-btn comment-btn" type="button" onclick="toggleCommentForm({{ forum.id }})">
+                            <i class="far fa-comment"></i>
+                            <span>Commenter</span>
+                            <span class="count">{{ forum.reponses|length }}</span>
+                        </button>
+                        <button class="action-btn report-btn {% if app.user and (forum.signalements|filter(report => report.user == app.user)|length > 0) %}reported{% endif %}" 
+                                type="button"
+                                data-forum-id="{{ forum.id }}"
+                                data-reported="{{ app.user ? (forum.signalements|filter(report => report.user == app.user)|length > 0 ? 'true' : 'false') : 'false' }}">
+                            <i class="{% if app.user and (forum.signalements|filter(report => report.user == app.user)|length > 0) %}fas{% else %}far{% endif %} fa-flag"></i>
+                            <span>Signaler</span>
+                        </button>
+                    </div>
+
+                    <!-- Section Réponses : Zone avec décalage visuel -->
+                    <div class="post-responses" id="responses-{{ forum.id }}" style="display: none;">
+                        <!-- Formulaire de commentaire -->
+                        <div class="comment-form-container" id="comment-form-{{ forum.id }}">
+                            {% if app.user %}
+                                <form id="comment-form-{{ forum.id }}" class="comment-form" enctype="multipart/form-data">
+                                    <input type="hidden" name="forum_id" value="{{ forum.id }}">
+                                    <div class="comment-input-wrapper">
+                                        <textarea name="contenu" id="comment-textarea-{{ forum.id }}" placeholder="Écrivez votre commentaire ou enregistrez un message vocal..." required></textarea>
+                                        <div class="voice-buttons-group">
+                                            <button type="button" class="voice-ai-btn" id="voiceAiBtn-{{ forum.id }}" onclick="toggleVoiceTranscription({{ forum.id }})" title="Transformer la voix en texte">
+                                                <i class="fas fa-microphone"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Voice Recording Preview (hidden by default) -->
+                                    <div class="voice-preview-container" id="voicePreviewContainer-{{ forum.id }}" style="display: none;">
+                                        <audio id="voicePreview-{{ forum.id }}" controls style="width: 100%;"></audio>
+                                        <div class="voice-controls-mini">
+                                            <button type="button" class="voice-transcribe-btn" onclick="transcribeAudio({{ forum.id }})">
+                                                <i class="fas fa-magic"></i> Transformer en texte
+                                            </button>
+                                            <button type="button" class="voice-delete-mini-btn" onclick="deleteVoiceRecording({{ forum.id }})">
+                                                <i class="fas fa-trash"></i> Supprimer
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- AI Transcription Status -->
+                                    <div class="ai-transcription-status" id="aiStatus-{{ forum.id }}" style="display: none;">
+                                        <div class="ai-status-content">
+                                            <i class="fas fa-brain ai-pulse"></i>
+                                            <span>Transcription en cours...</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <input type="hidden" name="voice_data" id="voiceDataInput-{{ forum.id }}">
+                                    
+                                    <button type="submit" class="submit-comment-btn">
+                                        <i class="fas fa-paper-plane"></i> Publier
                                     </button>
-                                    <ul class="dropdown-menu">
-                                        <li><a href="{{ path('app_forum_edit', {'id': forum.id}) }}" class="dropdown-item">
-                                            <i class="fas fa-edit"></i> Modifier
-                                        </a></li>
-                                        <li>
-                                            {{ include('forum/_delete_form.html.twig') }}
-                                        </li>
-                                    </ul>
+                                </form>
+                            {% else %}
+                                <div class="login-prompt">
+                                    <a href="{{ path('app_login') }}">Connectez-vous</a> pour commenter.
                                 </div>
                             {% endif %}
                         </div>
-                    </header>
 
-                    <!-- Post Content -->
-                    <div class="post-content">
-                        <h2 class="post-title">{{ forum.sujet }}</h2>
-                        <div class="post-body">{{ forum.message|nl2br }}</div>
+                        <!-- Liste des réponses avec indentation -->
+                        {% if forum.reponses|length > 0 %}
+                            <div class="responses-list">
+                                {% for reponse in forum.reponses %}
+                                    <div class="response-item" data-reponse-id="{{ reponse.id }}">
+                                        <div class="response-header">
+                                            <div class="response-avatar">
+                                                {{ reponse.auteur.prenom|first }}{{ reponse.auteur.nom|first }}
+                                            </div>
+                                            <div class="response-info">
+                                                <div class="response-author">{{ reponse.auteur.nom }} {{ reponse.auteur.prenom }}</div>
+                                                <div class="response-date">{{ reponse.dateReponse ? reponse.dateReponse|date('d/m/Y') : '' }}</div>
+                                            </div>
+                                            {% if is_granted('ROLE_ADMIN') or (app.user and app.user.id == reponse.auteur.id) %}
+                                                <div class="response-menu-dropdown">
+                                                    <button class="response-menu-btn" onclick="toggleResponseMenu({{ reponse.id }})" aria-label="Options">
+                                                        <i class="fas fa-ellipsis-h"></i>
+                                                    </button>
+                                                    <div class="response-menu-content" id="response-menu-{{ reponse.id }}">
+                                                        {% if app.user and reponse.auteur and app.user.id == reponse.auteur.id %}
+                                                            <a href="{{ path('app_forum_reponse_edit', {'id': reponse.id, 'search': search, 'sort': sortBy, 'order': order}) }}" class="response-menu-item">
+                                                                <i class="fas fa-edit"></i>
+                                                                Modifier
+                                                            </a>
+                                                        {% endif %}
+                                                        {% if is_granted('ROLE_ADMIN') or (app.user and reponse.auteur and app.user.id == reponse.auteur.id) %}
+                                                            <form method="post" action="{{ path('app_forum_reponse_delete', {'id': reponse.id, 'search': search, 'sort': sortBy, 'order': order}) }}" 
+                                                                  onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce commentaire ?');" 
+                                                                  style="display: contents;">
+                                                                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ reponse.id) }}">
+                                                                <button type="submit" class="response-menu-item response-menu-item-danger">
+                                                                    <i class="fas fa-trash"></i>
+                                                                    Supprimer
+                                                                </button>
+                                                            </form>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="response-content">{{ reponse.contenu|nl2br }}</div>
+                                        {% if reponse.voiceMessage %}
+                                            <div class="voice-message-player">
+                                                <audio controls preload="none" style="width: 100%; max-width: 300px;">
+                                                    <source src="{{ asset(reponse.voiceMessage) }}" type="audio/wav">
+                                                    <source src="{{ asset(reponse.voiceMessage) }}" type="audio/mpeg">
+                                                    <source src="{{ asset(reponse.voiceMessage) }}" type="audio/ogg">
+                                                    Votre navigateur ne supporte pas l'élément audio.
+                                                </audio>
+                                                <div class="voice-message-label">
+                                                    <i class="fas fa-microphone"></i> Message vocal
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                        <div class="response-actions">
+                                            <button class="response-action-btn response-like-btn" 
+                                                    data-reponse-id="{{ reponse.id }}"
+                                                    data-liked="{{ app.user ? (reponse.likes|filter(like => like.user == app.user)|length > 0 ? 'true' : 'false') : 'false' }}">
+                                                <i class="{% if app.user and (reponse.likes|filter(like => like.user == app.user)|length > 0) %}fas{% else %}far{% endif %} fa-heart"></i>
+                                                <span>{{ reponse.getLikesCount() }}</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="empty-responses">
+                                <i class="far fa-comments"></i>
+                                <p>Soyez le premier à commenter !</p>
+                            </div>
+                        {% endif %}
                     </div>
-
-                    <!-- Post Footer -->
-                    <footer class="post-footer">
-                        <div class="post-stats">
-                            <button class="stat-btn like-btn" 
-                                    data-forum-id="{{ forum.id }}"
-                                    data-liked="{{ app.user ? (forum.likes|filter(like => like.user == app.user)|length > 0 ? 'true' : 'false') : 'false' }}">
-                                <i class="far fa-heart"></i>
-                                <span class="stat-count">{{ forum.getLikesCount() }}</span>
-                            </button>
-                            <a href="{{ path('app_forum_show', {'id': forum.id}) }}" class="stat-btn">
-                                <i class="far fa-comment"></i>
-                                <span class="stat-count">{{ forum.reponses|length }}</span>
-                            </a>
-                        </div>
-                        
-                        <div class="post-engagement">
-                            <button class="engagement-btn report-btn" 
-                                    data-forum-id="{{ forum.id }}"
-                                    data-reported="{{ app.user ? (forum.signalements|filter(report => report.user == app.user)|length > 0 ? 'true' : 'false') : 'false' }}">
-                                <i class="far fa-flag"></i>
-                                <span>Signaler</span>
-                            </button>
-                            <button class="engagement-btn pdf-btn" onclick="saveForumPdf({{ forum.id }})">
-                                <i class="fas fa-file-pdf"></i>
-                                <span>Sauvegarder PDF</span>
-                            </button>
-                        </div>
-                    </footer>
                 </article>
             {% else %}
                 <div class="fo-empty">
@@ -379,6 +503,462 @@
     position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
     overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
 }
+/* ===== FILTER BAR - ALIGNEMENT PARFAIT SUR UNE LIGNE ===== */
+.filter-bar {
+    background: var(--bg-primary);
+    border-radius: var(--radius-xl);
+    padding: 1rem 1.5rem;
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--border-primary);
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    flex-wrap: nowrap;
+    position: relative;
+    backdrop-filter: blur(10px);
+}
+
+.filter-bar::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--ac-sky), var(--ac-mid), var(--ac-lavender));
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+}
+
+.filter-tabs {
+    display: flex; 
+    gap: 0.5rem;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-lg);
+    padding: 0.5rem;
+    flex-shrink: 0;
+}
+
+.filter-tab {
+    padding: 0.75rem 1.25rem;
+    border-radius: var(--radius-md);
+    border: none;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    background: transparent;
+    cursor: pointer;
+    transition: var(--transition);
+    white-space: nowrap;
+    text-decoration: none; 
+    display: inline-flex; 
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.filter-tab::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, var(--ac-deep), var(--ac-mid));
+    opacity: 0;
+    transition: var(--transition);
+}
+
+.filter-tab:hover::before {
+    opacity: 0.1;
+}
+
+.filter-tab.active {
+    background: linear-gradient(135deg, var(--ac-deep) 0%, var(--ac-mid) 55%, var(--ac-lavender) 100%); 
+    color: #fff; 
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-2px);
+}
+
+.filter-tab.active::before {
+    opacity: 0;
+}
+
+.filter-tab:not(.active):hover {
+    background: rgba(30,15,117,0.1);
+    color: var(--ac-deep);
+    transform: translateY(-1px);
+}
+
+.filter-search-form {
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 250px;
+}
+
+.search-input-wrapper-aligned {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: var(--bg-tertiary);
+    border: 2px solid var(--border-primary);
+    border-radius: var(--radius-lg);
+    transition: var(--transition);
+    height: 48px;
+    width: 100%;
+}
+
+.search-input-wrapper-aligned:focus-within {
+    border-color: var(--ac-mid);
+    box-shadow: 0 0 0 3px rgba(55,133,216,0.1);
+    background: var(--bg-primary);
+}
+
+.search-icon-aligned {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 1rem;
+    transition: var(--transition);
+    z-index: 5;
+    pointer-events: none;
+}
+
+.search-input-wrapper-aligned:focus-within .search-icon-aligned {
+    color: var(--ac-mid);
+}
+
+.search-input-aligned {
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: 0 45px 0 45px !important;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    outline: none;
+    height: 100%;
+    box-sizing: border-box;
+    font-weight: 500;
+}
+
+.search-input-aligned::placeholder {
+    color: var(--text-muted);
+    font-weight: 400;
+}
+
+.search-submit-btn-aligned {
+    position: absolute;
+    right: 12px;
+    background: var(--ac-mid);
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: white;
+    transition: var(--transition);
+    font-size: 0.8rem;
+    z-index: 10;
+    pointer-events: auto;
+}
+
+.search-submit-btn-aligned:hover {
+    background: var(--ac-deep);
+    transform: scale(1.05);
+}
+
+.search-submit-btn-aligned:active {
+    transform: scale(0.95);
+}
+
+.filter-sort-aligned {
+    border: 2px solid var(--border-primary);
+    border-radius: var(--radius-lg); 
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem; 
+    background: var(--bg-tertiary);
+    cursor: pointer; 
+    color: var(--text-secondary);
+    transition: var(--transition);
+    min-width: 140px;
+    height: 48px;
+    flex-shrink: 0;
+}
+
+.filter-sort-aligned:focus { 
+    outline: none; 
+    border-color: var(--ac-mid);
+    box-shadow: 0 0 0 3px rgba(55,133,216,0.1);
+    background: var(--bg-primary);
+}
+
+.filter-btn-submit-aligned {
+    border-radius: var(--radius-lg); 
+    font-weight: 700; 
+    font-size: 0.875rem;
+    padding: 0.75rem 1.25rem; 
+    min-width: auto; 
+    border: none;
+    background: linear-gradient(135deg, var(--ac-deep), var(--ac-mid));
+    color: #fff; 
+    cursor: pointer; 
+    transition: var(--transition);
+    box-shadow: var(--shadow-md);
+    text-decoration: none; 
+    display: inline-flex; 
+    align-items: center;
+    gap: 0.5rem;
+    height: 48px;
+    flex-shrink: 0;
+}
+
+.filter-btn-submit-aligned:hover { 
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.filter-count {
+    display: inline-flex; align-items: center; justify-content: center;
+    background: rgba(30,15,117,0.08); color: #1E0F75;
+    border-radius: 6px; font-size: 0.7rem; font-weight: 700;
+    min-width: 20px; height: 18px; padding: 0 4px; margin-left: 4px;
+}
+.filter-tab.active .filter-count {
+    background: rgba(255,255,255,0.25); color: #fff;
+}
+
+/* ===== BARRE DE RECHERCHE ÉTENDUE ===== */
+.filter-search-form {
+    width: 100%;
+}
+
+.filter-search-wrap {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    flex: 1;
+}
+
+.search-container-expanded {
+    flex: 2;
+    min-width: 300px;
+}
+
+.search-input-wrapper-expanded {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: var(--bg-tertiary);
+    border: 2px solid var(--border-primary);
+    border-radius: var(--radius-xl);
+    transition: var(--transition);
+    height: 48px;
+    width: 100%;
+}
+
+.search-input-wrapper-expanded:focus-within {
+    border-color: var(--ac-mid);
+    box-shadow: 0 0 0 3px rgba(55,133,216,0.1);
+    background: var(--bg-primary);
+}
+
+.search-icon-expanded {
+    position: absolute;
+    left: 16px;
+    color: var(--text-muted);
+    font-size: 1rem;
+    transition: var(--transition);
+    z-index: 5;
+    pointer-events: none;
+}
+
+.search-input-wrapper-expanded:focus-within .search-icon-expanded {
+    color: var(--ac-mid);
+}
+
+.search-input-expanded {
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: 0 52px 0 48px;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    outline: none;
+    height: 100%;
+    box-sizing: border-box;
+    font-weight: 500;
+}
+
+.search-input-expanded::placeholder {
+    color: var(--text-muted);
+    font-weight: 400;
+}
+
+.search-submit-btn-expanded {
+    position: absolute;
+    right: 12px;
+    background: var(--ac-mid);
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: white;
+    transition: var(--transition);
+    font-size: 0.8rem;
+    z-index: 10;
+    pointer-events: auto;
+}
+
+.search-submit-btn-expanded:hover {
+    background: var(--ac-deep);
+    transform: scale(1.05);
+}
+
+.search-submit-btn-expanded:active {
+    transform: scale(0.95);
+}
+
+.filter-controls {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.filter-sort-compact {
+    border: 2px solid var(--border-primary);
+    border-radius: var(--radius-lg); 
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem; 
+    background: var(--bg-tertiary);
+    cursor: pointer; 
+    color: var(--text-secondary);
+    transition: var(--transition);
+    min-width: 140px;
+}
+
+.filter-sort-compact:focus { 
+    outline: none; 
+    border-color: var(--ac-mid);
+    box-shadow: 0 0 0 3px rgba(55,133,216,0.1);
+    background: var(--bg-primary);
+}
+
+.filter-btn-submit-compact {
+    border-radius: var(--radius-lg); 
+    font-weight: 700; 
+    font-size: 0.875rem;
+    padding: 0.75rem 1.25rem; 
+    min-width: auto; 
+    border: none;
+    background: linear-gradient(135deg, var(--ac-deep), var(--ac-mid));
+    color: #fff; 
+    cursor: pointer; 
+    transition: var(--transition);
+    box-shadow: var(--shadow-md);
+    text-decoration: none; 
+    display: inline-flex; 
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.filter-btn-submit-compact:hover { 
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+/* ===== BARRE DE RECHERCHE RESTRUCTURÉE ===== */
+.search-container {
+    flex: 1;
+    min-width: 200px;
+}
+
+.search-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: var(--bg-tertiary);
+    border: 2px solid var(--border-primary);
+    border-radius: var(--radius-lg);
+    transition: var(--transition);
+    height: 44px;
+}
+
+.search-input-wrapper:focus-within {
+    border-color: var(--ac-mid);
+    box-shadow: 0 0 0 3px rgba(55,133,216,0.1);
+    background: var(--bg-primary);
+}
+
+.search-icon {
+    position: absolute;
+    left: 12px;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    transition: var(--transition);
+    z-index: 5;
+    pointer-events: none;
+}
+
+.search-input-wrapper:focus-within .search-icon {
+    color: var(--ac-mid);
+}
+
+.search-input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: 0 44px 0 40px;
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    outline: none;
+    height: 100%;
+    box-sizing: border-box;
+}
+
+.search-input::placeholder {
+    color: var(--text-muted);
+}
+
+.search-submit-btn {
+    position: absolute;
+    right: 8px;
+    background: var(--ac-mid);
+    border: none;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: white;
+    transition: var(--transition);
+    font-size: 0.75rem;
+    z-index: 10;
+    pointer-events: auto;
+}
+
+.search-submit-btn:hover {
+    background: var(--ac-deep);
+    transform: scale(1.1);
+}
+
+.search-submit-btn:active {
+    transform: scale(0.95);
+}
+
+/* ===== STYLES EXISTANTS ===== */
 .filter-search {
     position: relative;
     flex: 1;
@@ -389,11 +969,12 @@
     width: 100%; 
     border: 2px solid var(--border-primary);
     border-radius: var(--radius-lg); 
-    padding: 0.75rem 1rem 0.75rem 3rem;
+    padding: 0.75rem 4rem 0.75rem 3rem;
     font-size: 0.875rem; 
     background: var(--bg-tertiary);
     transition: var(--transition);
     color: var(--text-primary);
+    box-sizing: border-box;
 }
 
 .filter-search input:focus {
@@ -438,6 +1019,35 @@
     border-color: var(--ac-mid);
     box-shadow: 0 0 0 3px rgba(55,133,216,0.1);
     background: var(--bg-primary);
+}
+
+.search-submit-btn {
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--ac-mid);
+    border: none;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: white;
+    transition: var(--transition);
+    font-size: 0.75rem;
+    z-index: 10;
+}
+
+.search-submit-btn:hover {
+    background: var(--ac-deep);
+    transform: translateY(-50%) scale(1.1);
+}
+
+.search-submit-btn:active {
+    transform: translateY(-50%) scale(0.95);
 }
 
 .filter-btn-submit {
@@ -607,26 +1217,28 @@
 
 /* ===== POST COMPONENTS ===== */
 .post-header {
-    padding: 2rem 2rem 1rem;
+    padding: 1.5rem;
     border-bottom: 1px solid var(--border-secondary);
     position: relative;
-}
-
-.post-author {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 1.25rem;
 }
 
-.author-avatar {
+.post-author-info {
     display: flex;
     align-items: center;
     gap: 1rem;
+    flex: 1;
+}
+
+.author-avatar {
+    flex-shrink: 0;
 }
 
 .avatar-placeholder {
-    width: 56px;
-    height: 56px;
+    width: 48px;
+    height: 48px;
     border-radius: 50%;
     background: linear-gradient(145deg, var(--ac-deep), var(--ac-lavender));
     display: flex;
@@ -634,261 +1246,776 @@
     justify-content: center;
     color: white;
     font-weight: bold;
-    font-size: 1.25rem;
+    font-size: 1.1rem;
     box-shadow: var(--shadow-md);
-    position: relative;
-    overflow: hidden;
 }
 
-.avatar-placeholder::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
-    animation: shine 3s infinite;
-}
-
-@keyframes shine {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-.author-info {
+.author-details {
     flex: 1;
 }
 
 .author-name {
     font-weight: 700;
     color: var(--text-primary);
-    font-size: 1.125rem;
+    font-size: 1.1rem;
     margin-bottom: 0.25rem;
-}
-
-.author-meta {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
 }
 
 .post-date {
     color: var(--text-muted);
     font-size: 0.875rem;
+}
+
+.post-body {
+    padding: 1.5rem;
+}
+
+.post-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+    line-height: 1.3;
+}
+
+.post-content {
+    color: var(--text-secondary);
+    line-height: 1.6;
+    font-size: 1rem;
+}
+
+/* ===== BARRE D'ACTIONS ===== */
+.post-actions-bar {
+    display: flex;
+    border-top: 1px solid var(--border-secondary);
+    border-bottom: 1px solid var(--border-secondary);
+    padding: 0;
+    background: var(--bg-tertiary);
+}
+
+.post-actions-bar .action-btn {
+    flex: 1;
+    padding: 1rem;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    position: relative;
+}
+
+.post-actions-bar .action-btn:hover {
+    background: rgba(30, 15, 117, 0.05);
+    color: var(--ac-deep);
+}
+
+.post-actions-bar .action-btn.liked {
+    color: #ef4444;
+}
+
+.post-actions-bar .action-btn.reported {
+    color: #f59e0b;
+}
+
+.post-actions-bar .action-btn .count {
+    background: rgba(30, 15, 117, 0.1);
+    color: var(--ac-deep);
+    border-radius: 12px;
+    padding: 0.2rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    min-width: 20px;
+    text-align: center;
+}
+
+.post-actions-bar .action-btn.liked .count {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+}
+
+/* ===== SCORE BADGE DERRIÈRE LE NOM ===== */
+.author-score-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    background: linear-gradient(135deg, rgba(251, 191, 36, 0.15), rgba(245, 158, 11, 0.1));
+    color: #d97706;
+    padding: 0.2rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-left: 0.5rem;
+    border: 1px solid rgba(251, 191, 36, 0.2);
+    box-shadow: 0 1px 3px rgba(251, 191, 36, 0.1);
+    transition: var(--transition);
+    opacity: 0.8;
+}
+
+.author-score-badge:hover {
+    opacity: 1;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(251, 191, 36, 0.2);
+}
+
+.author-score-badge i {
+    font-size: 0.7rem;
+    color: #f59e0b;
+}
+
+/* ===== SECTION RÉPONSES ===== */
+.post-responses {
+    background: var(--bg-secondary);
+    padding: 1rem;
+}
+
+.comment-form-container {
+    margin-bottom: 1rem;
+    padding: 1rem;
+    background: var(--bg-primary);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-primary);
+}
+
+.comment-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.comment-form textarea {
+    border: 2px solid var(--border-primary);
+    border-radius: var(--radius-md);
+    padding: 0.75rem;
+    font-size: 0.9rem;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    transition: var(--transition);
+    resize: vertical;
+    min-height: 80px;
+    font-family: inherit;
+}
+
+.comment-form textarea:focus {
+    outline: none;
+    border-color: var(--ac-mid);
+    box-shadow: 0 0 0 3px rgba(55,133,216,0.1);
+    background: var(--bg-primary);
+}
+
+.submit-comment-btn {
+    background: linear-gradient(135deg, var(--ac-deep), var(--ac-mid));
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    align-self: flex-end;
     display: flex;
     align-items: center;
     gap: 0.5rem;
 }
 
-.post-date::before {
-    content: '📅';
-    font-size: 0.75rem;
+.submit-comment-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
 }
 
-.author-badge {
-    background: linear-gradient(135deg, var(--ac-pink), var(--ac-lavender));
-    color: white;
-    padding: 0.25rem 0.75rem;
-    border-radius: var(--radius-xl);
-    font-size: 0.75rem;
+.login-prompt {
+    text-align: center;
+    padding: 1rem;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.login-prompt a {
+    color: var(--ac-mid);
+    text-decoration: none;
     font-weight: 600;
+}
+
+.login-prompt a:hover {
+    text-decoration: underline;
+}
+
+/* ===== MENUS DROPDOWN STYLE FACEBOOK ===== */
+.post-menu-dropdown,
+.response-menu-dropdown {
+    position: relative;
+}
+
+.post-menu-btn,
+.response-menu-btn {
+    background: transparent;
+    border: none;
+    padding: 0.5rem;
+    border-radius: 50%;
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+}
+
+.post-menu-btn:hover,
+.response-menu-btn:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+.post-menu-content,
+.response-menu-content {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    z-index: 1000;
+    min-width: 150px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: var(--transition);
+    overflow: hidden;
+}
+
+.post-menu-content.show,
+.response-menu-content.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(5px);
+}
+
+.post-menu-item,
+.response-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    color: var(--text-primary);
+    text-decoration: none;
+    border: none;
+    background: transparent;
+    width: 100%;
+    text-align: left;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.post-menu-item:hover,
+.response-menu-item:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+.post-menu-item i,
+.response-menu-item i {
+    width: 16px;
+    text-align: center;
+}
+
+.post-menu-item-danger,
+.response-menu-item-danger {
+    color: #dc3545 !important;
+}
+
+.post-menu-item-danger:hover,
+.response-menu-item-danger:hover {
+    background: rgba(220, 53, 69, 0.1) !important;
+    color: #dc3545 !important;
+}
+
+/* ===== VOICE RECORDING STYLES ===== */
+.comment-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    width: 100%;
+}
+
+.comment-input-wrapper textarea {
+    flex: 1;
+    padding-right: 85px; /* Increased space for two buttons */
+    resize: vertical;
+    min-height: 60px;
+    border: 2px solid var(--border-primary);
+    border-radius: var(--radius-md);
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    line-height: 1.4;
+    transition: var(--transition);
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.comment-input-wrapper textarea:focus {
+    outline: none;
+    border-color: var(--ac-mid);
+    box-shadow: 0 0 0 3px rgba(55, 133, 216, 0.1);
+}
+
+.voice-buttons-group {
+    position: absolute;
+    right: 8px;
+    bottom: 8px;
+    display: flex;
+    gap: 4px;
+    z-index: 10;
+}
+
+.voice-micro-btn, .voice-ai-btn {
+    background: linear-gradient(135deg, var(--ac-deep), var(--ac-mid));
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: var(--transition);
+    font-size: 0.9rem;
+    box-shadow: 0 2px 8px rgba(55, 133, 216, 0.3);
+}
+
+.voice-ai-btn {
+    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+    box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+}
+
+.voice-micro-btn:hover, .voice-ai-btn:hover {
+    transform: scale(1.05);
+}
+
+.voice-micro-btn:hover {
+    box-shadow: 0 4px 12px rgba(55, 133, 216, 0.4);
+}
+
+.voice-ai-btn:hover {
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+}
+
+.voice-micro-btn.recording {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    animation: pulse 1.5s infinite;
+}
+
+.voice-ai-btn.transcribing {
+    background: linear-gradient(135deg, #10b981, #059669);
+    animation: pulse 1.5s infinite;
+}
+
+.voice-preview-container {
+    margin-top: 0.75rem;
+    padding: 0.75rem;
+    background: rgba(55, 133, 216, 0.05);
+    border: 1px solid rgba(55, 133, 216, 0.2);
+    border-radius: var(--radius-md);
+}
+
+.voice-preview-container audio {
+    width: 100%;
+    height: 40px;
+    border-radius: var(--radius-sm);
+}
+
+.voice-controls-mini {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 0.5rem;
+    gap: 0.5rem;
+}
+
+.voice-transcribe-btn {
+    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+    color: white;
+    border: none;
+    padding: 0.4rem 0.8rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.voice-transcribe-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+}
+
+.voice-delete-mini-btn {
+    background: linear-gradient(135deg, #6b7280, #4b5563);
+    color: white;
+    border: none;
+    padding: 0.4rem 0.8rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.voice-delete-mini-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(107, 114, 128, 0.3);
+}
+
+.ai-transcription-status {
+    margin-top: 0.75rem;
+    padding: 0.75rem;
+    background: rgba(139, 92, 246, 0.05);
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    border-radius: var(--radius-md);
+}
+
+.ai-status-content {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #8b5cf6;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.ai-pulse {
+    animation: aiPulse 1.5s infinite;
+}
+
+@keyframes aiPulse {
+    0% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.7; transform: scale(1.1); }
+    100% { opacity: 1; transform: scale(1); }
+}
+
+.comment-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.submit-comment-btn {
+    align-self: flex-end;
+    background: linear-gradient(135deg, var(--ac-deep), var(--ac-mid));
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.95rem;
+    box-shadow: 0 2px 8px rgba(55, 133, 216, 0.3);
+}
+
+.submit-comment-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(55, 133, 216, 0.4);
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
+/* ===== VOICE MESSAGE PLAYER ===== */
+.voice-message-player {
+    margin-top: 0.75rem;
+    padding: 0.75rem;
+    background: rgba(55, 133, 216, 0.05);
+    border: 1px solid rgba(55, 133, 216, 0.2);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.voice-message-player audio {
+    flex: 1;
+    height: 32px;
+}
+
+.voice-message-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    color: var(--ac-mid);
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.voice-message-label i {
+    color: var(--ac-deep);
+}
+
+/* ===== LISTE DES RÉPONSES ===== */
+.responses-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.response-item {
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-md);
+    padding: 0.75rem;
+    border: 1px solid var(--border-secondary);
+    margin-left: 1.5rem;
+    position: relative;
+    transition: var(--transition);
+    box-shadow: none;
+}
+
+.response-item::before {
+    content: '';
+    position: absolute;
+    left: -0.75rem;
+    top: 0.75rem;
+    width: 0.35rem;
+    height: 0.35rem;
+    background: var(--ac-mid);
+    border-radius: 50%;
+    opacity: 0.6;
+}
+
+.response-item:hover {
+    background: var(--bg-primary);
     box-shadow: var(--shadow-sm);
 }
 
-.author-badge.featured {
-    background: linear-gradient(135deg, var(--ac-mid), var(--ac-deep));
-    color: white;
+.response-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    justify-content: space-between;
 }
 
-.author-badge.featured::before {
-    content: '🔥 ';
-    margin-right: 0.25rem;
+.response-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: linear-gradient(145deg, var(--ac-sky), var(--ac-mid));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 0.7rem;
+    flex-shrink: 0;
+}
+
+.response-info {
+    flex: 1;
+}
+
+.response-author {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.8rem;
+    margin-bottom: 0.1rem;
+}
+
+.response-date {
+    color: var(--text-muted);
+    font-size: 0.7rem;
+}
+
+.response-content {
+    color: var(--text-secondary);
+    line-height: 1.4;
+    font-size: 0.85rem;
+    margin-bottom: 0.5rem;
+    background: transparent;
+    padding: 0;
+    border: none;
+    border-radius: 0;
+}
+
+.response-actions {
+    display: flex;
+    gap: 0.4rem;
+    margin-top: 0.3rem;
+}
+
+.response-action-btn {
+    background: transparent;
+    border: 1px solid var(--border-secondary);
+    padding: 0.3rem 0.6rem;
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.response-action-btn:hover {
+    background: var(--bg-primary);
+    color: var(--ac-deep);
+    border-color: var(--ac-mid);
+}
+
+.response-action-btn.liked {
+    color: #ef4444;
+    border-color: #ef4444;
+    background: rgba(239, 68, 68, 0.05);
+}
+
+.response-actions-menu {
+    position: relative;
+}
+
+/* ===== POST HEADER ===== */
+.post-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-secondary);
+}
+
+.post-author-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex: 1;
+}
+
+.author-avatar {
+    position: relative;
+}
+
+.avatar-placeholder {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(145deg, var(--ac-deep), var(--ac-mid));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 1rem;
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition);
+}
+
+.avatar-placeholder:hover {
+    transform: scale(1.05);
+    box-shadow: var(--shadow-md);
+}
+
+.author-details {
+    flex: 1;
+}
+
+.author-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 1rem;
+    margin-bottom: 0.2rem;
+}
+
+.post-date {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.post-date::before {
+    content: '📅';
+    font-size: 0.7rem;
 }
 
 .post-actions {
     position: relative;
+    margin-left: auto;
+    flex-shrink: 0;
 }
 
-.action-btn {
+.post-actions .action-btn {
     background: transparent;
-    border: 1px solid var(--border-primary);
+    border: none;
     padding: 0.5rem;
     border-radius: var(--radius-md);
     color: var(--text-muted);
     cursor: pointer;
     transition: var(--transition);
-    width: 36px;
-    height: 36px;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
-.action-btn:hover {
-    background: var(--bg-tertiary);
-    color: var(--ac-mid);
-    border-color: var(--ac-mid);
-    transform: scale(1.1);
-}
-
-.post-content {
-    padding: 0 2rem 1.5rem;
-}
-
-.post-title {
-    font-size: 1.5rem;
-    font-weight: 800;
-    color: var(--text-primary);
-    margin-bottom: 1rem;
-    line-height: 1.3;
-    position: relative;
-    padding-left: 1rem;
-}
-
-.post-title::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 4px;
-    height: 70%;
-    background: linear-gradient(135deg, var(--ac-deep), var(--ac-mid));
-    border-radius: var(--radius-sm);
-}
-
-.post-body {
-    color: var(--text-secondary);
-    line-height: 1.7;
-    font-size: 1rem;
-    margin-bottom: 1rem;
-    position: relative;
-    padding-left: 1rem;
-}
-
-.post-body::before {
-    content: '"';
-    position: absolute;
-    left: -0.5rem;
-    top: 0;
-    font-size: 3rem;
-    color: var(--ac-mid);
-    opacity: 0.2;
-    font-family: Georgia, serif;
-}
-
-.post-footer {
-    padding: 1.5rem 2rem;
-    background: var(--bg-tertiary);
-    border-top: 1px solid var(--border-secondary);
-    position: relative;
-}
-
-.post-footer::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 2rem;
-    right: 2rem;
-    height: 2px;
-    background: linear-gradient(90deg, var(--ac-sky), var(--ac-mid), var(--ac-lavender));
-    opacity: 0.3;
-}
-
-.post-stats {
-    display: flex;
-    align-items: center;
-    gap: 1.5rem;
-    margin-bottom: 1rem;
-    flex-wrap: wrap;
-}
-
-.stat-btn {
-    background: var(--bg-primary);
-    border: 2px solid var(--border-primary);
-    padding: 0.75rem 1rem;
-    border-radius: var(--radius-lg);
-    color: var(--text-secondary);
-    font-size: 0.875rem;
-    cursor: pointer;
-    transition: var(--transition);
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-weight: 600;
-    position: relative;
-    overflow: hidden;
-}
-
-.stat-btn::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(30,15,117,0.05), transparent);
-    transition: left 0.3s;
-}
-
-.stat-btn:hover::before {
-    left: 100%;
-}
-
-.stat-btn:hover {
+.post-actions .action-btn:hover {
     background: var(--bg-tertiary);
     color: var(--ac-deep);
-    border-color: var(--ac-mid);
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
 }
 
-.stat-btn.liked {
-    background: linear-gradient(135deg, #ef4444, #dc2626);
-    color: white;
-    border-color: #ef4444;
+.post-actions .dropdown-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    padding: 0.5rem;
+    min-width: 150px;
+    z-index: 1000;
+    display: none;
 }
 
-.stat-btn.liked:hover {
-    transform: translateY(-2px) scale(1.05);
-    box-shadow: 0 8px 25px rgba(239, 68, 68, 0.3);
+.post-actions .dropdown.show .dropdown-menu {
+    display: block;
 }
 
-.stat-count {
-    font-weight: 700;
+.post-actions .dropdown-menu .dropdown-item {
+    color: var(--text-secondary);
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: var(--transition);
     font-size: 0.875rem;
 }
 
-.post-tags {
-    display: flex;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-    margin-bottom: 1rem;
-}
-
-.tag {
+.post-actions .dropdown-menu .dropdown-item:hover {
     background: var(--bg-tertiary);
-    color: var(--text-muted);
-    padding: 0.5rem 1rem;
-    border-radius: var(--radius-xl);
-    font-size: 0.75rem;
-    font-weight: 600;
-    border: 1px solid var(--border-primary);
-    transition: var(--transition);
-    position: relative;
-    overflow: hidden;
-}
-
-.tag::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(30,15,117,0.05), transparent);
-    transition: left 0.3s;
+    color: var(--ac-deep);
 }
 
 .tag:hover::before {
@@ -1064,7 +2191,6 @@
     max-width: 400px;
     z-index: 9999;
     transition: all 0.3s ease;
-    animation: slideInRight 0.3s ease;
 }
 
 .notification-success {
@@ -1083,6 +2209,28 @@
 
 .notification-error i {
     color: #ef4444;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOutRight {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
 }
 
 .notification-warning {
@@ -1148,29 +2296,186 @@
     position: relative;
 }
 
-.dropdown-menu {
+.response-actions-menu .dropdown {
+    position: relative;
+}
+
+.response-actions-menu .dropdown-menu {
     position: absolute;
-    right: 0;
     top: 100%;
+    right: 0;
     background: white;
-    border: 1px solid #e2e8f0;
+    border: 1px solid #e0e0e0;
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    z-index: 1000;
-    min-width: 150px;
+    z-index: 9999;
+    min-width: 180px;
+    display: none;
+    padding: 0.5rem 0;
+    margin-top: 0.25rem;
+    list-style: none;
+}
+
+.response-actions-menu .dropdown.show .dropdown-menu {
+    display: block;
 }
 
 .dropdown-item {
-    display: block;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
     padding: 0.75rem 1rem;
     color: #1a1a1a;
     text-decoration: none;
     transition: all 0.2s ease;
     font-size: 0.875rem;
+    border: none;
+    background: transparent;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    gap: 0.5rem;
+}
+
+.dropdown-item i {
+    margin-right: 0.5rem;
+    width: 16px;
+    text-align: center;
+    flex-shrink: 0;
 }
 
 .dropdown-item:hover {
     background: #f3f4f6;
+    color: #1a1a1a;
+}
+
+.dropdown-item.text-danger {
+    color: #dc3545;
+}
+
+.dropdown-item.text-danger:hover {
+    background: #f8d7da;
+    color: #dc3545;
+}
+
+/* Corriger le dropdown coupé par overflow */
+.card,
+.post,
+.response-item {
+    overflow: visible !important;
+}
+
+/* Positionnement Absolu - bouton déclencheur dans parent relative */
+.post-actions,
+.response-actions-menu {
+    position: relative;
+}
+
+/* Fixe le dropdown-menu en position absolute */
+.post-actions .dropdown-menu,
+.response-actions-menu .dropdown-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    z-index: 1050 !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* Correction Bootstrap - attribut data-bs-boundary */
+.action-btn {
+    data-bs-boundary: "viewport";
+}
+
+/* ===== NOUVEAUX DROPDOWN AMÉLIORÉS ===== */
+.dropdown-container {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-toggle {
+    background: transparent;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.dropdown-toggle:hover {
+    background: rgba(0,0,0,0.05);
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    z-index: 1050 !important;
+    min-width: 180px;
+    display: none;
+    padding: 8px 0;
+    margin-top: 4px;
+    list-style: none;
+}
+
+.dropdown.show .dropdown-menu {
+    display: block;
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 12px 16px;
+    margin: 0;
+    border: none;
+    background: transparent;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-radius: 6px;
+    gap: 12px;
+}
+
+.dropdown-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #1a1a1a;
+    text-decoration: none;
+    font-size: 14px;
+    width: 100%;
+    padding: 0;
+}
+
+.dropdown-item:hover {
+    background: #f8f9fa;
+}
+
+.dropdown-item-danger {
+    color: #dc3545;
+}
+
+.dropdown-item-danger:hover {
+    background: #f8d7da;
+    color: #dc3545;
+}
+
+.dropdown-item i {
+    width: 16px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.dropdown-item span {
+    font-weight: 500;
 }
 
 /* ===== RESPONSIVE ===== */
@@ -1254,12 +2559,382 @@
         width: 100%;
         justify-content: space-between;
     }
+
+/* ===== CORRECTION DROPDOWTS ===== */
+.dropdown {
+    position: relative;
+    z-index: 1050;
+}
+
+.dropdown-toggle {
+    pointer-events: auto !important;
+    z-index: 1100 !important;
+    position: relative;
+    background: none;
+    border: none;
+    padding: 0.5rem;
+    border-radius: var(--radius-sm);
+    transition: var(--transition);
+    cursor: pointer;
+}
+
+.dropdown-toggle:hover {
+    background: rgba(30, 15, 117, 0.1);
+    color: var(--ac-deep);
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    min-width: 180px;
+    z-index: 1060;
+    margin-top: 0.25rem;
+    padding: 0.5rem 0;
+}
+
+.dropdown-menu .dropdown-item {
+    display: block;
+    width: 100%;
+    padding: 0.5rem 1rem;
+    clear: both;
+    font-weight: 400;
+    color: var(--text-secondary);
+    text-align: inherit;
+    text-decoration: none;
+    white-space: nowrap;
+    background-color: transparent;
+    border: 0;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.dropdown-menu .dropdown-item:hover {
+    background: var(--bg-tertiary);
+    color: var(--ac-deep);
+}
+
+.dropdown-menu .dropdown-item.text-danger {
+    color: #dc3545;
+}
+
+.dropdown-menu .dropdown-item.text-danger:hover {
+    background: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+}
+
+.dropdown-menu .dropdown-item i {
+    margin-right: 0.5rem;
+    width: 14px;
+    text-align: center;
+}
+
+/* S'assurer que les dropdowns ne sont pas bloqués par d'autres éléments */
+.post-actions {
+    position: relative;
+    z-index: 1040;
+}
+
+.response-actions-menu {
+    position: relative;
+    z-index: 1040;
+}
+
+/* Correction pour le confinement dans les posts */
+.post-card {
+    overflow: visible;
+}
+
+.response-item {
+    overflow: visible;
 }
 </style>
 
 <script>
+// TEST ISOLÉ - FONCTION DROPDOWN
 document.addEventListener('DOMContentLoaded', function() {
-    // Gestion des likes
+    console.log('=== PAGE CHARGÉE ===');
+    
+    // Fonction dropdown isolée
+    window.testDropdown = function(button) {
+        console.log('=== DROPDOWN CLIC ===');
+        console.log('Button:', button);
+        
+        // Trouver le menu
+        const menu = button.nextElementSibling;
+        console.log('Menu trouvé:', menu);
+        
+        if (!menu) {
+            console.error('Menu NON TROUVÉ!');
+            return;
+        }
+        
+        // État actuel
+        const isVisible = menu.style.display !== 'none' && menu.style.display !== '';
+        console.log('État actuel:', isVisible);
+        
+        // Fermer tous les autres menus
+        document.querySelectorAll('.dropdown-menu').forEach(function(otherMenu) {
+            if (otherMenu !== menu) {
+                otherMenu.style.display = 'none';
+            }
+        });
+        
+        // Basculer ce menu
+        menu.style.display = isVisible ? 'none' : 'block';
+        console.log('Nouvel état:', menu.style.display);
+    };
+    
+    // Test des éléments
+    setTimeout(function() {
+        const buttons = document.querySelectorAll('.dropdown-toggle');
+        const menus = document.querySelectorAll('.dropdown-menu');
+        console.log('Boutons trouvés:', buttons.length);
+        console.log('Menus trouvés:', menus.length);
+        
+        // Ajouter des listeners manuellement
+        buttons.forEach(function(button, index) {
+            console.log(`Ajout listener sur bouton ${index}:`, button);
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('CLIC DIRECT DÉTECTÉ!');
+                window.testDropdown(button);
+            });
+        });
+    }, 500);
+    
+    // Fermer les menus en cliquant ailleurs
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.dropdown-container')) {
+            document.querySelectorAll('.dropdown-menu').forEach(function(menu) {
+                menu.style.display = 'none';
+            });
+        }
+    });
+});
+
+// Anciennes fonctions pour compatibilité
+document.addEventListener('DOMContentLoaded', function() {
+    // Fonction pour afficher/masquer la section des réponses et le formulaire de commentaire
+    window.toggleCommentForm = function(forumId) {
+        try {
+            console.log('toggleCommentForm appelé avec ID:', forumId); // Debug
+            const responsesContainer = document.getElementById(`responses-${forumId}`);
+            console.log('Container trouvé:', responsesContainer); // Debug
+            if (responsesContainer) {
+                const isVisible = responsesContainer.style.display !== 'none';
+                console.log('État actuel:', isVisible); // Debug
+                responsesContainer.style.display = isVisible ? 'none' : 'block';
+                console.log('Nouvel état:', responsesContainer.style.display); // Debug
+                
+                // Si on affiche la section, scroller jusqu'au formulaire et donner le focus
+                if (!isVisible) {
+                    setTimeout(() => {
+                        const formContainer = document.getElementById(`comment-form-${forumId}`);
+                        if (formContainer) {
+                            formContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            const textarea = formContainer.querySelector('textarea');
+                            if (textarea) {
+                                textarea.focus();
+                            }
+                        }
+                    }, 100);
+                }
+            } else {
+                console.error('Container non trouvé pour ID:', `responses-${forumId}`);
+            }
+        } catch (error) {
+            console.error('Erreur dans toggleCommentForm:', error);
+        }
+    };
+
+    // Fonction pour gérer les dropdowns
+    window.toggleDropdown = function(button) {
+        console.log('toggleDropdown appelé'); // Debug
+        const container = button.closest('.dropdown-container');
+        console.log('Container trouvé:', container); // Debug
+        if (!container) {
+            console.error('Container dropdown non trouvé');
+            return;
+        }
+        const menu = container.querySelector('.dropdown-menu');
+        console.log('Menu trouvé:', menu); // Debug
+        if (!menu) {
+            console.error('Menu dropdown non trouvé');
+            return;
+        }
+        
+        const isOpen = container.classList.contains('show');
+        console.log('État actuel:', isOpen); // Debug
+        
+        // Fermer tous les autres dropdowns
+        document.querySelectorAll('.dropdown-container').forEach(d => d.classList.remove('show'));
+        
+        // Ouvrir/fermer le dropdown actuel
+        if (!isOpen) {
+            container.classList.add('show');
+            console.log('Dropdown ouvert'); // Debug
+        } else {
+            console.log('Dropdown fermé'); // Debug
+        }
+    };
+
+    // Fermer les dropdowns en cliquant ailleurs
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.dropdown-container')) {
+            document.querySelectorAll('.dropdown-container').forEach(d => d.classList.remove('show'));
+        }
+    });
+
+    // Gestion des formulaires de commentaires
+    document.querySelectorAll('.comment-form').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const forumId = this.querySelector('input[name="forum_id"]').value;
+            const contenu = this.querySelector('textarea[name="contenu"]').value;
+            const submitBtn = this.querySelector('.submit-comment-btn');
+            const originalText = submitBtn.innerHTML;
+            
+            // Afficher l'état de chargement
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Envoi...';
+            submitBtn.disabled = true;
+            
+            // Envoyer le commentaire via AJAX
+            fetch('/forum/reponse/create', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: `forum_id=${forumId}&contenu=${encodeURIComponent(contenu)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Ajouter le nouveau commentaire à la liste
+                    addNewComment(forumId, data.comment);
+                    
+                    // Vider le formulaire
+                    this.querySelector('textarea[name="contenu"]').value = '';
+                    
+                    // Mettre à jour le compteur de commentaires
+                    updateCommentCount(forumId, data.newCount);
+                    
+                    // Afficher une notification de succès
+                    showNotification('Commentaire publié avec succès !', 'success');
+                } else {
+                    showNotification('Erreur: ' + data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                showNotification('Une erreur est survenue lors de l\'envoi du commentaire', 'error');
+            })
+            .finally(() => {
+                // Restaurer le bouton
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            });
+        });
+    });
+
+    // Fonction pour ajouter un nouveau commentaire
+    function addNewComment(forumId, comment) {
+        const responsesList = document.querySelector(`#responses-${forumId} .responses-list`);
+        if (!responsesList) {
+            // Créer la liste des réponses si elle n'existe pas
+            const responsesContainer = document.getElementById(`responses-${forumId}`);
+            const newList = document.createElement('div');
+            newList.className = 'responses-list';
+            responsesContainer.appendChild(newList);
+        }
+        
+        const commentHtml = `
+            <div class="response-item" data-reponse-id="${comment.id}">
+                <div class="response-header">
+                    <div class="response-avatar">
+                        ${comment.auteur.prenom[0]}${comment.auteur.nom[0]}
+                    </div>
+                    <div class="response-info">
+                        <div class="response-author">${comment.auteur.nom} ${comment.auteur.prenom}</div>
+                        <div class="response-date">${comment.date}</div>
+                    </div>
+                    <div class="response-actions-menu">
+                        <div class="dropdown">
+                            <button class="action-btn" onclick="toggleDropdown(this)">
+                                <i class="fas fa-ellipsis-h"></i>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a href="/forum/reponse/${comment.id}/edit" class="dropdown-item">
+                                        <i class="fas fa-edit"></i> Modifier
+                                    </a>
+                                </li>
+                                <li>
+                                    <form action="/forum/reponse/${comment.id}/delete" method="POST" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce commentaire ?');">
+                                        <button type="submit" class="dropdown-item">
+                                            <i class="fas fa-trash"></i> Supprimer
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="response-content">${comment.contenu}</div>
+                <div class="response-actions">
+                    <button class="response-action-btn response-like-btn" data-reponse-id="${comment.id}" data-liked="false">
+                        <i class="far fa-heart"></i>
+                        <span>0</span>
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        const list = document.querySelector(`#responses-${forumId} .responses-list`);
+        list.insertAdjacentHTML('afterbegin', commentHtml);
+    }
+
+    // Fonction pour mettre à jour le compteur de commentaires
+    function updateCommentCount(forumId, newCount) {
+        const commentBtn = document.querySelector(`#responses-${forumId}`).closest('.post-card').querySelector('.comment-btn .count');
+        if (commentBtn) {
+            commentBtn.textContent = newCount;
+        }
+    }
+
+    // Fonction pour afficher des notifications
+    function showNotification(message, type = 'success') {
+        const notification = document.createElement('div');
+        notification.className = `notification notification-${type}`;
+        notification.innerHTML = `
+            <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+            <span>${message}</span>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Animation d'entrée
+        setTimeout(() => {
+            notification.style.animation = 'slideInRight 0.3s ease';
+        }, 100);
+        
+        // Supprimer après 3 secondes
+        setTimeout(() => {
+            notification.style.animation = 'slideOutRight 0.3s ease';
+            setTimeout(() => {
+                document.body.removeChild(notification);
+            }, 300);
+        }, 3000);
+    }
+
+    // Gestion des likes pour les posts
     document.querySelectorAll('.like-btn').forEach(button => {
         button.addEventListener('click', function() {
             const forumId = this.dataset.forumId;
@@ -1277,7 +2952,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (data.success) {
                     this.dataset.liked = !isLiked;
                     this.classList.toggle('liked');
-                    this.querySelector('.stat-count').textContent = data.likesCount;
+                    const countSpan = this.querySelector('.count');
+                    if (countSpan) {
+                        countSpan.textContent = data.likesCount;
+                    }
                     
                     // Changer l'icône
                     const icon = this.querySelector('i');
@@ -1294,14 +2972,14 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Gestion des signalements
+    // Gestion des signalements pour les posts
     document.querySelectorAll('.report-btn').forEach(button => {
         button.addEventListener('click', function() {
             const forumId = this.dataset.forumId;
             const isReported = this.dataset.reported === 'true';
             
             if (isReported) {
-                showNotification('Vous avez déjà signalé cette publication.', 'warning');
+                alert('Vous avez déjà signalé cette publication.');
                 return;
             }
             
@@ -1318,91 +2996,506 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (data.success) {
                         this.dataset.reported = 'true';
                         this.classList.add('reported');
-                        this.querySelector('span').textContent = 'Signalé';
+                        
+                        // Changer l'icône
+                        const icon = this.querySelector('i');
+                        icon.classList.remove('far');
+                        icon.classList.add('fas');
                         
                         if (data.deleted) {
                             const post = this.closest('.post-card');
-                            post.style.transition = 'all 0.3s ease';
+                            post.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
                             post.style.opacity = '0';
-                            post.style.transform = 'scale(0.95)';
+                            post.style.transform = 'scale(0.9)';
                             
                             setTimeout(() => {
                                 post.remove();
-                                showNotification('Cette publication a été supprimée car elle a reçu 3 signalements.', 'info');
+                                alert('Cette publication a été supprimée car elle a reçu 3 signalements.');
                             }, 300);
                         }
+                    } else {
+                        alert('Erreur: ' + (data.message || 'Une erreur est survenue.'));
                     }
                 })
-                .catch(error => console.error('Error:', error));
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Erreur de connexion: ' + error.message);
+                });
             }
         });
     });
 
-    // Système de notifications
-    function showNotification(message, type = 'info') {
-        const notification = document.createElement('div');
-        notification.className = `notification notification-${type}`;
-        
-        // Définir les icônes selon le type
-        const icons = {
-            'success': 'check-circle',
-            'error': 'times-circle',
-            'warning': 'exclamation-triangle',
-            'info': 'info-circle'
-        };
-        
-        notification.innerHTML = `
-            <i class="fas fa-${icons[type] || icons.info}"></i>
-            <span>${message}</span>
-            <button class="notification-close" onclick="this.parentElement.remove()">
-                <i class="fas fa-times"></i>
-            </button>
-        `;
-        
-        document.body.appendChild(notification);
-        
-        setTimeout(() => {
-            notification.style.opacity = '0';
-            setTimeout(() => notification.remove(), 300);
-        }, 3000);
-    }
+    // Gestion des likes pour les réponses
+    document.querySelectorAll('.response-like-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const reponseId = this.dataset.reponseId;
+            const isLiked = this.dataset.liked === 'true';
+            
+            fetch(`/forum-reponse/${reponseId}/like`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    this.dataset.liked = !isLiked;
+                    this.classList.toggle('liked');
+                    const countSpan = this.querySelector('span');
+                    if (countSpan) {
+                        countSpan.textContent = data.likesCount;
+                    }
+                    
+                    // Changer l'icône
+                    const icon = this.querySelector('i');
+                    if (data.liked) {
+                        icon.classList.remove('far');
+                        icon.classList.add('fas');
+                    } else {
+                        icon.classList.remove('fas');
+                        icon.classList.add('far');
+                    }
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    });
 
-    // Fonction de sauvegarde PDF - Version améliorée
-    function saveForumPost(forumId) {
-        console.log('Tentative de sauvegarde PDF pour le forum ID:', forumId);
+    // Fonction pour afficher/masquer la section des réponses et le formulaire de commentaire
+    window.toggleCommentForm = function(forumId) {
+        try {
+            console.log('toggleCommentForm appelé avec ID:', forumId);
+            const responsesContainer = document.getElementById(`responses-${forumId}`);
+            console.log('Container trouvé:', responsesContainer);
+            if (responsesContainer) {
+                const isVisible = responsesContainer.style.display !== 'none';
+                console.log('État actuel:', isVisible);
+                responsesContainer.style.display = isVisible ? 'none' : 'block';
+                console.log('Nouvel état:', responsesContainer.style.display);
+                
+                // Si on affiche la section, scroller jusqu'au formulaire et donner le focus
+                if (!isVisible) {
+                    setTimeout(() => {
+                        const formContainer = document.getElementById(`comment-form-${forumId}`);
+                        if (formContainer) {
+                            formContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            const textarea = formContainer.querySelector('textarea');
+                            if (textarea) {
+                                textarea.focus();
+                            }
+                        }
+                    }, 100);
+                }
+            } else {
+                console.error('Container non trouvé pour ID:', `responses-${forumId}`);
+            }
+        } catch (error) {
+            console.error('Erreur dans toggleCommentForm:', error);
+        }
+    };
+
+    // Fonctions pour gérer les menus dropdown style Facebook
+    window.togglePostMenu = function(postId) {
+        const menu = document.getElementById(`post-menu-${postId}`);
+        if (menu) {
+            // Fermer tous les autres menus
+            document.querySelectorAll('.post-menu-content, .response-menu-content').forEach(otherMenu => {
+                if (otherMenu !== menu) {
+                    otherMenu.classList.remove('show');
+                }
+            });
+            
+            // Basculer ce menu
+            menu.classList.toggle('show');
+        }
+    };
+
+    window.toggleResponseMenu = function(responseId) {
+        const menu = document.getElementById(`response-menu-${responseId}`);
+        if (menu) {
+            // Fermer tous les autres menus
+            document.querySelectorAll('.post-menu-content, .response-menu-content').forEach(otherMenu => {
+                if (otherMenu !== menu) {
+                    otherMenu.classList.remove('show');
+                }
+            });
+            
+            // Basculer ce menu
+            menu.classList.toggle('show');
+        }
+    };
+
+    // Fermer les menus en cliquant ailleurs
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.post-menu-dropdown') && !e.target.closest('.response-menu-dropdown')) {
+            document.querySelectorAll('.post-menu-content, .response-menu-content').forEach(menu => {
+                menu.classList.remove('show');
+            });
+        }
+    });
+
+    // Gestion des suppressions en AJAX pour rester sur la même page
+    document.addEventListener('DOMContentLoaded', function() {
+        // Gérer la suppression des posts
+        document.querySelectorAll('form[action*="/forum/"][action*="/delete"]').forEach(form => {
+            if (form.action.includes('/forum/') && !form.action.includes('/forum/reponse/')) {
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    if (!confirm('Êtes-vous sûr de vouloir supprimer ce post ?')) {
+                        return;
+                    }
+                    
+                    const formData = new FormData(this);
+                    const forumId = this.action.match(/\/forum\/(\d+)\/delete/)[1];
+                    
+                    fetch(this.action, {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            // Supprimer le post du DOM
+                            const postCard = document.querySelector(`[data-forum-id="${forumId}"]`);
+                            if (postCard) {
+                                postCard.style.transition = 'opacity 0.3s, transform 0.3s';
+                                postCard.style.opacity = '0';
+                                postCard.style.transform = 'translateX(-20px)';
+                                setTimeout(() => postCard.remove(), 300);
+                            }
+                            showNotification('Post supprimé avec succès !', 'success');
+                        } else {
+                            showNotification('Erreur lors de la suppression du post', 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Erreur:', error);
+                        showNotification('Erreur lors de la suppression', 'error');
+                    });
+                });
+            }
+        });
         
-        // Afficher une notification de début
-        showNotification('Génération du PDF en cours...', 'info');
+        // Gérer la suppression des réponses
+        document.querySelectorAll('form[action*="/forum/reponse/"][action*="/delete"]').forEach(form => {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                if (!confirm('Êtes-vous sûr de vouloir supprimer ce commentaire ?')) {
+                    return;
+                }
+                
+                const formData = new FormData(this);
+                const reponseId = this.action.match(/\/forum\/reponse\/(\d+)$/)[1];
+                
+                fetch(this.action, {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => {
+                    if (response.ok) {
+                        // Supprimer la réponse du DOM
+                        const responseItem = document.querySelector(`[data-reponse-id="${reponseId}"]`);
+                        if (responseItem) {
+                            responseItem.style.transition = 'opacity 0.3s, transform 0.3s';
+                            responseItem.style.opacity = '0';
+                            responseItem.style.transform = 'translateX(-20px)';
+                            setTimeout(() => {
+                                responseItem.remove();
+                                // Mettre à jour le compteur de commentaires
+                                const forumId = responseItem.closest('.post-responses').id.replace('responses-', '');
+                                updateCommentCount(forumId, document.querySelectorAll('.response-item').length);
+                            }, 300);
+                        }
+                        showNotification('Commentaire supprimé avec succès !', 'success');
+                    } else {
+                        showNotification('Erreur lors de la suppression du commentaire', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur:', error);
+                    showNotification('Erreur lors de la suppression', 'error');
+                });
+            });
+        });
+    });
+
+    // Voice Recording Functionality for Forum Index
+    const voiceRecorders = {};
+    const speechRecognizers = {};
+
+    window.toggleVoiceRecording = function(forumId) {
+        const microBtn = document.getElementById(`voiceMicroBtn-${forumId}`);
+        const previewContainer = document.getElementById(`voicePreviewContainer-${forumId}`);
+        const voicePreview = document.getElementById(`voicePreview-${forumId}`);
+        const voiceDataInput = document.getElementById(`voiceDataInput-${forumId}`);
+        const textarea = document.getElementById(`comment-textarea-${forumId}`);
         
-        // Créer une fenêtre pour le téléchargement
-        const pdfUrl = `/forum/${forumId}/save-pdf`;
+        if (microBtn.classList.contains('recording')) {
+            // Stop recording
+            const recorder = voiceRecorders[forumId];
+            if (recorder && recorder.mediaRecorder) {
+                recorder.mediaRecorder.stop();
+                recorder.stream.getTracks().forEach(track => track.stop());
+                delete voiceRecorders[forumId];
+            }
+            
+            microBtn.classList.remove('recording');
+            microBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+            
+        } else {
+            // Start recording
+            try {
+                navigator.mediaDevices.getUserMedia({ audio: true })
+                    .then(mediaStream => {
+                        const mediaRecorder = new MediaRecorder(mediaStream);
+                        const audioChunks = [];
+                        
+                        voiceRecorders[forumId] = {
+                            mediaRecorder: mediaRecorder,
+                            stream: mediaStream,
+                            audioChunks: audioChunks
+                        };
+
+                        mediaRecorder.ondataavailable = (event) => {
+                            audioChunks.push(event.data);
+                        };
+
+                        mediaRecorder.onstop = () => {
+                            const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                            const audioUrl = URL.createObjectURL(audioBlob);
+                            
+                            voicePreview.src = audioUrl;
+                            previewContainer.style.display = 'block';
+                            
+                            // Convert blob to base64 for form submission
+                            const reader = new FileReader();
+                            reader.onloadend = () => {
+                                voiceDataInput.value = reader.result;
+                                // Clear textarea when voice is recorded
+                                textarea.value = '';
+                                textarea.placeholder = 'Message vocal enregistré (cliquez sur le micro pour enregistrer un nouveau message)...';
+                            };
+                            reader.readAsDataURL(audioBlob);
+                        };
+
+                        mediaRecorder.start();
+                        
+                        // Update UI
+                        microBtn.classList.add('recording');
+                        microBtn.innerHTML = '<i class="fas fa-stop"></i>';
+                        previewContainer.style.display = 'none';
+                        
+                    }).catch(error => {
+                        console.error('Error accessing microphone:', error);
+                        alert('Erreur: Impossible d\'accéder au microphone');
+                    });
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Erreur: Impossible d\'accéder au microphone');
+            }
+        }
+    };
+
+    // AI Voice Transcription Functionality
+    window.toggleVoiceTranscription = function(forumId) {
+        const aiBtn = document.getElementById(`voiceAiBtn-${forumId}`);
+        const aiStatus = document.getElementById(`aiStatus-${forumId}`);
+        const textarea = document.getElementById(`comment-textarea-${forumId}`);
         
-        // Ouvrir dans une nouvelle fenêtre/onglet pour forcer le téléchargement
-        const newWindow = window.open(pdfUrl, '_blank');
-        
-        // Vérifier si la fenêtre s'est ouverte
-        if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
-            // Si bloqué par le popup blocker, essayer avec un lien
-            const link = document.createElement('a');
-            link.href = pdfUrl;
-            link.download = `forum-post-${forumId}-${new Date().toISOString().split('T')[0]}.pdf`;
-            link.style.display = 'none';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+        if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+            alert('La reconnaissance vocale n\'est pas supportée par votre navigateur. Essayez Chrome ou Edge.');
+            return;
         }
         
-        // Afficher un message de vérification après un court délai
-        setTimeout(() => {
-            showNotification('Vérifiez votre dossier de téléchargements ou les onglets ouverts', 'info');
-        }, 2000);
-        
-        // Message de confirmation après plus de temps
-        setTimeout(() => {
-            showNotification('Si le PDF ne s\'est pas téléchargé, vérifiez les popups bloqués', 'warning');
-        }, 5000);
-    }
+        if (aiBtn.classList.contains('transcribing')) {
+            // Stop transcription
+            const recognizer = speechRecognizers[forumId];
+            if (recognizer) {
+                recognizer.stop();
+                delete speechRecognizers[forumId];
+            }
+            
+            aiBtn.classList.remove('transcribing');
+            aiBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+            aiStatus.style.display = 'none';
+            
+        } else {
+            // Start transcription
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const recognizer = new SpeechRecognition();
+            
+            speechRecognizers[forumId] = recognizer;
+            
+            recognizer.lang = 'fr-FR';
+            recognizer.continuous = true;
+            recognizer.interimResults = true;
+            
+            let finalTranscript = '';
+            
+            recognizer.onresult = function(event) {
+                let interimTranscript = '';
+                
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    const transcript = event.results[i][0].transcript;
+                    if (event.results[i].isFinal) {
+                        finalTranscript += transcript + ' ';
+                    } else {
+                        interimTranscript += transcript;
+                    }
+                }
+                
+                textarea.value = finalTranscript + interimTranscript;
+                textarea.placeholder = 'Transcription automatique en cours...';
+            };
+            
+            recognizer.onerror = function(event) {
+                console.error('Speech recognition error:', event.error);
+                alert('Erreur de reconnaissance vocale: ' + event.error);
+                aiBtn.classList.remove('transcribing');
+                aiBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+                aiStatus.style.display = 'none';
+            };
+            
+            recognizer.onend = function() {
+                aiBtn.classList.remove('transcribing');
+                aiBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+                aiStatus.style.display = 'none';
+                textarea.placeholder = 'Écrivez votre commentaire ou enregistrez un message vocal...';
+            };
+            
+            // Clear textarea and start
+            textarea.value = '';
+            recognizer.start();
+            
+            // Update UI
+            aiBtn.classList.add('transcribing');
+            aiBtn.innerHTML = '<i class="fas fa-stop"></i>';
+            aiStatus.style.display = 'block';
+            textarea.placeholder = 'Parlez maintenant, je vous écoute...';
+        }
+    };
 
+    // Transcribe recorded audio to text
+    window.transcribeAudio = function(forumId) {
+        const voicePreview = document.getElementById(`voicePreview-${forumId}`);
+        const voiceDataInput = document.getElementById(`voiceDataInput-${forumId}`);
+        const textarea = document.getElementById(`comment-textarea-${forumId}`);
+        const aiStatus = document.getElementById(`aiStatus-${forumId}`);
+        
+        if (!voicePreview.src) {
+            alert('Aucun audio à transcrire');
+            return;
+        }
+        
+        // Show AI status
+        aiStatus.style.display = 'block';
+        aiStatus.querySelector('span').textContent = 'Envoi de l\'audio pour transcription...';
+        
+        // Convert audio blob to file for upload
+        fetch(voicePreview.src)
+            .then(res => res.blob())
+            .then(blob => {
+                const file = new File([blob], 'audio.wav', { type: 'audio/wav' });
+                const formData = new FormData();
+                
+                // Add form data
+                formData.append('forum_id', document.querySelector(`input[name="forum_id"]`).value);
+                formData.append('voice_message', file);
+                formData.append('transcribe_audio', 'true');
+                formData.append('contenu', ''); // Empty content since we're transcribing
+                
+                // Send to backend for transcription
+                fetch('/forum/reponse/create', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    aiStatus.style.display = 'none';
+                    
+                    if (data.success) {
+                        // Clear voice data since we're using text now
+                        voiceDataInput.value = '';
+                        document.getElementById(`voicePreviewContainer-${forumId}`).style.display = 'none';
+                        
+                        // Show success message and reload or update UI
+                        const successMsg = document.createElement('div');
+                        successMsg.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #10b981; color: white; padding: 1rem; border-radius: 8px; z-index: 1000;';
+                        successMsg.innerHTML = '<i class="fas fa-check"></i> Transcription terminée et commentaire publié!';
+                        document.body.appendChild(successMsg);
+                        
+                        setTimeout(() => {
+                            document.body.removeChild(successMsg);
+                            // Reload the page to show the new comment
+                            window.location.reload();
+                        }, 2000);
+                    } else {
+                        alert('Erreur de transcription: ' + (data.message || 'Erreur inconnue'));
+                    }
+                })
+                .catch(error => {
+                    aiStatus.style.display = 'none';
+                    console.error('Error:', error);
+                    alert('Erreur lors de la transcription: ' + error.message);
+                });
+            })
+            .catch(error => {
+                aiStatus.style.display = 'none';
+                console.error('Error converting audio:', error);
+                alert('Erreur lors de la préparation de l\'audio');
+            });
+    };
+
+    window.deleteVoiceRecording = function(forumId) {
+        // Reset everything
+        if (voiceRecorders[forumId]) {
+            delete voiceRecorders[forumId];
+        }
+        if (speechRecognizers[forumId]) {
+            speechRecognizers[forumId].stop();
+            delete speechRecognizers[forumId];
+        }
+        
+        const microBtn = document.getElementById(`voiceMicroBtn-${forumId}`);
+        const aiBtn = document.getElementById(`voiceAiBtn-${forumId}`);
+        const previewContainer = document.getElementById(`voicePreviewContainer-${forumId}`);
+        const voicePreview = document.getElementById(`voicePreview-${forumId}`);
+        const voiceDataInput = document.getElementById(`voiceDataInput-${forumId}`);
+        const textarea = document.getElementById(`comment-textarea-${forumId}`);
+        const aiStatus = document.getElementById(`aiStatus-${forumId}`);
+        
+        voicePreview.src = '';
+        previewContainer.style.display = 'none';
+        voiceDataInput.value = '';
+        aiStatus.style.display = 'none';
+        
+        microBtn.classList.remove('recording');
+        microBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+        
+        aiBtn.classList.remove('transcribing');
+        aiBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+        
+        textarea.placeholder = 'Écrivez votre commentaire ou enregistrez un message vocal...';
+    };
+
+    // Form submission validation for voice comments
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.comment-form').forEach(form => {
+            form.addEventListener('submit', function(e) {
+                const textarea = this.querySelector('textarea[name="contenu"]');
+                const voiceDataInput = this.querySelector('input[name="voice_data"]');
+                
+                // Check if either text or voice is provided
+                if (!textarea.value.trim() && !voiceDataInput.value) {
+                    e.preventDefault();
+                    alert('Veuillez écrire un message ou enregistrer un message vocal');
+                }
+            });
+        });
     });
+});
 </script>
 {% endblock %}

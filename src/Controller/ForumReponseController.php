@@ -5,13 +5,11 @@ namespace App\Controller;
 use App\Entity\ForumReponse;
 use App\Form\ForumReponseType;
 use App\Repository\ForumReponseRepository;
+use App\Service\ForumMailService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
-use Symfony\Component\Mailer\MailerInterface;
-use Symfony\Component\Mime\Email;
 use Symfony\Component\Routing\Attribute\Route;
 
 #[Route('/forum/reponse')]
@@ -57,33 +55,28 @@ final class ForumReponseController extends AbstractController
     }
 
     #[Route('/new', name: 'app_forum_reponse_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $entityManager, MailerInterface $mailer): Response
+    public function new(Request $request, EntityManagerInterface $entityManager, ForumMailService $forumMailService): Response
     {
         $forumReponse = new ForumReponse();
         $form = $this->createForm(ForumReponseType::class, $forumReponse);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            // Sauvegarde du commentaire en base
             $entityManager->persist($forumReponse);
             $entityManager->flush();
-
-            $forum = $forumReponse->getForum();
-            $to = $forum?->getEmail();
-            $from = $_ENV['MAILER_FROM'] ?? 'no-reply@example.com';
-
-            if (is_string($to) && $to !== '') {
-                try {
-                    $email = (new Email())
-                        ->from($from)
-                        ->to($to)
-                        ->subject('Réponse à votre message : ' . ($forum?->getSujet() ?? ''))
-                        ->text($forumReponse->getContenu() ?? '');
-
-                    $mailer->send($email);
-                    $this->addFlash('success', 'Email envoyé à l\'utilisateur.');
-                } catch (TransportExceptionInterface $e) {
-                    $this->addFlash('error', 'La réponse a été enregistrée, mais l\'envoi de l\'email a échoué.');
+            
+            // Envoi automatique de l'email de notification après flush()
+            try {
+                $emailSent = $forumMailService->sendDynamicCommentNotification($forumReponse);
+                
+                if ($emailSent) {
+                    $this->addFlash('success', 'Commentaire ajouté avec succès et notification envoyée à l\'auteur du post !');
+                } else {
+                    $this->addFlash('warning', 'Commentaire ajouté avec succès mais l\'envoi de la notification a échoué.');
                 }
+            } catch (\Exception $e) {
+                $this->addFlash('error', 'Commentaire ajouté avec succès mais une erreur est survenue lors de l\'envoi de la notification: ' . $e->getMessage());
             }
 
             return $this->redirectToRoute('app_forum_reponse_index', [], Response::HTTP_SEE_OTHER);
@@ -115,11 +108,17 @@ final class ForumReponseController extends AbstractController
             // Ajouter un message flash
             $this->addFlash('success', 'Réponse modifiée avec succès !');
 
-            // Rediriger vers la page du forum parent
-            $forum = $forumReponse->getForum();
-            if ($forum) {
-                return $this->redirectToRoute('app_forum_show', ['id' => $forum->getId()]);
-            }
+            // Rediriger vers la page index du forum avec les paramètres actuels
+            $search = $request->query->getString('search', '');
+            $sortBy = $request->query->getString('sort', 'dateCreation');
+            $order = $request->query->getString('order', 'DESC');
+            
+            $params = [];
+            if ($search) $params['search'] = $search;
+            if ($sortBy) $params['sort'] = $sortBy;
+            if ($order) $params['order'] = $order;
+
+            return $this->redirectToRoute('app_forum_index', $params);
         }
 
         return $this->render('forum_reponse/edit.html.twig', [
@@ -132,20 +131,23 @@ final class ForumReponseController extends AbstractController
     public function delete(Request $request, ForumReponse $forumReponse, EntityManagerInterface $entityManager): Response
     {
         if ($this->isCsrfTokenValid('delete'.$forumReponse->getId(), $request->getPayload()->getString('_token'))) {
-            // Récupérer l'ID du forum avant suppression
-            $forum = $forumReponse->getForum();
-            $forumId = $forum ? $forum->getId() : null;
-            
             $entityManager->remove($forumReponse);
             $entityManager->flush();
             
             // Ajouter un message flash
             $this->addFlash('success', 'Réponse supprimée avec succès !');
             
-            // Rediriger vers la page du forum parent
-            if ($forumId) {
-                return $this->redirectToRoute('app_forum_show', ['id' => $forumId]);
-            }
+            // Rediriger vers la page index du forum avec les paramètres actuels
+            $search = $request->query->getString('search', '');
+            $sortBy = $request->query->getString('sort', 'dateCreation');
+            $order = $request->query->getString('order', 'DESC');
+            
+            $params = [];
+            if ($search) $params['search'] = $search;
+            if ($sortBy) $params['sort'] = $sortBy;
+            if ($order) $params['order'] = $order;
+
+            return $this->redirectToRoute('app_forum_index', $params);
         }
 
         return $this->redirectToRoute('app_forum_index');

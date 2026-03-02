@@ -6,6 +6,7 @@ use App\Entity\Forum;
 use App\Entity\ForumReponse;
 use App\Form\Forum\ForumReponseType;
 use App\Repository\ForumReponseRepository;
+use App\Service\OpenAIService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -61,28 +62,102 @@ final class ForumReponseController extends AbstractController
     }
 
     #[Route('/create', name: 'app_forum_reponse_create', methods: ['POST'])]
-    public function create(Request $request, EntityManagerInterface $entityManager, MailerInterface $mailer): Response
+    public function create(Request $request, EntityManagerInterface $entityManager, MailerInterface $mailer, OpenAIService $openAIService): Response
     {
         $forumId = $request->request->get('forum_id');
         $contenu = $request->request->get('contenu');
+        $voiceData = $request->request->get('voice_data');
+        $uploadedFile = $request->files->get('voice_message');
+        $transcribeAudio = $request->request->get('transcribe_audio') === 'true';
         
-        if (!$forumId || !$contenu) {
-            $this->addFlash('error', 'Veuillez remplir tous les champs.');
+        // Vérifier si c'est une requête AJAX
+        $isAjax = $request->isXmlHttpRequest();
+        
+        if (!$forumId || (!$contenu && !$voiceData && !$uploadedFile)) {
+            if ($isAjax) {
+                return $this->json([
+                    'success' => false,
+                    'message' => 'Veuillez écrire un message ou enregistrer un message vocal.'
+                ], 400);
+            }
+            $this->addFlash('error', 'Veuillez écrire un message ou enregistrer un message vocal.');
             return $this->redirectToRoute('app_forum_index');
         }
 
         // Récupérer le forum
         $forum = $entityManager->getRepository(Forum::class)->find($forumId);
         if (!$forum) {
+            if ($isAjax) {
+                return $this->json([
+                    'success' => false,
+                    'message' => 'Post non trouvé.'
+                ], 404);
+            }
             $this->addFlash('error', 'Post non trouvé.');
             return $this->redirectToRoute('app_forum_index');
         }
 
         // Créer la réponse
         $forumReponse = new ForumReponse();
-        $forumReponse->setContenu($contenu);
         $forumReponse->setForum($forum);
         $forumReponse->setDateReponse(new \DateTimeImmutable());
+        
+        // Handle voice message and transcription
+        $voiceFileName = null;
+        $transcriptionText = null;
+        
+        if ($uploadedFile) {
+            // Handle uploaded file
+            $voiceFileName = 'voice_' . uniqid() . '.' . $uploadedFile->guessExtension();
+            try {
+                $uploadDir = $this->getParameter('kernel.project_dir') . '/public/uploads/voices';
+                if (!is_dir($uploadDir)) {
+                    mkdir($uploadDir, 0777, true);
+                }
+                $uploadedFile->move($uploadDir, $voiceFileName);
+                $forumReponse->setVoiceMessage('/uploads/voices/' . $voiceFileName);
+                
+                // Transcribe audio if requested
+                if ($transcribeAudio) {
+                    $transcriptionResult = $openAIService->transcribeAudio($uploadedFile);
+                    if ($transcriptionResult['success']) {
+                        $transcriptionText = $transcriptionResult['text'];
+                    }
+                }
+            } catch (\Exception $e) {
+                error_log('Error uploading voice file: ' . $e->getMessage());
+            }
+        } elseif ($voiceData && str_starts_with($voiceData, 'data:audio/')) {
+            // Handle base64 encoded audio
+            $voiceFileName = 'voice_' . uniqid() . '.wav';
+            $uploadDir = $this->getParameter('kernel.project_dir') . '/public/uploads/voices';
+            if (!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0777, true);
+            }
+            
+            // Decode base64 and save
+            $audioData = base_decode(substr($voiceData, strpos($voiceData, ',') + 1));
+            file_put_contents($uploadDir . '/' . $voiceFileName, $audioData);
+            $forumReponse->setVoiceMessage('/uploads/voices/' . $voiceFileName);
+            
+            // Create temporary file for transcription
+            if ($transcribeAudio) {
+                $tempFile = new \Symfony\Component\HttpFoundation\File\File($uploadDir . '/' . $voiceFileName);
+                $transcriptionResult = $openAIService->transcribeAudio($tempFile);
+                if ($transcriptionResult['success']) {
+                    $transcriptionText = $transcriptionResult['text'];
+                }
+            }
+        }
+        
+        // Set content: use transcription if available, otherwise use original content or placeholder
+        if ($transcriptionText) {
+            $forumReponse->setContenu($transcriptionText);
+        } elseif ($contenu) {
+            $forumReponse->setContenu($contenu);
+        } else {
+            $forumReponse->setContenu('[Message vocal]');
+        }
         
         // Associer l'utilisateur connecté
         $user = $this->getUser();
@@ -99,21 +174,49 @@ final class ForumReponseController extends AbstractController
 
         if (is_string($to) && $to !== '' && $to !== $user?->getEmail()) {
             try {
+                $messageContent = $transcriptionText ?: $contenu;
+                if ($voiceFileName) {
+                    $messageContent .= "\n\n[Message vocal joint: " . $voiceFileName . "]";
+                }
+                
                 $email = (new Email())
                     ->from($from)
                     ->to($to)
                     ->subject('Réponse à votre message : ' . $forum->getSujet())
-                    ->text($contenu . "\n\nRéponse de : " . ($user ? $user->getNom() . ' ' . $user->getPrenom() : 'Anonyme'));
+                    ->text($messageContent . "\n\nRéponse de : " . ($user ? $user->getNom() . ' ' . $user->getPrenom() : 'Anonyme'));
 
                 $mailer->send($email);
-                $this->addFlash('success', 'Réponse publiée avec succès !');
             } catch (TransportExceptionInterface $e) {
-                $this->addFlash('warning', 'Réponse publiée, mais l\'email de notification n\'a pas pu être envoyé.');
+                // Ignorer l'erreur d'email pour AJAX
             }
-        } else {
-            $this->addFlash('success', 'Réponse publiée avec succès !');
         }
 
+        // Si c'est une requête AJAX, retourner JSON
+        if ($isAjax) {
+            // Calculer le nouveau nombre de commentaires
+            $newCount = $forum->getReponses()->count();
+            
+            return $this->json([
+                'success' => true,
+                'message' => 'Commentaire publié avec succès !',
+                'comment' => [
+                    'id' => $forumReponse->getId(),
+                    'contenu' => $forumReponse->getContenu(),
+                    'date' => $forumReponse->getDateReponse()->format('d/m/Y'),
+                    'voiceMessage' => $forumReponse->getVoiceMessage(),
+                    'auteur' => [
+                        'id' => $user?->getId(),
+                        'nom' => $user?->getNom() ?? 'Anonyme',
+                        'prenom' => $user?->getPrenom() ?? ''
+                    ]
+                ],
+                'newCount' => $newCount
+            ]);
+        }
+
+        // Pour les requêtes non-AJAX, utiliser les messages flash et rediriger
+        $this->addFlash('success', 'Réponse publiée avec succès !');
+        
         // Rediriger vers la page du post
         return $this->redirectToRoute('app_forum_show', ['id' => $forumId]);
     }

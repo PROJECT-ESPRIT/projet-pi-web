@@ -22,17 +22,20 @@ class ForumReponse
     #[Assert\Length(min: 2)]
     private ?string $contenu = null;
 
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $voiceMessage = null;
+
     #[ORM\Column]
     #[Assert\NotNull]
     #[Assert\Type(type: \DateTimeImmutable::class)]
     private ?\DateTimeImmutable $dateReponse = null;
 
-    #[ORM\ManyToOne(inversedBy: 'reponses')]
+    #[ORM\ManyToOne(inversedBy: 'reponses', cascade: ['persist'])]
     #[ORM\JoinColumn(nullable: false)]
     #[Assert\NotNull]
     private ?Forum $forum = null;
 
-    #[ORM\ManyToOne(inversedBy: 'forumReponses')]
+    #[ORM\ManyToOne(inversedBy: 'forumReponses', cascade: ['persist'])]
     #[ORM\JoinColumn(nullable: false)]
     #[Assert\NotNull]
     private ?User $auteur = null;
@@ -40,13 +43,13 @@ class ForumReponse
     /**
      * @var Collection<int, ForumReponseLike>
      */
-    #[ORM\OneToMany(targetEntity: ForumReponseLike::class, mappedBy: 'reponse', orphanRemoval: true)]
+    #[ORM\OneToMany(mappedBy: 'reponse', targetEntity: ForumReponseLike::class, orphanRemoval: true, cascade: ['persist'])]
     private Collection $likes;
 
     /**
      * @var Collection<int, ForumReponseSignalement>
      */
-    #[ORM\OneToMany(targetEntity: ForumReponseSignalement::class, mappedBy: 'reponse', orphanRemoval: true)]
+    #[ORM\OneToMany(targetEntity: ForumReponseSignalement::class, mappedBy: 'reponse', orphanRemoval: true, cascade: ['persist'])]
     private Collection $signalements;
 
     public function getId(): ?int
@@ -62,6 +65,18 @@ class ForumReponse
     public function setContenu(string $contenu): static
     {
         $this->contenu = $contenu;
+
+        return $this;
+    }
+
+    public function getVoiceMessage(): ?string
+    {
+        return $this->voiceMessage;
+    }
+
+    public function setVoiceMessage(?string $voiceMessage): static
+    {
+        $this->voiceMessage = $voiceMessage;
 
         return $this;
     }
@@ -100,6 +115,12 @@ class ForumReponse
         $this->auteur = $auteur;
 
         return $this;
+    }
+
+    public function __toString(): string
+    {
+        $preview = substr($this->contenu, 0, 50);
+        return $preview . '... (by ' . ($this->auteur ? $this->auteur->__toString() : 'Unknown') . ')';
     }
 
     public function __construct()

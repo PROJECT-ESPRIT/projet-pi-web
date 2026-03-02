@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nouveau commentaire sur votre post</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #2c3e50;
+            max-width: 650px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            border: 1px solid #e9ecef;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 35px 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+        }
+        .header .subtitle {
+            margin: 8px 0 0 0;
+            opacity: 0.9;
+            font-size: 16px;
+        }
+        .content {
+            padding: 40px 30px;
+        }
+        .section {
+            margin-bottom: 30px;
+        }
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #495057;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .icon {
+            font-size: 20px;
+        }
+        .post-info {
+            background: linear-gradient(135deg, #f8f9ff 0%, #e8f0fe 100%);
+            border-left: 4px solid #4285f4;
+            padding: 25px;
+            border-radius: 8px;
+        }
+        .post-title {
+            font-size: 22px;
+            font-weight: 600;
+            color: #1a73e8;
+            margin-bottom: 12px;
+            line-height: 1.3;
+        }
+        .post-content {
+            background-color: #ffffff;
+            padding: 18px;
+            border-radius: 6px;
+            border: 1px solid #dadce0;
+            color: #5f6368;
+            font-style: italic;
+            white-space: pre-wrap;
+            max-height: 180px;
+            overflow-y: auto;
+        }
+        .comment-info {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            border-left: 4px solid #0284c7;
+            padding: 25px;
+            border-radius: 8px;
+        }
+        .author-details {
+            background-color: #ffffff;
+            padding: 18px;
+            border-radius: 6px;
+            border: 1px solid #cbd5e1;
+            margin-bottom: 20px;
+        }
+        .detail-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 15px;
+        }
+        .detail-row:last-child {
+            margin-bottom: 0;
+        }
+        .detail-label {
+            font-weight: 600;
+            color: #0284c7;
+            min-width: 90px;
+            margin-right: 12px;
+        }
+        .detail-value {
+            color: #334155;
+        }
+        .comment-content {
+            background-color: #ffffff;
+            padding: 22px;
+            border-radius: 8px;
+            border: 2px solid #0ea5e9;
+            color: #1e293b;
+            white-space: pre-wrap;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 30px;
+            text-align: center;
+            border-top: 1px solid #e9ecef;
+        }
+        .footer p {
+            margin: 8px 0;
+            font-size: 13px;
+            color: #6c757d;
+        }
+        .footer .brand {
+            font-weight: 600;
+            color: #495057;
+        }
+        .highlight {
+            background-color: #fff3cd;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+        .action-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 14px 28px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 15px;
+            margin-top: 20px;
+            transition: all 0.2s ease;
+        }
+        .action-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+        }
+        @media (max-width: 600px) {
+            body {
+                padding: 15px;
+            }
+            .header, .content, .footer {
+                padding: 25px 20px;
+            }
+            .post-title {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔔 Nouveau commentaire sur votre post</h1>
+            <div class="subtitle">ArtConnect Forum - Votre publication a reçu une réponse</div>
+        </div>
+
+        <div class="content">
+            <!-- Informations sur le post -->
+            <div class="section">
+                <div class="post-info">
+                    <div class="section-title">
+                        <span class="icon">📋</span>
+                        Informations sur votre post
+                    </div>
+                    <div class="post-title">{{ post_title }}</div>
+                    <div class="post-content">{{ post_content }}</div>
+                </div>
+            </div>
+
+            <!-- Nouveau commentaire -->
+            <div class="section">
+                <div class="comment-info">
+                    <div class="section-title">
+                        <span class="icon">💬</span>
+                        Nouveau commentaire publié
+                    </div>
+                    
+                    <div class="author-details">
+                        <div class="detail-row">
+                            <span class="detail-label">Auteur :</span>
+                            <span class="detail-value highlight">{{ comment_author_name }}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Email :</span>
+                            <span class="detail-value">{{ comment_author_email }}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Date :</span>
+                            <span class="detail-value">{{ comment_date|date('d/m/Y à H:i') }}</span>
+                        </div>
+                    </div>
+
+                    <div class="comment-content">{{ comment_content|nl2br }}</div>
+                    
+                    <div style="text-align: center;">
+                        <a href="#" class="action-button">Voir sur le forum</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Message informatif -->
+            <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 18px; border-radius: 6px; margin-top: 25px;">
+                <p style="margin: 0; color: #92400e; font-size: 14px;">
+                    <strong>💡 Conseil :</strong> Vous pouvez répondre directement à ce commentaire depuis la page du forum.
+                </p>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p><strong class="brand">ArtConnect</strong> - Plateforme d'art communautaire</p>
+            <p>Cet email a été généré automatiquement suite à un nouveau commentaire.</p>
+            <p>Envoyé par {{ comment_author_name }} à {{ post_author_name }}</p>
+            <p style="margin-top: 15px; font-size: 11px; color: #adb5bd;">
+                Pour ne plus recevoir ces notifications, contactez l'administrateur du site.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

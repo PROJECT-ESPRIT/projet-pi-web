@@ -8,8 +8,6 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
-use App\Entity\ForumPostScore;
-use App\Entity\ForumDislike;
 
 #[ORM\Entity(repositoryClass: ForumRepository::class)]
 class Forum
@@ -50,35 +48,37 @@ class Forum
     #[Assert\Type(type: \DateTimeImmutable::class)]
     private ?\DateTimeImmutable $dateCreation = null;
 
+    #[ORM\Column(type: 'integer', options: ['default' => 0])]
+    private ?int $score = null;
+
     /**
      * @var Collection<int, ForumReponse>
      */
-    #[ORM\OneToMany(targetEntity: ForumReponse::class, mappedBy: 'forum', orphanRemoval: true)]
+    #[ORM\OneToMany(targetEntity: ForumReponse::class, mappedBy: 'forum', orphanRemoval: true, cascade: ['persist'])]
     private Collection $reponses;
 
     /**
      * @var Collection<int, ForumLike>
      */
-    #[ORM\OneToMany(targetEntity: ForumLike::class, mappedBy: 'forum', orphanRemoval: true)]
+    #[ORM\OneToMany(targetEntity: ForumLike::class, mappedBy: 'forum', orphanRemoval: true, cascade: ['persist'])]
     private Collection $likes;
 
     /**
      * @var Collection<int, ForumDislike>
      */
-    #[ORM\OneToMany(targetEntity: ForumDislike::class, mappedBy: 'forum', orphanRemoval: true)]
+    #[ORM\OneToMany(targetEntity: ForumDislike::class, mappedBy: 'forum', orphanRemoval: true, cascade: ['persist'])]
     private Collection $dislikes;
 
     /**
      * @var Collection<int, ForumSignalement>
      */
-    #[ORM\OneToMany(targetEntity: ForumSignalement::class, mappedBy: 'forum', orphanRemoval: true)]
+    #[ORM\OneToMany(targetEntity: ForumSignalement::class, mappedBy: 'forum', orphanRemoval: true, cascade: ['persist'])]
     private Collection $signalements;
 
-    /**
-     * @var ForumPostScore|null
-     */
-    #[ORM\OneToOne(targetEntity: ForumPostScore::class, mappedBy: 'forum', cascade: ['persist', 'remove'])]
-    private ?ForumPostScore $score = null;
+    public function __toString(): string
+    {
+        return $this->sujet ?? 'Forum #' . $this->id;
+    }
 
     public function __construct()
     {
@@ -86,6 +86,8 @@ class Forum
         $this->likes = new ArrayCollection();
         $this->dislikes = new ArrayCollection();
         $this->signalements = new ArrayCollection();
+        $this->dateCreation = new \DateTimeImmutable();
+        $this->score = 0;
     }
 
     public function getId(): ?int
@@ -300,23 +302,13 @@ class Forum
         return $this->signalements->count();
     }
 
-    public function getScore(): ?ForumPostScore
+    public function getScore(): ?int
     {
         return $this->score;
     }
 
-    public function setScore(?ForumPostScore $score): static
+    public function setScore(int $score): static
     {
-        // unset the owning side of the relation if necessary
-        if ($score === null && $this->score !== null) {
-            $this->score->setForum(null);
-        }
-
-        // set the owning side of the relation if necessary
-        if ($score !== null && $score->getForum() !== $this) {
-            $score->setForum($this);
-        }
-
         $this->score = $score;
 
         return $this;

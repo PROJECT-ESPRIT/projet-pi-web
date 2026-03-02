@@ -47,6 +47,7 @@ class ForumRepository extends ServiceEntityRepository
         $allowedSortFields = [
             'dateCreation' => 'f.dateCreation',
             'sujet' => 'f.sujet',
+            'score' => 'f.score',
         ];
 
         $sortExpr = $allowedSortFields[$sortBy] ?? $allowedSortFields['dateCreation'];

@@ -7,6 +7,7 @@ parameters:
     email_verification_ttl_hours: '%env(int:EMAIL_VERIFICATION_TTL_HOURS)%'
     password_reset_ttl_minutes: '%env(int:PASSWORD_RESET_TTL_MINUTES)%'
     stripe_publishable_key: '%env(default::STRIPE_PUBLISHABLE_KEY)%'
+    openai_api_key: '%env(OPENAI_API_KEY)%'
     
     # Forum Scoring Configuration
     forum_scoring:
@@ -52,6 +53,9 @@ services:
         arguments:
             $adminEmail: '%mailer_from%'
 
+    # Configuration du ForumMailService pour les notifications de forum
+    App\Service\ForumMailService:
+
     App\Service\StripeService:
         arguments:
             $stripeSecretKey: '%env(default::STRIPE_SECRET_KEY)%'
@@ -63,11 +67,6 @@ services:
     App\Service\TicketPdfService:
         arguments:
             $projectDir: '%kernel.project_dir%'
-
-    # Forum Scoring Service
-    App\Service\ForumScoringService:
-        arguments:
-            $forumScoring: '%forum_scoring%'
 
     # Forum Anti-Spam Service
     App\Service\ForumAntiSpamService:

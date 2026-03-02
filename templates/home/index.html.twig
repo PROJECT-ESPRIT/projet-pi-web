@@ -792,11 +792,9 @@
                             <div class="forum-card-meta">
                                 <i class="fas fa-user"></i> {{ forum.prenom }} {{ forum.nom }}
                                 &middot;
-                                <i class="fas fa-clock"></i> {{ forum.dateCreation ? forum.dateCreation|date('d/m/Y') : '' }}
-                                {% if forum.reponses|length > 0 %}
-                                    &middot;
-                                    <i class="fas fa-reply"></i> {{ forum.reponses|length }} réponse{{ forum.reponses|length > 1 ? 's' : '' }}
-                                {% endif %}
+                                <i class="fas fa-calendar"></i> {{ forum.dateCreation|date('d/m/Y') }}
+                                &middot;
+                                <i class="fas fa-comments"></i> {{ forum.reponses|length }} réponse{{ forum.reponses|length > 1 ? 's' : '' }}
                             </div>
                         </div>
                     </a>

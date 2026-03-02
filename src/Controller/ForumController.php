@@ -12,6 +12,7 @@ use App\Repository\ForumLikeRepository;
 use App\Repository\ForumDislikeRepository;
 use App\Repository\ForumSignalementRepository;
 use App\Service\PdfService;
+use App\Service\ForumScoringService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -22,14 +23,24 @@ use Symfony\Component\Routing\Attribute\Route;
 #[Route('/forum')]
 final class ForumController extends AbstractController
 {
+    public function __construct(
+        private ForumScoringService $scoringService
+    ) {
+    }
     #[Route(name: 'app_forum_index', methods: ['GET'])]
-    public function index(Request $request, ForumRepository $forumRepository): Response
+    public function index(Request $request, ForumRepository $forumRepository, EntityManagerInterface $entityManager): Response
     {
         $search = $request->query->getString('search', '');
         $sortBy = $request->query->getString('sort', 'dateCreation');
         $order = $request->query->getString('order', 'DESC');
 
         $forums = $forumRepository->findBySearchAndSort($search, $sortBy, $order);
+        
+        // Mettre à jour les scores pour tous les posts affichés
+        foreach ($forums as $forum) {
+            $this->scoringService->updateScore($forum);
+        }
+        $entityManager->flush();
         
         return $this->render('forum/index.html.twig', [
             'forums' => $forums,
@@ -76,7 +87,17 @@ final class ForumController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $entityManager->flush();
 
-            return $this->redirectToRoute('app_forum_index', [], Response::HTTP_SEE_OTHER);
+            // Récupérer les paramètres actuels pour rester sur la même page
+            $search = $request->query->getString('search', '');
+            $sortBy = $request->query->getString('sort', 'dateCreation');
+            $order = $request->query->getString('order', 'DESC');
+            
+            $params = [];
+            if ($search) $params['search'] = $search;
+            if ($sortBy) $params['sort'] = $sortBy;
+            if ($order) $params['order'] = $order;
+
+            return $this->redirectToRoute('app_forum_index', $params, Response::HTTP_SEE_OTHER);
         }
 
         return $this->render('forum/edit.html.twig', [
@@ -93,7 +114,17 @@ final class ForumController extends AbstractController
             $entityManager->flush();
         }
 
-        return $this->redirectToRoute('app_forum_index', [], Response::HTTP_SEE_OTHER);
+        // Récupérer les paramètres actuels pour rester sur la même page
+        $search = $request->query->getString('search', '');
+        $sortBy = $request->query->getString('sort', 'dateCreation');
+        $order = $request->query->getString('order', 'DESC');
+        
+        $params = [];
+        if ($search) $params['search'] = $search;
+        if ($sortBy) $params['sort'] = $sortBy;
+        if ($order) $params['order'] = $order;
+
+        return $this->redirectToRoute('app_forum_index', $params, Response::HTTP_SEE_OTHER);
     }
 
     #[Route('/{id<\\d+>}/like', name: 'app_forum_like', methods: ['POST'])]
@@ -121,12 +152,17 @@ final class ForumController extends AbstractController
             $isLiked = true;
         }
 
+        // Mettre à jour le score du post
+        $this->scoringService->updateScore($forum);
+        $entityManager->flush();
+
         $likesCount = $likeRepository->countByForum($forum->getId());
 
         return new JsonResponse([
             'success' => true,
             'liked' => $isLiked,
-            'likesCount' => $likesCount
+            'likesCount' => $likesCount,
+            'score' => $forum->getScore()
         ]);
     }
 

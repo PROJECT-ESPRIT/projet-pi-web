@@ -2,65 +2,51 @@
 
 namespace App\Command;
 
+use App\Service\MailService;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Style\SymfonyStyle;
-use App\Service\EmailService;
-use App\Entity\User;
 
 #[AsCommand(
-    name: 'app:test-email',
-    description: 'Test email sending functionality'
+    name: 'app:test-mail-service',
+    description: 'Teste l\'envoi d\'email avec le MailService'
 )]
 class TestEmailCommand extends Command
 {
-    public function __construct(
-        private EmailService $emailService
-    ) {
-        parent::__construct();
-    }
-
-    protected function configure(): void
+    public function __construct(private MailService $mailService)
     {
-        $this
-            ->addArgument('email', InputArgument::REQUIRED, 'Email address to send test to')
-            ->setHelp('This command allows you to test email sending functionality');
+        parent::__construct();
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $io = new SymfonyStyle($input, $output);
-        $email = $input->getArgument('email');
+        $output->writeln('<info>Test d\'envoi d\'email avec MailService...</info>');
+        
+        $postTitle = 'Test Post - ' . date('Y-m-d H:i:s');
+        $commentContent = 'Ceci est un test de commentaire pour vérifier l\'envoi d\'email.';
+        $authorName = 'Test User';
+        $commentDate = new \DateTimeImmutable();
 
-        $io->title('Test Email Sending');
+        $output->writeln('<comment>Données de test:</comment>');
+        $output->writeln('  - Titre: ' . $postTitle);
+        $output->writeln('  - Auteur: ' . $authorName);
+        $output->writeln('  - Date: ' . $commentDate->format('Y-m-d H:i:s'));
 
-        try {
-            // Create a test user
-            $user = new User();
-            $user->setEmail($email);
-            $user->setPrenom('Test');
-            $user->setNom('User');
-            $user->setEmailVerificationToken('test-token-123');
+        $result = $this->mailService->sendCommentNotification(
+            $postTitle,
+            $commentContent,
+            $authorName,
+            $commentDate
+        );
 
-            $io->section('Testing EmailService configuration...');
-            
-            // Test basic email sending
-            $io->text('Attempting to send verification email...');
-            
-            // Test email verification
-            $this->emailService->sendEmailVerification($user);
-            
-            $io->success('Test email sent successfully!');
-            $io->info('Check your inbox at: ' . $email);
-            
+        if ($result) {
+            $output->writeln('<info>✅ Email envoyé avec succès !</info>');
+            $output->writeln('<info>Vérifiez votre boîte de réception: rayen.dorbez@esprit.tn</info>');
             return Command::SUCCESS;
-            
-        } catch (\Exception $e) {
-            $io->error('Email test failed: ' . $e->getMessage());
-            $io->text('Error details: ' . $e->getTraceAsString());
+        } else {
+            $output->writeln('<error>❌ Échec de l\'envoi d\'email</error>');
+            $output->writeln('<error>Vérifiez les logs pour plus de détails</error>');
             return Command::FAILURE;
         }
     }
