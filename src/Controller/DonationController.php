@@ -2,17 +2,14 @@
 
 namespace App\Controller;
 
-use App\Entity\Donation;
-use App\Form\DonationType;
 use App\Repository\DonationRepository;
-use Doctrine\ORM\EntityManagerInterface;
+use App\Service\EmailService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
-use App\Service\EmailService;
-use Symfony\Component\HttpFoundation\JsonResponse;
 
 #[Route('/donation')]
 class DonationController extends AbstractController
@@ -28,44 +25,26 @@ class DonationController extends AbstractController
                 new \DateTime('+3 days'),
                 'Espace Culturel, 123 Rue de l\'Art, 75001 Paris'
             );
-            
+
             return new JsonResponse(['status' => 'success', 'message' => 'Email de test envoyé avec succès !']);
         } catch (\Exception $e) {
             return new JsonResponse(['status' => 'error', 'message' => $e->getMessage()], 500);
         }
     }
-    
+
     #[Route('/my-donations', name: 'app_donation_my', methods: ['GET'])]
     #[IsGranted('ROLE_USER')]
     public function myDonations(DonationRepository $donationRepository): Response
     {
         return $this->render('donation/my_donations.html.twig', [
-            'donations' => $donationRepository->findBy(['donateur' => $this->getUser()], ['dateDon' => 'DESC']),
+            'donations' => $donationRepository->findByDonateurVisible($this->getUser()),
         ]);
     }
 
     #[Route('/new', name: 'app_donation_new', methods: ['GET', 'POST'])]
-    #[IsGranted('ROLE_USER')]
-    public function new(Request $request, EntityManagerInterface $entityManager): Response
+    public function new(): Response
     {
-        $donation = new Donation();
-        $form = $this->createForm(DonationType::class, $donation);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $donation->setDonateur($this->getUser());
-            $entityManager->persist($donation);
-            $entityManager->flush();
-
-            $this->addFlash('success', 'Merci pour votre don !');
-
-            return $this->redirectToRoute('app_donation_my', [], Response::HTTP_SEE_OTHER);
-        }
-
-        return $this->render('donation/new.html.twig', [
-            'donation' => $donation,
-            'form' => $form,
-        ]);
+        return $this->redirectToRoute('app_charity_index');
     }
 
     #[Route('/admin', name: 'app_donation_index', methods: ['GET'])]
@@ -77,7 +56,7 @@ class DonationController extends AbstractController
         $direction = $request->query->getString('direction', 'DESC');
 
         return $this->render('donation/index.html.twig', [
-            'donations' => $donationRepository->findBySearchAndSort($search, $sort, $direction),
+            'donations' => $donationRepository->findBySearchAndSort($search, $sort, $direction, true),
             'search' => $search,
             'sort' => $sort,
             'direction' => strtoupper($direction) === 'ASC' ? 'ASC' : 'DESC',

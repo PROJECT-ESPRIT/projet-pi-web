@@ -491,7 +491,7 @@
                         <li class="nav-item"><a class="nav-link nav-link-guest" href="{{ path('home') }}"><i class="fas fa-home me-1"></i> Accueil</a></li>
                         <li class="nav-item"><a class="nav-link nav-link-guest" href="{{ path('app_evenement_index') }}"><i class="fas fa-calendar-alt me-1"></i> Événements</a></li>
                         <li class="nav-item"><a class="nav-link nav-link-guest" href="{{ path('app_produit_index') }}"><i class="fas fa-store me-1"></i> Boutique</a></li>
-                        <li class="nav-item"><a class="nav-link nav-link-guest" href="{{ path('app_donation_new') }}"><i class="fas fa-hand-holding-heart me-1"></i> Faire un Don</a></li>
+                        <li class="nav-item"><a class="nav-link nav-link-guest" href="{{ path('app_charity_index') }}"><i class="fas fa-hand-holding-heart me-1"></i> Faire un Don</a></li>
                         <li class="nav-item"><a class="nav-link nav-link-guest" href="{{ path('app_forum_index') }}"><i class="fas fa-comments me-1"></i> Forum</a></li>
                     </ul>
                     <div class="d-flex align-items-center gap-2 flex-shrink-0">
@@ -526,6 +526,7 @@
                     <li><a href="{{ path('app_commande_index') }}"><i class="fas fa-shopping-cart"></i> Commandes</a></li>
 
                     <li class="sidebar-section-label">Communauté</li>
+                    <li><a href="{{ path('app_admin_charity_index') }}"><i class="fas fa-building"></i> Charities</a></li>
                     <li><a href="{{ path('app_donation_index') }}"><i class="fas fa-hand-holding-heart"></i> Dons</a></li>
                     <li><a href="{{ path('app_type_don_index') }}"><i class="fas fa-tags"></i> Types de Don</a></li>
                     <li><a href="{{ path('app_forum_index') }}"><i class="fas fa-comments"></i> Forum</a></li>
@@ -583,7 +584,7 @@
                             <a class="nav-link" href="{{ path('app_produit_index') }}"><i class="fas fa-store"></i> Boutique</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ path('app_donation_new') }}"><i class="fas fa-hand-holding-heart"></i> Faire un Don</a>
+                            <a class="nav-link" href="{{ path('app_charity_index') }}"><i class="fas fa-hand-holding-heart"></i> Faire un Don</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="{{ path('app_forum_index') }}"><i class="fas fa-comments"></i> Forum</a>
@@ -635,6 +636,7 @@
                                 {% endif %}
                                 <li><a class="dropdown-item" href="{{ path('app_commande_my') }}"><i class="fas fa-shopping-bag"></i> Mes Commandes</a></li>
                                 <li><a class="dropdown-item" href="{{ path('app_donation_my') }}"><i class="fas fa-heart"></i> Mes Dons</a></li>
+                                <li><a class="dropdown-item" href="{{ path('app_charity_mine') }}"><i class="fas fa-hands-helping"></i> Mes causes</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li>
                                     <a class="dropdown-item text-danger" href="{{ path('logout') }}">
@@ -807,7 +809,7 @@
                             {% endif %}
                             <li><a href="{{ path('app_commande_my') }}">Commandes</a></li>
                             <li><a href="{{ path('app_donation_my') }}">Mes Dons</a></li>
-                            <li><a href="{{ path('app_donation_new') }}">Faire un Don</a></li>
+                            <li><a href="{{ path('app_charity_index') }}">Faire un Don</a></li>
                         </ul>
                     </div>
 

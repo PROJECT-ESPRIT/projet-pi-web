@@ -1,0 +1,342 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ charity.name }}{% endblock %}
+
+{% block body %}
+    <style>
+        .donation-thread { position: relative; margin-left: .5rem; }
+        .donation-thread::before {
+            content: '';
+            position: absolute;
+            left: 9px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #e5e7eb;
+        }
+        .donation-thread-item {
+            position: relative;
+            padding-left: 2.2rem;
+            margin-bottom: 1rem;
+        }
+        .donation-thread-item::before {
+            content: '';
+            position: absolute;
+            left: 3px;
+            top: .35rem;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #0d6efd;
+            border: 2px solid #fff;
+            box-shadow: 0 0 0 2px #cfe2ff;
+        }
+        .donate-panel { display: none; }
+        .donate-panel.open { display: block; }
+        .donate-box {
+            border-left: 3px solid #0d6efd;
+            background: #f8fafc;
+            padding: 0.9rem 1rem;
+            border-radius: 10px;
+            margin-top: .75rem;
+        }
+        .donate-box .form-label { font-size: .78rem; font-weight: 600; color: #6b7280; }
+        .donate-box .form-control, .donate-box .form-select { font-size: .85rem; }
+    </style>
+
+    <a href="{{ path('app_charity_index') }}" class="btn btn-link ps-0">&larr; Retour aux charities</a>
+
+    {% for message in app.flashes('payment_success') %}
+        <div class="alert alert-success">{{ message }}</div>
+    {% endfor %}
+    {% for message in app.flashes('success') %}
+        <div class="alert alert-success">{{ message }}</div>
+    {% endfor %}
+    {% for message in app.flashes('info') %}
+        <div class="alert alert-info">{{ message }}</div>
+    {% endfor %}
+    {% for message in app.flashes('danger') %}
+        <div class="alert alert-danger">{{ message }}</div>
+    {% endfor %}
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <div class="d-flex flex-wrap gap-4 align-items-start">
+                <div style="flex:1; min-width:260px;">
+                    <h1 class="h3">{{ charity.name }}</h1>
+                    <p class="mb-3">{{ charity.description ?: 'Aucune description disponible.' }}</p>
+
+                    {% set barClass = progressPercent >= 100 ? 'bg-success' : (hasGoal ? 'bg-danger' : 'bg-secondary') %}
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <small class="text-muted">
+                            {% if hasGoal %}
+                                Objectif: {{ charity.goalAmount }} €
+                            {% else %}
+                                Objectif: non défini
+                            {% endif %}
+                        </small>
+                        <small class="fw-bold {{ progressPercent >= 100 ? 'text-success' : (hasGoal ? 'text-danger' : 'text-muted') }}">
+                            {{ hasGoal ? progressPercent ~ '%' : '—' }}
+                        </small>
+                    </div>
+                    <div class="progress" style="height: 12px;">
+                        <div class="progress-bar {{ barClass }}" style="width: {{ min(progressPercent, 100) }}%"></div>
+                    </div>
+                    <small class="text-muted d-block mt-2">{{ donationsAmount }} € collectés · {{ donationsCount }} dons reçus</small>
+                </div>
+                {% if charity.imagePath %}
+                    <img src="{{ charity.imagePath }}" alt="{{ charity.name }}" style="width: 220px; height: 160px; object-fit: cover; border-radius: 12px;">
+                {% endif %}
+            </div>
+        </div>
+        <div class="card-footer bg-white d-flex flex-wrap gap-2">
+            {% if app.user and charity.owner and charity.owner.id == app.user.id %}
+                <span class="btn btn-outline-secondary btn-sm" style="min-height:36px;">Vous êtes propriétaire</span>
+            {% elseif app.user %}
+                <button class="btn btn-outline-secondary btn-sm btn-toggle-donate" data-target="donate-panel" style="min-height:36px;">Donner à cette charité</button>
+            {% else %}
+                <a href="{{ path('login') }}" class="btn btn-outline-secondary btn-sm" style="min-height:36px;">Se connecter pour donner</a>
+            {% endif %}
+
+            {% if app.user and charity.owner and charity.owner.id == app.user.id %}
+                <a href="{{ path('app_charity_edit', {'id': charity.id}) }}" class="btn btn-outline-secondary btn-sm" style="min-height:36px;">Modifier</a>
+                <form method="post" action="{{ path('app_charity_delete', {'id': charity.id}) }}" onsubmit="return confirm('Supprimer cette cause ?');">
+                    <input type="hidden" name="_token" value="{{ csrf_token('delete-charity-' ~ charity.id) }}">
+                    <button class="btn btn-outline-danger btn-sm" style="min-height:36px;">Supprimer</button>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+
+    <div id="donate-panel" class="donate-panel {% if donationErrors[charity.id] is defined %}open{% endif %}">
+        <div class="donate-box mb-3">
+            {% if app.user and charity.owner and charity.owner.id == app.user.id %}
+                <div class="text-muted">Vous êtes propriétaire de cette charity.</div>
+            {% elseif app.user %}
+                <form method="post" class="donation-form" data-turbo="false" action="{{ path('app_charity_show', {'id': charity.id, '_fragment': 'donate-panel'}) }}" enctype="multipart/form-data">
+                    <input type="hidden" name="_token" value="{{ csrf_token('donate-charity-' ~ charity.id) }}">
+                    <input type="hidden" name="charity_id" value="{{ charity.id }}">
+                    {% if donationErrors[charity.id] is defined and donationErrors[charity.id].general is defined %}
+                        <div class="alert alert-danger py-2">{{ donationErrors[charity.id].general }}</div>
+                    {% endif %}
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <label class="form-label">Type de don</label>
+                            <select name="type_id" class="form-select don-type-select" data-amount-id="amount-show" data-image-id="donation-image-show" required>
+                                <option value="">Choisir un type</option>
+                                {% for type in typeDons %}
+                                    {% set label = type.libelle|lower %}
+                                    {% set isMoney = (moneyTypeId is defined and moneyTypeId > 0 and type.id == moneyTypeId)
+                                        or 'argent' in label or 'money' in label or 'dinar' in label or 'dt' in label or 'tnd' in label
+                                        or 'euro' in label or 'eur' in label or '€' in label %}
+                                    <option value="{{ type.id }}" data-is-money="{{ isMoney ? '1' : '0' }}"
+                                        {{ donationOld[charity.id] is defined and donationOld[charity.id].type_id == type.id ? 'selected' : '' }}>
+                                        {{ type.libelle }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            {% if donationErrors[charity.id] is defined and donationErrors[charity.id].type_id is defined %}
+                                <div class="text-danger small mt-1">{{ donationErrors[charity.id].type_id }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 amount-wrap" id="amount-show">
+                            <label class="form-label">Montant (€)</label>
+                            <input type="number" name="amount" min="0" class="form-control amount-input" placeholder="Ex: 50"
+                                   value="{{ donationOld[charity.id].amount ?? '' }}">
+                            {% if donationErrors[charity.id] is defined and donationErrors[charity.id].amount is defined %}
+                                <div class="text-danger small mt-1">{{ donationErrors[charity.id].amount }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Description</label>
+                            <textarea name="description" class="form-control" rows="3" placeholder="Décrivez votre don">{{ donationOld[charity.id].description ?? '' }}</textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Image du don (obligatoire)</label>
+                            <input type="file" name="donation_image" class="form-control donation-image-input" id="donation-image-show">
+                            {% if donationErrors[charity.id] is defined and donationErrors[charity.id].donation_image is defined %}
+                                <div class="text-danger small mt-1">{{ donationErrors[charity.id].donation_image }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-12 form-check">
+                            <input class="form-check-input" type="checkbox" name="is_anonymous" id="anon-show"
+                                   {{ donationOld[charity.id] is defined and donationOld[charity.id].is_anonymous ? 'checked' : '' }}>
+                            <label class="form-check-label" for="anon-show">Don anonyme (seul l'administrateur verra mon identité)</label>
+                        </div>
+                        <div class="col-12">
+                            <button class="btn btn-success">Confirmer le don</button>
+                        </div>
+                    </div>
+                </form>
+            {% else %}
+                <div class="text-muted">
+                    Connectez-vous pour faire un don.
+                    <a href="{{ path('login') }}">Se connecter</a> ou
+                    <a href="{{ path('register') }}">Créer un compte</a>.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <h2 class="h5 mb-3">Derniers dons</h2>
+    <div class="donation-thread">
+        {% for donation in recentDonations %}
+            <div class="donation-thread-item">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <strong>{{ donation.type.libelle }}</strong>
+                        <div class="small text-muted">
+                            {% if donation.isAnonymous and not is_granted('ROLE_ADMIN') %}
+                                Donateur anonyme
+                            {% else %}
+                                {{ donation.donateur.prenom }} {{ donation.donateur.nom }}
+                            {% endif %}
+                            {% if donation.isAnonymous %}
+                                <span class="badge text-bg-secondary ms-1">Anonyme</span>
+                            {% endif %}
+                            <span class="ms-2"><i class="fas fa-coins"></i> {{ donation.amount }} €</span>
+                        </div>
+                    </div>
+                    <span class="small text-muted">{{ donation.dateDon|date('d/m/Y H:i') }}</span>
+                </div>
+                {% if donation.description %}
+                    <p class="mb-0 mt-1">{{ donation.description }}</p>
+                {% endif %}
+            </div>
+        {% else %}
+            <div class="text-muted">Aucun don pour cette charity pour le moment.</div>
+        {% endfor %}
+    </div>
+
+    <div class="modal fade" id="aiValidationModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content p-3 text-center">
+                <div id="aiValidationSpinner" class="spinner-border text-primary mx-auto mb-2" role="status" aria-hidden="true"></div>
+                <div id="aiValidationTitle" class="fw-semibold">Validation de l'image</div>
+                <div id="aiValidationMessage" class="text-muted small">Merci de patienter…</div>
+                <button id="aiValidationClose" type="button" class="btn btn-outline-secondary btn-sm mt-3" data-bs-dismiss="modal" style="display:none;">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            var initDonationUI = function () {
+                var aiModalEl = document.getElementById('aiValidationModal');
+                var aiModal = aiModalEl ? bootstrap.Modal.getOrCreateInstance(aiModalEl, {backdrop: 'static', keyboard: false}) : null;
+                var aiSpinner = document.getElementById('aiValidationSpinner');
+                var aiTitle = document.getElementById('aiValidationTitle');
+                var aiMessage = document.getElementById('aiValidationMessage');
+                var aiClose = document.getElementById('aiValidationClose');
+                var aiResult = {{ ai_validation_result is defined ? ai_validation_result|json_encode|raw : 'null' }};
+                if (aiResult && aiModal) {
+                    if (aiSpinner) aiSpinner.style.display = 'none';
+                    if (aiClose) aiClose.style.display = 'inline-block';
+                    if (aiResult.ok && aiResult.skipped) {
+                        if (aiTitle) aiTitle.textContent = 'Validation ignorée';
+                        if (aiMessage) aiMessage.textContent = aiResult.message || 'Validation ignorée.';
+                    } else if (aiResult.ok) {
+                        if (aiTitle) aiTitle.textContent = 'Image validée';
+                        if (aiMessage) aiMessage.textContent = aiResult.message || 'Validation réussie.';
+                    } else {
+                        if (aiTitle) aiTitle.textContent = 'Image invalide';
+                        if (aiMessage) aiMessage.textContent = aiResult.message || 'L\'image ne correspond pas au type de don.';
+                    }
+                    aiModal.show();
+                }
+                var btn = document.querySelector('.btn-toggle-donate');
+                var panel = document.getElementById('donate-panel');
+                if (btn && panel) {
+                    if (!btn.dataset.aiBound) {
+                        btn.dataset.aiBound = '1';
+                        btn.addEventListener('click', function () {
+                            panel.classList.toggle('open');
+                        });
+                    }
+                }
+                document.querySelectorAll('.don-type-select').forEach(function (select) {
+                    if (select.dataset.aiBound) return;
+                    select.dataset.aiBound = '1';
+                    var amountId = select.getAttribute('data-amount-id');
+                    var amountWrap = document.getElementById(amountId);
+                    var input = amountWrap ? amountWrap.querySelector('.amount-input') : null;
+                    var isMoneyType = function () {
+                        var opt = select.options[select.selectedIndex];
+                        var label = opt ? (opt.textContent || '').toLowerCase() : '';
+                        var isMoney = opt && (opt.getAttribute('data-is-money') === '1'
+                            || label.includes('argent')
+                            || label.includes('money')
+                            || label.includes('dinar')
+                            || label.includes('dt')
+                            || label.includes('tnd')
+                            || label.includes('euro')
+                            || label.includes('eur')
+                            || label.includes('€'));
+                        return !!isMoney;
+                    };
+                    var toggle = function () {
+                        var isMoney = isMoneyType();
+                        var imageId = select.getAttribute('data-image-id');
+                        var imageInput = imageId ? document.getElementById(imageId) : null;
+                        if (amountWrap) {
+                            amountWrap.style.display = 'block';
+                            if (input) {
+                                input.disabled = !isMoney;
+                                if (!isMoney) input.value = '';
+                            }
+                        }
+                        if (imageInput) {
+                            imageInput.disabled = isMoney;
+                            imageInput.required = !isMoney;
+                            if (isMoney) {
+                                imageInput.value = '';
+                            }
+                        }
+                    };
+                    select.addEventListener('change', toggle);
+                    toggle();
+                });
+
+                document.querySelectorAll('.donation-form').forEach(function (form) {
+                    if (form.dataset.aiBound) return;
+                    form.dataset.aiBound = '1';
+                    form.addEventListener('submit', function () {
+                        var select = form.querySelector('.don-type-select');
+                        var opt = select ? select.options[select.selectedIndex] : null;
+                        var label = opt ? (opt.textContent || '').toLowerCase() : '';
+                        var isMoney = opt && (opt.getAttribute('data-is-money') === '1'
+                            || label.includes('argent')
+                            || label.includes('money')
+                            || label.includes('dinar')
+                            || label.includes('dt')
+                            || label.includes('tnd')
+                            || label.includes('euro')
+                            || label.includes('eur')
+                            || label.includes('€'));
+                        if (aiModal && !isMoney) {
+                            if (aiSpinner) aiSpinner.style.display = 'inline-block';
+                            if (aiClose) aiClose.style.display = 'none';
+                            if (aiTitle) aiTitle.textContent = 'Validation de l\'image';
+                            if (aiMessage) aiMessage.textContent = 'Merci de patienter…';
+                            aiModal.show();
+                        }
+                    });
+                });
+            };
+
+            if (window.Turbo) {
+                document.addEventListener('turbo:load', initDonationUI);
+            } else {
+                document.addEventListener('DOMContentLoaded', initDonationUI);
+            }
+            document.addEventListener('turbo:before-cache', function () {
+                var aiModalEl = document.getElementById('aiValidationModal');
+                if (!aiModalEl) return;
+                var modal = bootstrap.Modal.getInstance(aiModalEl);
+                if (modal) {
+                    modal.hide();
+                }
+            });
+        })();
+    </script>
+{% endblock %}

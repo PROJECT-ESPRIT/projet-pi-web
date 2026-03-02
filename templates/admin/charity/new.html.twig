@@ -1,0 +1,9 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nouvelle Charity{% endblock %}
+
+{% block body %}
+    <h1>Créer une charity</h1>
+    {{ include('admin/charity/_form.html.twig') }}
+    <a href="{{ path('app_admin_charity_index') }}" class="btn btn-link mt-2">Retour</a>
+{% endblock %}

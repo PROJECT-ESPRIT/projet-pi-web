@@ -1,0 +1,17 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Créer une cause{% endblock %}
+
+{% block body %}
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="mb-0">Créer une cause</h1>
+        <a href="{{ path('app_charity_mine') }}" class="btn btn-outline-secondary">Mes causes</a>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            {{ include('charity/_form.html.twig', {'form': form, 'button_label': 'Créer'}) }}
+            <small class="text-muted d-block mt-2">Formats conseillés: JPG/PNG. L'image sera affichée sur la liste des causes.</small>
+        </div>
+    </div>
+{% endblock %}

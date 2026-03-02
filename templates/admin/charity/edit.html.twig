@@ -1,0 +1,12 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier Charity{% endblock %}
+
+{% block body %}
+    <h1>Modifier {{ charity.name }}</h1>
+    {{ include('admin/charity/_form.html.twig', {'button_label': 'Mettre à jour'}) }}
+    <div class="mt-3 d-flex gap-2">
+        <a href="{{ path('app_admin_charity_show', {'id': charity.id}) }}" class="btn btn-outline-primary">Voir</a>
+        <a href="{{ path('app_admin_charity_index') }}" class="btn btn-link">Retour</a>
+    </div>
+{% endblock %}

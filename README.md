@@ -24,13 +24,49 @@
    php bin/console doctrine:migrations:migrate
    ```
 
-3. **Dépendances Python** (moteurs de recommandation et hotness)
+3. **Dépendances Python** (moteurs de recommandation et hotness + validation IA optionnelle)
 
    ```cmd
    pip install -r python\requirements.txt
    ```
 
-   Dépendances installées : `sqlalchemy`, `pymysql`, `scikit-learn`, `numpy`.
+   Dépendances installées : `sqlalchemy`, `pymysql`, `scikit-learn`, `numpy`, `ultralytics`, `pillow`.
+
+   Validation IA des dons (optionnelle) :
+   - `DONATION_AI_MODEL` : chemin du modèle local (ex: `models/donation.pt`)
+   - `DONATION_AI_PYTHON_BIN` : chemin du Python utilisé
+   - `DONATION_AI_ALLOW_SKIP=0` : si le modèle manque, la validation échoue (par défaut)
+   - `DONATION_AI_CONFIDENCE` + `DONATION_AI_MARGIN` : seuil et marge de confiance
+   - Mapping des labels : `config/donation_label_map.json`
+   - Groupes de labels IA : `config/ai_label_groups.json`
+   - Types de don visibles : `config/donation_types.json`
+
+   Setup rapide (crée un venv Python et configure `.env.local`) :
+   ```bash
+   bash bin/setup-ai-validator.sh
+   ```
+
+   Service IA local (recommandé pour la vitesse) :
+   ```bash
+   python3 -m pip install -r python/requirements.txt
+   bash python/run_ai_service.sh
+   ```
+   Le service reste actif tant que la commande tourne (laissez ce terminal ouvert).
+   Pour le mettre en arrière-plan :
+   ```bash
+   bash python/run_ai_service.sh &
+   ```
+   Vérification rapide :
+   ```bash
+   curl http://127.0.0.1:8001/health
+   ```
+   Si `/health` renvoie `{"ok": false, "error": ...}` :
+   - Assurez-vous d’utiliser le même Python pour installer et démarrer (ex: `PYTHON_BIN=/home/yo/anaconda3/bin/python3 bash python/run_ai_service.sh`).
+   - Vérifiez que `python3 -c "import ultralytics"` fonctionne.
+   - En cas d’erreur `torchvision`/`torch` (ex: `has no attribute 'extension'`), lancez :
+   ```bash
+   PYTHON_BIN=/home/yo/anaconda3/bin/python3 bash python/fix_ai_deps.sh
+   ```
 
 4. **Données de démo**
 
@@ -88,4 +124,3 @@ Endpoint : `POST /stripe-webhook`
 - Paiement → Webhook reçu → Réservation confirmée → Emails envoyés + Ticket généré
 
 **Logs** : `var/log/dev.log`
-

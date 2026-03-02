@@ -20,6 +20,15 @@ class Donation
     #[ORM\Column]
     private ?\DateTimeImmutable $dateDon = null;
 
+    #[ORM\Column]
+    private int $amount = 0;
+
+    #[ORM\Column(name: 'image_path', length: 255, nullable: true)]
+    private ?string $imagePath = null;
+
+    #[ORM\Column(name: 'is_hidden')]
+    private bool $isHidden = false;
+
     #[ORM\ManyToOne(inversedBy: 'donations')]
     #[ORM\JoinColumn(nullable: false)]
     private ?TypeDon $type = null;
@@ -27,6 +36,13 @@ class Donation
     #[ORM\ManyToOne(inversedBy: 'donations')]
     #[ORM\JoinColumn(nullable: false)]
     private ?User $donateur = null;
+
+    #[ORM\ManyToOne(inversedBy: 'donations')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?Charity $charity = null;
+
+    #[ORM\Column]
+    private bool $isAnonymous = false;
 
     public function __construct()
     {
@@ -62,6 +78,42 @@ class Donation
         return $this;
     }
 
+    public function getAmount(): int
+    {
+        return $this->amount;
+    }
+
+    public function setAmount(int $amount): static
+    {
+        $this->amount = max(0, $amount);
+
+        return $this;
+    }
+
+    public function getImagePath(): ?string
+    {
+        return $this->imagePath;
+    }
+
+    public function setImagePath(?string $imagePath): static
+    {
+        $this->imagePath = $imagePath;
+
+        return $this;
+    }
+
+    public function isHidden(): bool
+    {
+        return $this->isHidden;
+    }
+
+    public function setIsHidden(bool $isHidden): static
+    {
+        $this->isHidden = $isHidden;
+
+        return $this;
+    }
+
     public function getType(): ?TypeDon
     {
         return $this->type;
@@ -82,6 +134,30 @@ class Donation
     public function setDonateur(?User $donateur): static
     {
         $this->donateur = $donateur;
+
+        return $this;
+    }
+
+    public function getCharity(): ?Charity
+    {
+        return $this->charity;
+    }
+
+    public function setCharity(?Charity $charity): static
+    {
+        $this->charity = $charity;
+
+        return $this;
+    }
+
+    public function isAnonymous(): bool
+    {
+        return $this->isAnonymous;
+    }
+
+    public function setIsAnonymous(bool $isAnonymous): static
+    {
+        $this->isAnonymous = $isAnonymous;
 
         return $this;
     }

@@ -1,0 +1,454 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Charities{% endblock %}
+
+{% block body %}
+    <style>
+        .charity-thread { position: relative; margin-left: .5rem; }
+        .charity-thread::before {
+            content: '';
+            position: absolute;
+            left: 10px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #e5e7eb;
+        }
+        .charity-thread-item {
+            position: relative;
+            padding-left: 2.4rem;
+            margin-bottom: 1.4rem;
+        }
+        .charity-thread-item::before {
+            content: '';
+            position: absolute;
+            left: 3px;
+            top: .35rem;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #0d6efd;
+            border: 2px solid #fff;
+            box-shadow: 0 0 0 2px #cfe2ff;
+        }
+        .charity-card {
+            border: 1px solid #e9ecef;
+            border-radius: 14px;
+            box-shadow: 0 8px 24px rgba(0,0,0,.06);
+            overflow: hidden;
+            background: #fff;
+        }
+        .charity-card .progress { height: 10px; border-radius: 999px; }
+        .charity-card .meta-pill { font-size: .74rem; border-radius: 999px; padding: .25rem .65rem; }
+        .charity-card .percent { font-weight: 700; font-size: .88rem; }
+        .charity-row { display: flex; gap: 1rem; align-items: stretch; }
+        .charity-info { flex: 1; min-width: 0; }
+        .charity-image {
+            width: 180px;
+            min-width: 180px;
+            height: 140px;
+            border-radius: 12px;
+            object-fit: cover;
+            background: #f3f4f6;
+        }
+        @media (max-width: 768px) {
+            .charity-row { flex-direction: column; }
+            .charity-image { width: 100%; height: 180px; }
+        }
+        .donate-box {
+            border-left: 3px solid #0d6efd;
+            background: #f8fafc;
+            padding: 0.9rem 1rem;
+            border-radius: 10px;
+            margin-top: .75rem;
+        }
+        .donation-thread { position: relative; margin-left: .4rem; margin-top: .75rem; }
+        .donation-thread::before {
+            content: '';
+            position: absolute;
+            left: 8px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #e5e7eb;
+        }
+        .donation-thread-item {
+            position: relative;
+            padding-left: 2rem;
+            margin-bottom: .75rem;
+        }
+        .donation-thread-item::before {
+            content: '';
+            position: absolute;
+            left: 2px;
+            top: .35rem;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #0d6efd;
+            border: 2px solid #fff;
+            box-shadow: 0 0 0 2px #cfe2ff;
+        }
+        .donate-panel { display: none; }
+        .donate-panel.open { display: block; }
+        .donate-box .form-label { font-size: .78rem; font-weight: 600; color: #6b7280; }
+        .donate-box .form-control, .donate-box .form-select { font-size: .85rem; }
+        details.charity-toggle > summary { list-style: none; cursor: pointer; }
+        details.charity-toggle > summary::-webkit-details-marker { display: none; }
+    </style>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0">Charities</h1>
+        {% if app.user %}
+            <div class="d-flex gap-2">
+                <a href="{{ path('app_charity_mine') }}" class="btn btn-outline-secondary">Mes causes</a>
+                <a href="{{ path('app_charity_new') }}" class="btn btn-outline-primary">Créer une cause</a>
+                <a href="{{ path('app_donation_my') }}" class="btn btn-outline-primary">Mes dons</a>
+            </div>
+        {% endif %}
+    </div>
+
+    <p class="text-muted mb-4">
+        Consultez les charities et leur progression. Pour faire un don, vous devez être connecté.
+    </p>
+
+    {% for message in app.flashes('payment_success') %}
+        <div class="alert alert-success">{{ message }}</div>
+    {% endfor %}
+    {% for message in app.flashes('success') %}
+        <div class="alert alert-success">{{ message }}</div>
+    {% endfor %}
+    {% for message in app.flashes('info') %}
+        <div class="alert alert-info">{{ message }}</div>
+    {% endfor %}
+    {% for message in app.flashes('danger') %}
+        <div class="alert alert-danger">{{ message }}</div>
+    {% endfor %}
+
+    <form method="get" class="row g-3 mb-4">
+        <div class="col-md-6">
+            <label for="charity-search" class="form-label">Recherche</label>
+            <input
+                type="text"
+                id="charity-search"
+                name="q"
+                class="form-control"
+                placeholder="Nom ou description..."
+                value="{{ search }}"
+            >
+        </div>
+        <div class="col-md-3">
+            <label for="charity-sort" class="form-label">Trier par</label>
+            <select id="charity-sort" name="sort" class="form-select">
+                <option value="name" {{ sort == 'name' ? 'selected' : '' }}>Nom</option>
+                <option value="newest" {{ sort == 'newest' ? 'selected' : '' }}>Nouveauté</option>
+                <option value="donations" {{ sort == 'donations' ? 'selected' : '' }}>Nombre de dons</option>
+                <option value="amount" {{ sort == 'amount' ? 'selected' : '' }}>Montant collecté</option>
+                <option value="goal" {{ sort == 'goal' ? 'selected' : '' }}>Objectif</option>
+                <option value="progress" {{ sort == 'progress' ? 'selected' : '' }}>Progression</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label for="charity-direction" class="form-label">Ordre</label>
+            <select id="charity-direction" name="direction" class="form-select">
+                <option value="ASC" {{ direction == 'ASC' ? 'selected' : '' }}>Croissant</option>
+                <option value="DESC" {{ direction == 'DESC' ? 'selected' : '' }}>Décroissant</option>
+            </select>
+        </div>
+        <div class="col-12">
+            <button type="submit" class="btn btn-primary">Appliquer</button>
+            <a href="{{ path('app_charity_index') }}" class="btn btn-outline-secondary">Réinitialiser</a>
+        </div>
+    </form>
+
+    <div class="charity-thread">
+        {% for row in charityStats %}
+            {% set charity = row.charity %}
+            {% set percent = row.progressPercent %}
+            {% set barClass = percent >= 100 ? 'bg-success' : (row.hasGoal ? 'bg-danger' : 'bg-secondary') %}
+            <div class="charity-thread-item" id="charity-{{ charity.id }}">
+                <div class="charity-card">
+                    <div class="p-3">
+                        <div class="charity-row">
+                            <div class="charity-info">
+                                <div class="d-flex justify-content-between align-items-start gap-3 mb-2">
+                                    <h5 class="mb-0">{{ charity.name }}</h5>
+                                    <span class="badge text-bg-light meta-pill">{{ row.donationsCount }} dons</span>
+                                </div>
+                                <p class="text-muted mb-3">{{ charity.description ?: 'Aucune description disponible.' }}</p>
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <small class="text-muted">
+                                        {% if row.hasGoal %}
+                                            Objectif: {{ charity.goalAmount }} €
+                                        {% else %}
+                                            Objectif: non défini
+                                        {% endif %}
+                                    </small>
+                                    <span class="percent {{ percent >= 100 ? 'text-success' : (row.hasGoal ? 'text-danger' : 'text-muted') }}">
+                                        {{ row.hasGoal ? percent ~ '%' : '—' }}
+                                    </span>
+                                </div>
+                                <div class="progress mb-2">
+                                    <div class="progress-bar {{ barClass }}" role="progressbar" style="width: {{ min(percent, 100) }}%"></div>
+                                </div>
+                                <small class="text-muted d-block">{{ row.donationsAmount }} € collectés · {{ row.donationsCount }} dons</small>
+                                <div class="mt-2 d-flex gap-2">
+                                    <a href="{{ path('app_charity_show', {'id': charity.id}) }}" class="btn btn-outline-secondary btn-sm">Voir</a>
+                                    {% if app.user and charity.owner and charity.owner.id == app.user.id %}
+                                        <span class="btn btn-outline-secondary btn-sm">Vous êtes propriétaire</span>
+                                    {% elseif app.user %}
+                                        <button class="btn btn-primary btn-sm btn-toggle-donate" data-target="donate-{{ charity.id }}">
+                                            Donner à cette charité
+                                        </button>
+                                    {% else %}
+                                        <a href="{{ path('login') }}" class="btn btn-primary btn-sm">Se connecter pour donner</a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% if charity.imagePath %}
+                                <img src="{{ charity.imagePath }}" alt="{{ charity.name }}" class="charity-image">
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="donate-panel {% if donationErrors[charity.id] is defined %}open{% endif %}" id="donate-{{ charity.id }}">
+                    <div class="donate-box">
+                        {% if app.user and charity.owner and charity.owner.id == app.user.id %}
+                            <div class="text-muted">Vous êtes propriétaire de cette charity.</div>
+                        {% elseif app.user %}
+                            <form method="post" class="donation-form" data-turbo="false" action="{{ path('app_charity_index', {'_fragment': 'charity-' ~ charity.id}) }}" enctype="multipart/form-data">
+                                <input type="hidden" name="_token" value="{{ csrf_token('donate-charity-' ~ charity.id) }}">
+                                <input type="hidden" name="charity_id" value="{{ charity.id }}">
+                                {% if donationErrors[charity.id] is defined and donationErrors[charity.id].general is defined %}
+                                    <div class="alert alert-danger py-2">{{ donationErrors[charity.id].general }}</div>
+                                {% endif %}
+                                <div class="row g-2">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Type de don</label>
+                                        <select name="type_id" class="form-select don-type-select" data-amount-id="amount-{{ charity.id }}" data-image-id="donation-image-{{ charity.id }}" required>
+                                            <option value="">Choisir un type</option>
+                                            {% for type in typeDons %}
+                                                {% set label = type.libelle|lower %}
+                                                {% set isMoney = (moneyTypeId is defined and moneyTypeId > 0 and type.id == moneyTypeId)
+                                                    or 'argent' in label or 'money' in label or 'dinar' in label or 'dt' in label or 'tnd' in label
+                                                    or 'euro' in label or 'eur' in label or '€' in label %}
+                                                <option value="{{ type.id }}" data-is-money="{{ isMoney ? '1' : '0' }}"
+                                                    {{ donationOld[charity.id] is defined and donationOld[charity.id].type_id == type.id ? 'selected' : '' }}>
+                                                    {{ type.libelle }}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                        {% if donationErrors[charity.id] is defined and donationErrors[charity.id].type_id is defined %}
+                                            <div class="text-danger small mt-1">{{ donationErrors[charity.id].type_id }}</div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-6 amount-wrap" id="amount-{{ charity.id }}">
+                                        <label class="form-label">Montant (€)</label>
+                                        <input type="number" name="amount" min="0" class="form-control amount-input" placeholder="Ex: 50"
+                                               value="{{ donationOld[charity.id].amount ?? '' }}">
+                                        {% if donationErrors[charity.id] is defined and donationErrors[charity.id].amount is defined %}
+                                            <div class="text-danger small mt-1">{{ donationErrors[charity.id].amount }}</div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label">Description</label>
+                                        <textarea name="description" class="form-control" rows="3" placeholder="Décrivez votre don">{{ donationOld[charity.id].description ?? '' }}</textarea>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label">Image du don (obligatoire)</label>
+                                        <input type="file" name="donation_image" class="form-control donation-image-input" id="donation-image-{{ charity.id }}">
+                                        {% if donationErrors[charity.id] is defined and donationErrors[charity.id].donation_image is defined %}
+                                            <div class="text-danger small mt-1">{{ donationErrors[charity.id].donation_image }}</div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-12 form-check">
+                                        <input class="form-check-input" type="checkbox" name="is_anonymous" id="anon-{{ charity.id }}"
+                                               {{ donationOld[charity.id] is defined and donationOld[charity.id].is_anonymous ? 'checked' : '' }}>
+                                        <label class="form-check-label" for="anon-{{ charity.id }}">Don anonyme (seul l'administrateur verra mon identité)</label>
+                                    </div>
+                                    <div class="col-12">
+                                        <button class="btn btn-success">Confirmer le don</button>
+                                    </div>
+                                </div>
+                            </form>
+
+                            <div class="donation-thread">
+                                {% set items = recentDonations[charity.id] ?? [] %}
+                                {% for donation in items %}
+                                    <div class="donation-thread-item">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div>
+                                                <strong>{{ donation.type.libelle }}</strong>
+                                                <div class="small text-muted">
+                                                    {% if donation.isAnonymous and not is_granted('ROLE_ADMIN') %}
+                                                        Donateur anonyme
+                                                    {% else %}
+                                                        {{ donation.donateur.prenom }} {{ donation.donateur.nom }}
+                                                    {% endif %}
+                                                    {% if donation.isAnonymous %}
+                                                        <span class="badge text-bg-secondary ms-1">Anonyme</span>
+                                                    {% endif %}
+                                                    <span class="ms-2"><i class="fas fa-coins"></i> {{ donation.amount }} €</span>
+                                                </div>
+                                            </div>
+                                            <span class="small text-muted">{{ donation.dateDon|date('d/m/Y H:i') }}</span>
+                                        </div>
+                                        {% if donation.description %}
+                                            <p class="mb-0 mt-1">{{ donation.description }}</p>
+                                        {% endif %}
+                                    </div>
+                                {% else %}
+                                    <div class="text-muted">Aucun don pour cette charity pour le moment.</div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="text-muted">
+                                Connectez-vous pour faire un don.
+                                <a href="{{ path('login') }}">Se connecter</a> ou
+                                <a href="{{ path('register') }}">Créer un compte</a>.
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="alert alert-info mb-0">Aucune charity disponible pour le moment.</div>
+        {% endfor %}
+    </div>
+
+    <div class="modal fade" id="aiValidationModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content p-3 text-center">
+                <div id="aiValidationSpinner" class="spinner-border text-primary mx-auto mb-2" role="status" aria-hidden="true"></div>
+                <div id="aiValidationTitle" class="fw-semibold">Validation de l'image</div>
+                <div id="aiValidationMessage" class="text-muted small">Merci de patienter…</div>
+                <button id="aiValidationClose" type="button" class="btn btn-outline-secondary btn-sm mt-3" data-bs-dismiss="modal" style="display:none;">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            var initDonationUI = function () {
+                var aiModalEl = document.getElementById('aiValidationModal');
+                var aiModal = aiModalEl ? bootstrap.Modal.getOrCreateInstance(aiModalEl, {backdrop: 'static', keyboard: false}) : null;
+                var aiSpinner = document.getElementById('aiValidationSpinner');
+                var aiTitle = document.getElementById('aiValidationTitle');
+                var aiMessage = document.getElementById('aiValidationMessage');
+                var aiClose = document.getElementById('aiValidationClose');
+                var aiResult = {{ ai_validation_result is defined ? ai_validation_result|json_encode|raw : 'null' }};
+                if (aiResult && aiModal) {
+                    if (aiSpinner) aiSpinner.style.display = 'none';
+                    if (aiClose) aiClose.style.display = 'inline-block';
+                    if (aiResult.ok && aiResult.skipped) {
+                        if (aiTitle) aiTitle.textContent = 'Validation ignorée';
+                        if (aiMessage) aiMessage.textContent = aiResult.message || 'Validation ignorée.';
+                    } else if (aiResult.ok) {
+                        if (aiTitle) aiTitle.textContent = 'Image validée';
+                        if (aiMessage) aiMessage.textContent = aiResult.message || 'Validation réussie.';
+                    } else {
+                        if (aiTitle) aiTitle.textContent = 'Image invalide';
+                        if (aiMessage) aiMessage.textContent = aiResult.message || 'L\'image ne correspond pas au type de don.';
+                    }
+                    aiModal.show();
+                }
+                document.querySelectorAll('.btn-toggle-donate').forEach(function (btn) {
+                    if (btn.dataset.aiBound) return;
+                    btn.dataset.aiBound = '1';
+                    btn.addEventListener('click', function () {
+                        var targetId = btn.getAttribute('data-target');
+                        var panel = document.getElementById(targetId);
+                        if (panel) {
+                            panel.classList.toggle('open');
+                        }
+                    });
+                });
+                document.querySelectorAll('.don-type-select').forEach(function (select) {
+                    if (select.dataset.aiBound) return;
+                    select.dataset.aiBound = '1';
+                    var amountId = select.getAttribute('data-amount-id');
+                    var amountWrap = document.getElementById(amountId);
+                    var input = amountWrap ? amountWrap.querySelector('.amount-input') : null;
+                    var isMoneyType = function () {
+                        var opt = select.options[select.selectedIndex];
+                        var label = opt ? (opt.textContent || '').toLowerCase() : '';
+                        var isMoney = opt && (opt.getAttribute('data-is-money') === '1'
+                            || label.includes('argent')
+                            || label.includes('money')
+                            || label.includes('dinar')
+                            || label.includes('dt')
+                            || label.includes('tnd')
+                            || label.includes('euro')
+                            || label.includes('eur')
+                            || label.includes('€'));
+                        return !!isMoney;
+                    };
+                    var toggle = function () {
+                        var isMoney = isMoneyType();
+                        var imageId = select.getAttribute('data-image-id');
+                        var imageInput = imageId ? document.getElementById(imageId) : null;
+                        if (amountWrap) {
+                            amountWrap.style.display = 'block';
+                            if (input) {
+                                input.disabled = !isMoney;
+                                if (!isMoney) {
+                                    input.value = '';
+                                }
+                            }
+                        }
+                        if (imageInput) {
+                            imageInput.disabled = isMoney;
+                            imageInput.required = !isMoney;
+                            if (isMoney) {
+                                imageInput.value = '';
+                            }
+                        }
+                    };
+                    select.addEventListener('change', toggle);
+                    toggle();
+                });
+
+                document.querySelectorAll('.donation-form').forEach(function (form) {
+                    if (form.dataset.aiBound) return;
+                    form.dataset.aiBound = '1';
+                    form.addEventListener('submit', function () {
+                        var select = form.querySelector('.don-type-select');
+                        var opt = select ? select.options[select.selectedIndex] : null;
+                        var label = opt ? (opt.textContent || '').toLowerCase() : '';
+                        var isMoney = opt && (opt.getAttribute('data-is-money') === '1'
+                            || label.includes('argent')
+                            || label.includes('money')
+                            || label.includes('dinar')
+                            || label.includes('dt')
+                            || label.includes('tnd')
+                            || label.includes('euro')
+                            || label.includes('eur')
+                            || label.includes('€'));
+                        if (aiModal && !isMoney) {
+                            if (aiSpinner) aiSpinner.style.display = 'inline-block';
+                            if (aiClose) aiClose.style.display = 'none';
+                            if (aiTitle) aiTitle.textContent = 'Validation de l\'image';
+                            if (aiMessage) aiMessage.textContent = 'Merci de patienter…';
+                            aiModal.show();
+                        }
+                    });
+                });
+            };
+
+            if (window.Turbo) {
+                document.addEventListener('turbo:load', initDonationUI);
+            } else {
+                document.addEventListener('DOMContentLoaded', initDonationUI);
+            }
+            document.addEventListener('turbo:before-cache', function () {
+                var aiModalEl = document.getElementById('aiValidationModal');
+                if (!aiModalEl) return;
+                var modal = bootstrap.Modal.getInstance(aiModalEl);
+                if (modal) {
+                    modal.hide();
+                }
+            });
+        })();
+    </script>
+{% endblock %}

@@ -1061,11 +1061,18 @@
                     Votre générosité permet aux enfants ayant des besoins spécifiques de s'exprimer à travers l'art. Chaque don compte.
                 </p>
             </div>
-            <div class="col-lg-4 text-lg-end">
-                <a href="{{ path('app_donation_new') }}" class="btn btn-light btn-hero me-2">
-                    <i class="fas fa-hand-holding-heart me-1"></i> Faire un Don
-                </a>
-                <a href="{{ path('app_donation_my') }}" class="btn btn-outline-light btn-hero">Mes Dons</a>
+            <div class="col-lg-4">
+                <div class="d-flex flex-wrap justify-content-lg-end gap-2">
+                    <a href="{{ path('app_charity_index') }}" class="btn btn-outline-light btn-hero">
+                        <i class="fas fa-list-ul me-1"></i> Voir toutes les causes
+                    </a>
+                    <a href="{{ path('app_charity_index') }}" class="btn btn-light btn-hero">
+                        <i class="fas fa-hand-holding-heart me-1"></i> Faire un Don
+                    </a>
+                    {% if app.user %}
+                        <a href="{{ path('app_donation_my') }}" class="btn btn-outline-light btn-hero">Mes Dons</a>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </section>
@@ -1242,8 +1249,8 @@
             </div>
         </section>
 
-        {# ---------- PRODUCTS PREVIEW ---------- #}
-        <section class="mb-4">
+    {# ---------- PRODUCTS PREVIEW ---------- #}
+    <section class="mb-4">
             <div class="section-head">
                 <h2><i class="fas fa-store me-2" style="color:var(--ac-blue)"></i>Boutique</h2>
                 <a href="{{ path('app_produit_index') }}" class="see-all">Voir tout <i class="fas fa-arrow-right"></i></a>
@@ -1271,8 +1278,20 @@
                 {% else %}
                     <div class="col-12"><div class="text-center text-muted py-3">Aucun produit pour le moment.</div></div>
                 {% endfor %}
-            </div>
-        </section>
+        </div>
+    </section>
+
+    {# ---------- CHARITIES QUICK ACCESS (under Boutique) ---------- #}
+    <section class="mb-4">
+        <div class="section-head">
+            <h2><i class="fas fa-hands-helping me-2" style="color:var(--ac-mid)"></i>Charities</h2>
+            <a href="{{ path('app_charity_index') }}" class="see-all">Voir tout <i class="fas fa-arrow-right"></i></a>
+        </div>
+        <div class="alert alert-light border" style="border-radius:14px;">
+            Découvrez toutes les causes et choisissez celle que vous souhaitez soutenir.
+            <a class="ms-2" href="{{ path('app_charity_index') }}">Voir les causes</a>
+        </div>
+    </section>
 
         {# ---------- CTA ---------- #}
         <section class="cta-banner mb-4">

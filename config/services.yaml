@@ -7,6 +7,18 @@ parameters:
     email_verification_ttl_hours: '%env(int:EMAIL_VERIFICATION_TTL_HOURS)%'
     password_reset_ttl_minutes: '%env(int:PASSWORD_RESET_TTL_MINUTES)%'
     stripe_publishable_key: '%env(default::STRIPE_PUBLISHABLE_KEY)%'
+    donation_ai_python_bin_default: 'python3'
+    donation_ai_model_default: '%kernel.project_dir%/models/donation.pt'
+    donation_ai_confidence_default: 0.25
+    donation_ai_timeout_default: 20
+    donation_ai_allow_skip_default: false
+    donation_ai_python_bin: '%env(default:donation_ai_python_bin_default:DONATION_AI_PYTHON_BIN)%'
+    donation_ai_model: '%env(default:donation_ai_model_default:DONATION_AI_MODEL)%'
+    donation_ai_confidence: '%env(float:default:donation_ai_confidence_default:DONATION_AI_CONFIDENCE)%'
+    donation_ai_timeout: '%env(int:default:donation_ai_timeout_default:DONATION_AI_TIMEOUT)%'
+    donation_ai_allow_skip: '%env(bool:default:donation_ai_allow_skip_default:DONATION_AI_ALLOW_SKIP)%'
+    donation_ai_service_url_default: 'http://127.0.0.1:8001'
+    donation_ai_service_url: '%env(default:donation_ai_service_url_default:DONATION_AI_SERVICE_URL)%'
 
 services:
     # Configuration par défaut
@@ -38,6 +50,17 @@ services:
     App\Service\StripeService:
         arguments:
             $stripeSecretKey: '%env(default::STRIPE_SECRET_KEY)%'
+
+    App\Service\DonationImageValidator:
+        arguments:
+            $pythonBin: '%donation_ai_python_bin%'
+            $modelPath: '%donation_ai_model%'
+            $confidence: '%donation_ai_confidence%'
+            $timeoutSeconds: '%donation_ai_timeout%'
+            $settingsDir: '%kernel.project_dir%/var/ultralytics'
+            $allowSkip: '%donation_ai_allow_skip%'
+            $serviceUrl: '%donation_ai_service_url%'
+            $httpClient: '@http_client'
 
     App\Controller\Event\StripeWebhookController:
         arguments:

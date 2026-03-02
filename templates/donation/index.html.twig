@@ -13,7 +13,7 @@
                 id="donation-search"
                 name="q"
                 class="form-control"
-                placeholder="Nom, email, type, description..."
+                placeholder="Nom, email, charity, type, description..."
                 value="{{ search }}"
             >
         </div>
@@ -23,18 +23,19 @@
                 <option value="dateDon" {{ sort == 'dateDon' ? 'selected' : '' }}>Date</option>
                 <option value="donateur" {{ sort == 'donateur' ? 'selected' : '' }}>Donateur</option>
                 <option value="type" {{ sort == 'type' ? 'selected' : '' }}>Type</option>
+                <option value="charity" {{ sort == 'charity' ? 'selected' : '' }}>Charity</option>
             </select>
         </div>
         <div class="col-md-3">
             <label for="donation-direction" class="form-label">Ordre</label>
             <select id="donation-direction" name="direction" class="form-select">
-                <option value="DESC" {{ direction == 'DESC' ? 'selected' : '' }}>DÃ©croissant</option>
+                <option value="DESC" {{ direction == 'DESC' ? 'selected' : '' }}>Décroissant</option>
                 <option value="ASC" {{ direction == 'ASC' ? 'selected' : '' }}>Croissant</option>
             </select>
         </div>
         <div class="col-12">
             <button type="submit" class="btn btn-primary">Appliquer</button>
-            <a href="{{ path('app_donation_index') }}" class="btn btn-outline-secondary">RÃ©initialiser</a>
+            <a href="{{ path('app_donation_index') }}" class="btn btn-outline-secondary">Réinitialiser</a>
         </div>
     </form>
 
@@ -43,7 +44,10 @@
             <tr>
                 <th>Date</th>
                 <th>Donateur</th>
+                <th>Charity</th>
                 <th>Type</th>
+                <th>Montant (€)</th>
+                <th>Anonyme</th>
                 <th>Description</th>
             </tr>
         </thead>
@@ -52,12 +56,15 @@
             <tr>
                 <td>{{ donation.dateDon|date('d/m/Y H:i') }}</td>
                 <td>{{ donation.donateur.prenom }} {{ donation.donateur.nom }}</td>
+                <td>{{ donation.charity.name }}</td>
                 <td><span class="badge bg-info">{{ donation.type.libelle }}</span></td>
+                <td>{{ donation.amount }}</td>
+                <td>{{ donation.isAnonymous ? 'Oui' : 'Non' }}</td>
                 <td>{{ donation.description }}</td>
             </tr>
         {% else %}
             <tr>
-                <td colspan="4">Aucun don enregistré.</td>
+                <td colspan="7">Aucun don enregistré.</td>
             </tr>
         {% endfor %}
         </tbody>

@@ -1,0 +1,6 @@
+{{ form_start(form, {'attr': {'novalidate': 'novalidate'}}) }}
+    {{ form_row(form.name) }}
+    {{ form_row(form.goalAmount) }}
+    {{ form_row(form.description) }}
+    <button class="btn btn-primary">{{ button_label|default('Enregistrer') }}</button>
+{{ form_end(form) }}

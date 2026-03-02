@@ -1,0 +1,54 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Admin - Charities{% endblock %}
+
+{% block body %}
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="mb-0">Charities</h1>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead>
+                <tr>
+                    <th>Charity</th>
+                    <th>Objectif (€)</th>
+                    <th>Collecté (€)</th>
+                    <th>Dons</th>
+                    <th>Progression</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in charityStats %}
+                    {% set charity = row.charity %}
+                    {% set percent = row.progressPercent %}
+                    <tr>
+                        <td>
+                            <strong>{{ charity.name }}</strong>
+                            {% set desc = charity.description|default('Sans description') %}
+                            <div class="small text-muted">{{ desc|length > 80 ? desc|slice(0, 80) ~ '...' : desc }}</div>
+                        </td>
+                        <td>{{ row.hasGoal ? charity.goalAmount : '—' }}</td>
+                        <td>{{ row.donationsAmount }}</td>
+                        <td>{{ row.donationsCount }}</td>
+                        <td style="min-width: 220px;">
+                            {% set barClass = percent >= 100 ? 'bg-success' : (row.hasGoal ? 'bg-danger' : 'bg-secondary') %}
+                            <div class="progress" style="height: 12px;">
+                                <div class="progress-bar {{ barClass }}" style="width: {{ min(percent, 100) }}%"></div>
+                            </div>
+                            <div class="small text-muted mt-1">{{ row.hasGoal ? percent ~ '%' : '—' }}</div>
+                        </td>
+                        <td class="text-nowrap">
+                            <a class="btn btn-sm btn-outline-primary" href="{{ path('app_admin_charity_show', {'id': charity.id}) }}">Voir</a>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="6">Aucune charity.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}
