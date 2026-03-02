@@ -6,6 +6,7 @@
 {% block guest_wrapper_close %}{% endblock %}
 
 {% block body %}
+<<<<<<< HEAD
 {% include 'security/_auth_styles.html.twig' %}
 
 <div class="auth-page">
@@ -15,6 +16,33 @@
         </div>
 
         <p class="auth-sub">Connectez-vous à votre espace</p>
+=======
+<div class="row justify-content-center">
+    <div class="col-md-5 col-lg-4">
+        <div class="card shadow">
+            <div class="card-body p-4">
+                <h2 class="card-title text-center mb-4">Connexion</h2>
+
+                <div class="alert alert-info">
+                    Les comptes artistes doivent etre valides par l'admin avant la connexion.
+                </div>
+                
+                {% if error %}
+                    <div class="alert alert-danger">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
+                {% endif %}
+
+                    <div class="mb-3">
+                        <label for="inputEmail" class="form-label">Email</label>
+                        <input type="email" value="{{ last_username }}" name="_username" id="inputEmail" 
+                               placeholder="votre.email@example.com">
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="inputPassword" class="form-label">Mot de passe</label>
+                        <input type="password" name="_password" id="inputPassword" 
+                               placeholder="Votre mot de passe">
+                    </div>
+>>>>>>> c4d1c44b0746a7387dc28bd3111400a167bda2d9
 
         <a href="{{ path('connect_google_start') }}" class="btn-social">
             <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">

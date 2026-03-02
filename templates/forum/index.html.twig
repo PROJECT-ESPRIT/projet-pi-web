@@ -1,5 +1,6 @@
 {% extends 'base.html.twig' %}
 
+<<<<<<< HEAD
 {% block title %}Forum index{% endblock %}
 
 {% block body %}
@@ -63,4 +64,89 @@
     </table>
 
     <a href="{{ path('app_forum_new') }}">Create new</a>
+=======
+{% block title %}Forum{% endblock %}
+
+{% block body %}
+    <div class="row align-items-center mb-3">
+        <div class="col">
+            <h1>Messages Forum</h1>
+        </div>
+        <div class="col-auto">
+            <a href="{{ path('app_forum_new') }}" class="btn btn-success">Nouveau message</a>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-body">
+            <form method="get" class="row g-2 align-items-end">
+                <div class="col-12 col-md-6">
+                    <label class="form-label">Recherche</label>
+                    <input type="text" name="search" class="form-control" placeholder="Rechercher..." value="{{ search }}">
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label">Trier par</label>
+                    <select name="sort" class="form-select">
+                        <option value="dateCreation" {% if sortBy == 'dateCreation' %}selected{% endif %}>Date</option>
+                        <option value="sujet" {% if sortBy == 'sujet' %}selected{% endif %}>Sujet</option>
+                    </select>
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label">Ordre</label>
+                    <select name="order" class="form-select">
+                        <option value="DESC" {% if order == 'DESC' %}selected{% endif %}>Descendant</option>
+                        <option value="ASC" {% if order == 'ASC' %}selected{% endif %}>Ascendant</option>
+                    </select>
+                </div>
+                <div class="col-12 col-md-2 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary w-100">Filtrer</button>
+                    <a href="{{ path('app_forum_index') }}" class="btn btn-outline-secondary w-100">Reset</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nom</th>
+                        <th>Prenom</th>
+                        <th>Email</th>
+                        <th>Sujet</th>
+                        <th>Message</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for forum in forums %}
+                    <tr>
+                        <td>{{ forum.id }}</td>
+                        <td>{{ forum.nom }}</td>
+                        <td>{{ forum.prenom }}</td>
+                        <td>{{ forum.email }}</td>
+                        <td>{{ forum.sujet }}</td>
+                        <td>{{ forum.message }}</td>
+                        <td>{{ forum.dateCreation ? forum.dateCreation|date('Y-m-d H:i:s') : '' }}</td>
+                        <td>
+                            <div class="d-flex flex-wrap gap-1">
+                                <a href="{{ path('app_forum_show', {'id': forum.id}) }}" class="btn btn-sm btn-outline-secondary">Voir</a>
+                                <a href="{{ path('app_forum_edit', {'id': forum.id}) }}" class="btn btn-sm btn-outline-primary">Editer</a>
+                                <a href="{{ path('app_forum_reponse_new', {'forum': forum.id}) }}" class="btn btn-sm btn-success">Repondre</a>
+                            </div>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="8">Aucun message trouve.</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+>>>>>>> c4d1c44b0746a7387dc28bd3111400a167bda2d9
 {% endblock %}

@@ -21,6 +21,7 @@ class CommandeRepository extends ServiceEntityRepository
         parent::__construct($registry, Commande::class);
     }
 
+<<<<<<< HEAD
     public function getTotalRevenue(): float
     {
         return (float) $this->createQueryBuilder('c')
@@ -90,5 +91,49 @@ class CommandeRepository extends ServiceEntityRepository
         }
 
         return array_values($data);
+=======
+    /**
+     * @return Commande[]
+     */
+    public function findForAdminBySearchAndSort(?string $search, string $sort, string $direction): array
+    {
+        $allowedSorts = [
+            'id' => 'c.id',
+            'dateCommande' => 'c.dateCommande',
+            'statut' => 'c.statut',
+            'total' => 'c.total',
+            'client' => 'u.nom',
+        ];
+
+        $qb = $this->createQueryBuilder('c')
+            ->leftJoin('c.user', 'u')
+            ->leftJoin('c.ligneCommandes', 'lc')
+            ->leftJoin('lc.produit', 'p')
+            ->addSelect('u')
+            ->addSelect('lc')
+            ->addSelect('p')
+            ->distinct();
+
+        if ($search !== null && $search !== '') {
+            $qb
+                ->andWhere(
+                    'LOWER(c.statut) LIKE :search
+                    OR LOWER(u.nom) LIKE :search
+                    OR LOWER(u.prenom) LIKE :search
+                    OR LOWER(p.nom) LIKE :search'
+                )
+                ->setParameter('search', '%'.mb_strtolower($search).'%');
+
+            if (ctype_digit($search)) {
+                $qb
+                    ->orWhere('c.id = :searchId')
+                    ->setParameter('searchId', (int) $search);
+            }
+        }
+
+        $qb->orderBy($allowedSorts[$sort] ?? 'c.dateCommande', $direction);
+
+        return $qb->getQuery()->getResult();
+>>>>>>> c4d1c44b0746a7387dc28bd3111400a167bda2d9
     }
 }

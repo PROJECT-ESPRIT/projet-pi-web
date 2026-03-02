@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 :root {
     --brand-deep: #1e0f75;
     --brand-blue: #1c1dab;
@@ -412,4 +413,7 @@ a.btn {
 
 .feature-card--charity p {
     color: rgba(29, 23, 70, 0.95) !important;
+=======
+body {
+>>>>>>> c4d1c44b0746a7387dc28bd3111400a167bda2d9
 }

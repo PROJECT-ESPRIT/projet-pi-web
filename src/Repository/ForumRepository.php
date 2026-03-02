@@ -55,6 +55,7 @@ class ForumRepository extends ServiceEntityRepository
         $qb->orderBy($sortExpr, $direction);
     }
 
+<<<<<<< HEAD
     public function getMonthlyPosts(int $months = 6): array
     {
         $conn = $this->getEntityManager()->getConnection();
@@ -80,4 +81,30 @@ class ForumRepository extends ServiceEntityRepository
 
         return array_values($data);
     }
+=======
+    //    /**
+    //     * @return Forum[] Returns an array of Forum objects
+    //     */
+    //    public function findByExampleField($value): array
+    //    {
+    //        return $this->createQueryBuilder('f')
+    //            ->andWhere('f.exampleField = :val')
+    //            ->setParameter('val', $value)
+    //            ->orderBy('f.id', 'ASC')
+    //            ->setMaxResults(10)
+    //            ->getQuery()
+    //            ->getResult()
+    //        ;
+    //    }
+
+    //    public function findOneBySomeField($value): ?Forum
+    //    {
+    //        return $this->createQueryBuilder('f')
+    //            ->andWhere('f.exampleField = :val')
+    //            ->setParameter('val', $value)
+    //            ->getQuery()
+    //            ->getOneOrNullResult()
+    //        ;
+    //    }
+>>>>>>> c4d1c44b0746a7387dc28bd3111400a167bda2d9
 }

@@ -15,6 +15,7 @@ class UserChecker implements UserCheckerInterface
             return;
         }
 
+<<<<<<< HEAD
         match ($user->getStatus()) {
             User::STATUS_EMAIL_PENDING => throw new CustomUserMessageAccountStatusException(
                 'Veuillez vérifier votre adresse email avant de vous connecter.'
@@ -31,6 +32,19 @@ class UserChecker implements UserCheckerInterface
             User::STATUS_APPROVED => null,
             default => null,
         };
+=======
+        if (!in_array('ROLE_ARTISTE', $user->getRoles(), true)) {
+            return;
+        }
+
+        if ($user->getStatus() === User::STATUS_PENDING) {
+            throw new CustomUserMessageAccountStatusException('Votre compte artiste est en attente de validation.');
+        }
+
+        if ($user->getStatus() === User::STATUS_REJECTED) {
+            throw new CustomUserMessageAccountStatusException('Votre compte artiste a ete refuse.');
+        }
+>>>>>>> c4d1c44b0746a7387dc28bd3111400a167bda2d9
     }
 
     public function checkPostAuth(UserInterface $user): void

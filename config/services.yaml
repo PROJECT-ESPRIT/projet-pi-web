@@ -19,6 +19,7 @@ parameters:
     google_oauth_redirect_uri: '%env(default::GOOGLE_OAUTH_REDIRECT_URI)%'
 
 services:
+<<<<<<< HEAD
     # Configuration par défaut
     _defaults:
         autowire: true
@@ -29,6 +30,10 @@ services:
             int $accountDeletionTtlMinutes: '%account_deletion_ttl_minutes%'
 
     # Enregistre toutes les classes de src/ comme services
+=======
+    _defaults:
+
+>>>>>>> c4d1c44b0746a7387dc28bd3111400a167bda2d9
     App\:
         resource: '../src/'
         exclude:
@@ -36,6 +41,7 @@ services:
             - '../src/Entity/'
             - '../src/Kernel.php'
 
+<<<<<<< HEAD
     # Configuration explicite du service d'envoi d'email
     App\Service\ResetPasswordMailer:
         arguments:
@@ -77,3 +83,5 @@ services:
             $googleOauthClientSecret: '%google_oauth_client_secret%'
             $googleOauthRedirectUri: '%google_oauth_redirect_uri%'
             $appSecret: '%kernel.secret%'
+=======
+>>>>>>> c4d1c44b0746a7387dc28bd3111400a167bda2d9

@@ -3,39 +3,79 @@
 {% block title %}Gestion des Produits{% endblock %}
 
 {% block body %}
-    <h1>Gestion des Produits</h1>
-
-    <div class="mb-3 text-end">
-        <a href="{{ path('app_produit_new') }}" class="btn btn-success">Ajouter un produit</a>
+    <div class="row align-items-center mb-3">
+        <div class="col">
+            <h1>Gestion des Produits</h1>
+        </div>
+        <div class="col-auto">
+            <a href="{{ path('app_produit_new') }}" class="btn btn-success">Ajouter un produit</a>
+        </div>
     </div>
 
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Id</th>
-                <th>Nom</th>
-                <th>Prix</th>
-                <th>Stock</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-        {% for produit in produits %}
-            <tr>
-                <td>{{ produit.id }}</td>
-                <td>{{ produit.nom }}</td>
-                <td>{{ produit.prix }} TND</td>
-                <td>{{ produit.stock }}</td>
-                <td>
-                    <a href="{{ path('app_produit_edit', {'id': produit.id}) }}" class="btn btn-sm btn-warning">Éditer</a>
-                    {{ include('produit/_delete_form.html.twig') }}
-                </td>
-            </tr>
-        {% else %}
-            <tr>
-                <td colspan="5">Aucun produit trouvé</td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+    <div class="card mb-3">
+        <div class="card-body">
+            <form method="get" action="{{ path('app_produit_admin_index') }}" class="row g-2 align-items-end">
+                <div class="col-12 col-md-4">
+                    <label class="form-label">Recherche</label>
+                    <input type="text" name="q" class="form-control" placeholder="Rechercher un produit..." value="{{ search|default('') }}">
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label">Trier par</label>
+                    <select name="sort" class="form-select">
+                        <option value="id" {{ (sort|default('id')) == 'id' ? 'selected' : '' }}>ID</option>
+                        <option value="nom" {{ (sort|default('id')) == 'nom' ? 'selected' : '' }}>Nom</option>
+                        <option value="prix" {{ (sort|default('id')) == 'prix' ? 'selected' : '' }}>Prix</option>
+                        <option value="stock" {{ (sort|default('id')) == 'stock' ? 'selected' : '' }}>Stock</option>
+                    </select>
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label">Ordre</label>
+                    <select name="direction" class="form-select">
+                        <option value="asc" {{ (direction|default('asc')) == 'asc' ? 'selected' : '' }}>Ascendant</option>
+                        <option value="desc" {{ (direction|default('asc')) == 'desc' ? 'selected' : '' }}>Descendant</option>
+                    </select>
+                </div>
+                <div class="col-12 col-md-4 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">Filtrer</button>
+                    <a href="{{ path('app_produit_admin_index') }}" class="btn btn-outline-secondary">Reset</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nom</th>
+                        <th>Prix</th>
+                        <th>Stock</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for produit in produits %}
+                    <tr>
+                        <td>{{ produit.id }}</td>
+                        <td>{{ produit.nom }}</td>
+                        <td>{{ produit.prix }} TND</td>
+                        <td>{{ produit.stock }}</td>
+                        <td>
+                            <div class="d-flex flex-wrap gap-1">
+                                <a href="{{ path('app_produit_edit', {'id': produit.id}) }}" class="btn btn-sm btn-outline-primary">Editer</a>
+                                {{ include('produit/_delete_form.html.twig') }}
+                            </div>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="5">Aucun produit trouve</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
 {% endblock %}

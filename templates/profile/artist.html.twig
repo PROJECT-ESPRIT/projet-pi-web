@@ -1,5 +1,6 @@
 {% extends 'base.html.twig' %}
 
+<<<<<<< HEAD
 {% block title %}Mon profil artiste — Art Connect{% endblock %}
 
 {% block stylesheets %}
@@ -159,4 +160,15 @@
         </div>
     </article>
 </section>
+=======
+{% block title %}Artist Profile{% endblock %}
+
+{% block body %}
+<div class="row">
+    <div class="col-12">
+        <h1>Artist Profile</h1>
+        <p>Welcome, {{ app.user ? app.user.prenom : '' }}.</p>
+    </div>
+</div>
+>>>>>>> c4d1c44b0746a7387dc28bd3111400a167bda2d9
 {% endblock %}

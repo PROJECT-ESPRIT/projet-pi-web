@@ -10,6 +10,10 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity(repositoryClass: CommandeRepository::class)]
 class Commande
 {
+    public const STATUT_EN_ATTENTE = 'EN_ATTENTE';
+    public const STATUT_ACCEPTEE = 'ACCEPTEE';
+    public const STATUT_REFUSEE = 'REFUSEE';
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -35,7 +39,7 @@ class Commande
     {
         $this->dateCommande = new \DateTimeImmutable();
         $this->ligneCommandes = new ArrayCollection();
-        $this->statut = 'EN_ATTENTE';
+        $this->statut = self::STATUT_EN_ATTENTE;
     }
 
     public function getId(): ?int

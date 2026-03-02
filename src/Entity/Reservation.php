@@ -31,6 +31,7 @@ class Reservation
     #[ORM\JoinColumn(nullable: false)]
     private ?Evenement $evenement = null;
 
+<<<<<<< HEAD
     #[ORM\Column(length: 20, nullable: true)]
     private ?string $seatLabel = null;
 
@@ -44,6 +45,19 @@ class Reservation
     /** When the ticket was scanned at entrance (null = not scanned). */
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $scannedAt = null;
+=======
+    #[ORM\Column]
+    private int $quantite = 1;
+
+    #[ORM\Column]
+    private float $prixUnitaire = 0.0;
+
+    #[ORM\Column]
+    private float $remiseRate = 0.0;
+
+    #[ORM\Column]
+    private float $montantTotal = 0.0;
+>>>>>>> c4d1c44b0746a7387dc28bd3111400a167bda2d9
 
     public function __construct()
     {
@@ -104,6 +118,7 @@ class Reservation
         return $this;
     }
 
+<<<<<<< HEAD
     public function getSeatLabel(): ?string
     {
         return $this->seatLabel;
@@ -145,6 +160,53 @@ class Reservation
     public function setScannedAt(?\DateTimeImmutable $scannedAt): static
     {
         $this->scannedAt = $scannedAt;
+=======
+    public function getQuantite(): int
+    {
+        return $this->quantite;
+    }
+
+    public function setQuantite(int $quantite): static
+    {
+        $this->quantite = max(1, $quantite);
+
+        return $this;
+    }
+
+    public function getPrixUnitaire(): float
+    {
+        return $this->prixUnitaire;
+    }
+
+    public function setPrixUnitaire(float $prixUnitaire): static
+    {
+        $this->prixUnitaire = max(0.0, $prixUnitaire);
+
+        return $this;
+    }
+
+    public function getRemiseRate(): float
+    {
+        return $this->remiseRate;
+    }
+
+    public function setRemiseRate(float $remiseRate): static
+    {
+        $this->remiseRate = max(0.0, min(1.0, $remiseRate));
+
+        return $this;
+    }
+
+    public function getMontantTotal(): float
+    {
+        return $this->montantTotal;
+    }
+
+    public function setMontantTotal(float $montantTotal): static
+    {
+        $this->montantTotal = max(0.0, $montantTotal);
+
+>>>>>>> c4d1c44b0746a7387dc28bd3111400a167bda2d9
         return $this;
     }
 }
