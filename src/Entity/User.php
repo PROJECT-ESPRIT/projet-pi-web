@@ -20,6 +20,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public const STATUS_REJECTED = 'REJECTED';
     public const STATUS_SUSPENDED = 'SUSPENDED';
 
+    public const SEGMENT_VIP = 'VIP';
+    public const SEGMENT_ACTIF = 'ACTIF';
+    public const SEGMENT_CHURN_RISK = 'CHURN_RISK';
+    public const SEGMENT_DORMANT = 'DORMANT';
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -66,6 +71,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(length: 500, nullable: true)]
     private ?string $profileImageUrl = null;
+
+    #[ORM\Column(length: 50, nullable: true)]
+    private ?string $segment = null;
 
     public function __construct()
     {
@@ -244,6 +252,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setStatus(string $status): static
     {
         $this->status = $status;
+        return $this;
+    }
+
+    public function getSegment(): ?string
+    {
+        return $this->segment;
+    }
+
+    public function setSegment(?string $segment): static
+    {
+        $this->segment = $segment;
         return $this;
     }
 

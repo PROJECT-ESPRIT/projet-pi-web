@@ -162,7 +162,7 @@
                     <tr>
                         <td class="fw-bold">#{{ cmd.id }}</td>
                         <td>{{ cmd.total|number_format(2, '.', ' ') }} TND</td>
-                        <td>{{ cmd.createdAt ? cmd.createdAt|date('d/m/Y') : '—' }}</td>
+                        <td>{{ cmd.dateCommande ? cmd.dateCommande|date('d/m/Y') : '—' }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -209,6 +209,22 @@
                     {% elseif user.status == 'REJECTED' %}<span class="badge bg-danger" style="font-size:.7rem;">Refusé</span>
                     {% elseif user.status == 'SUSPENDED' %}<span class="badge bg-dark" style="font-size:.7rem;">Suspendu</span>
                     {% else %}<span class="badge bg-secondary" style="font-size:.7rem;">{{ user.status }}</span>{% endif %}
+                </span>
+            </div>
+            <div class="up-info-row">
+                <span class="up-lbl">Segment IA</span>
+                <span class="up-val">
+                    {% if user.segment == 'VIP' %}
+                        <span class="badge bg-warning text-dark" style="font-size:.7rem;"><i class="fas fa-crown me-1"></i>VIP</span>
+                    {% elseif user.segment == 'ACTIF' %}
+                        <span class="badge bg-success" style="font-size:.7rem;"><i class="fas fa-bolt me-1"></i>Actif</span>
+                    {% elseif user.segment == 'CHURN_RISK' %}
+                        <span class="badge bg-warning" style="font-size:.7rem;"><i class="fas fa-exclamation-triangle me-1"></i>Risque de Churn</span>
+                    {% elseif user.segment == 'DORMANT' %}
+                        <span class="badge bg-secondary" style="font-size:.7rem;"><i class="fas fa-bed me-1"></i>Dormant</span>
+                    {% else %}
+                        <span class="text-muted fst-italic" style="font-size:.7rem;">Non calculé</span>
+                    {% endif %}
                 </span>
             </div>
             <div class="up-info-row">

@@ -58,6 +58,7 @@
                         <th>Email</th>
                         <th>Rôles</th>
                         <th>Statut</th>
+                        <th>Segment IA</th>
                         <th class="text-end">Actions</th>
                     </tr>
                 </thead>
@@ -101,8 +102,19 @@
                                 <span class="badge bg-danger"><i class="fas fa-times-circle me-1"></i>Refusé</span>
                             {% elseif user.status == 'SUSPENDED' %}
                                 <span class="badge bg-dark"><i class="fas fa-ban me-1"></i>Suspendu</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if user.segment == 'VIP' %}
+                                <span class="badge bg-warning text-dark"><i class="fas fa-crown me-1"></i>VIP</span>
+                            {% elseif user.segment == 'ACTIF' %}
+                                <span class="badge bg-success"><i class="fas fa-bolt me-1"></i>Actif</span>
+                            {% elseif user.segment == 'CHURN_RISK' %}
+                                <span class="badge bg-warning"><i class="fas fa-exclamation-triangle me-1"></i>Risque</span>
+                            {% elseif user.segment == 'DORMANT' %}
+                                <span class="badge bg-secondary"><i class="fas fa-bed me-1"></i>Dormant</span>
                             {% else %}
-                                <span class="badge bg-secondary">{{ user.status }}</span>
+                                <span class="text-muted fst-italic" style="font-size: 0.8rem;">Non calculé</span>
                             {% endif %}
                         </td>
                         <td class="text-end">

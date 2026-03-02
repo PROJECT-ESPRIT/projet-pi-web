@@ -922,6 +922,338 @@
         </script>
     {% endif %}
 
+    {% if layout in ['front', 'guest'] %}
+        <style>
+            .onb-chatbot {
+                position: fixed;
+                right: 1.1rem;
+                bottom: 1.1rem;
+                z-index: 1055;
+                font-family: 'Manrope', sans-serif;
+            }
+            .onb-chatbot-toggle {
+                width: 58px;
+                height: 58px;
+                border: none;
+                border-radius: 16px;
+                color: #fff;
+                background: linear-gradient(135deg, var(--ac-deep), var(--ac-mid), var(--ac-blue));
+                box-shadow: 0 10px 30px rgba(30,15,117,.35);
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1.2rem;
+            }
+            .onb-chatbot-panel {
+                display: none;
+                width: min(360px, calc(100vw - 1.5rem));
+                max-height: min(560px, calc(100vh - 7.5rem));
+                margin-bottom: .75rem;
+                border-radius: 18px;
+                overflow: hidden;
+                background: #fff;
+                border: 1px solid rgba(30,15,117,.12);
+                box-shadow: 0 22px 50px rgba(30,15,117,.22);
+            }
+            .onb-chatbot.open .onb-chatbot-panel {
+                display: flex;
+                flex-direction: column;
+            }
+            .onb-chatbot-head {
+                padding: .8rem 1rem;
+                color: #fff;
+                background: linear-gradient(135deg, var(--ac-deep), var(--ac-mid));
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: .5rem;
+            }
+            .onb-chatbot-title {
+                font-weight: 700;
+                font-size: .92rem;
+                margin: 0;
+            }
+            .onb-chatbot-sub {
+                margin: 0;
+                opacity: .88;
+                font-size: .72rem;
+            }
+            .onb-chatbot-close {
+                background: rgba(255,255,255,.14);
+                border: none;
+                color: #fff;
+                border-radius: 10px;
+                width: 32px;
+                height: 32px;
+                font-size: .85rem;
+            }
+            .onb-chatbot-body {
+                background: #f7f8fd;
+                padding: .85rem;
+                overflow-y: auto;
+                min-height: 240px;
+                max-height: 320px;
+                display: flex;
+                flex-direction: column;
+                gap: .6rem;
+            }
+            .onb-msg {
+                max-width: 90%;
+                border-radius: 12px;
+                padding: .6rem .75rem;
+                font-size: .84rem;
+                line-height: 1.45;
+                white-space: pre-wrap;
+            }
+            .onb-msg-user {
+                align-self: flex-end;
+                background: linear-gradient(135deg, var(--ac-mid), var(--ac-blue));
+                color: #fff;
+            }
+            .onb-msg-assistant {
+                align-self: flex-start;
+                background: #fff;
+                border: 1px solid rgba(30,15,117,.08);
+                color: #223;
+            }
+            .onb-chatbot-actions {
+                padding: .65rem .85rem 0;
+                display: flex;
+                flex-wrap: wrap;
+                gap: .45rem;
+                background: #fff;
+                border-top: 1px solid rgba(30,15,117,.08);
+            }
+            .onb-action {
+                border: 1px solid rgba(30,15,117,.16);
+                background: #f8f9ff;
+                color: var(--ac-deep);
+                border-radius: 999px;
+                font-size: .72rem;
+                font-weight: 700;
+                padding: .32rem .62rem;
+                text-decoration: none;
+            }
+            .onb-chatbot-form {
+                display: flex;
+                gap: .5rem;
+                padding: .75rem .85rem .85rem;
+                background: #fff;
+            }
+            .onb-chatbot-input {
+                border: 1px solid rgba(30,15,117,.15);
+                border-radius: 10px;
+                font-size: .84rem;
+                padding: .54rem .68rem;
+                flex: 1;
+                min-width: 0;
+            }
+            .onb-chatbot-send {
+                border: none;
+                border-radius: 10px;
+                min-width: 44px;
+                background: linear-gradient(135deg, var(--ac-deep), var(--ac-blue));
+                color: #fff;
+            }
+            .onb-chatbot-note {
+                margin: 0 .85rem .55rem;
+                font-size: .68rem;
+                color: #6b7280;
+                background: #fff;
+            }
+            @media (max-width: 576px) {
+                .onb-chatbot {
+                    right: .7rem;
+                    bottom: .7rem;
+                }
+                .onb-chatbot-panel {
+                    width: calc(100vw - 1.4rem);
+                    max-height: calc(100vh - 6.8rem);
+                }
+            }
+        </style>
+
+        <div class="onb-chatbot" id="onbChatbot">
+            <div class="onb-chatbot-panel">
+                <div class="onb-chatbot-head">
+                    <div>
+                        <p class="onb-chatbot-title">Assistant onboarding</p>
+                        <p class="onb-chatbot-sub">Guide rapide pour bien demarrer</p>
+                    </div>
+                    <button type="button" class="onb-chatbot-close" id="onbChatClose" aria-label="Fermer">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="onb-chatbot-body" id="onbChatMessages"></div>
+                <div class="onb-chatbot-actions" id="onbChatActions"></div>
+                <form class="onb-chatbot-form" id="onbChatForm">
+                    <input id="onbChatInput" class="onb-chatbot-input" type="text" maxlength="700" placeholder="Pose ta question..." required>
+                    <button class="onb-chatbot-send" type="submit" aria-label="Envoyer">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </form>
+                <p class="onb-chatbot-note" id="onbChatNote">
+                    {% if app.user %}
+                        Connecte au service IA d onboarding.
+                    {% else %}
+                        Mode invite: connectez-vous pour activer l assistant IA complet.
+                    {% endif %}
+                </p>
+            </div>
+            <button type="button" id="onbChatToggle" class="onb-chatbot-toggle" aria-label="Ouvrir le chatbot onboarding">
+                <i class="fas fa-comments"></i>
+            </button>
+        </div>
+
+        <script>
+            (function() {
+                var root = document.getElementById('onbChatbot');
+                if (!root) return;
+                var panelToggle = document.getElementById('onbChatToggle');
+                var panelClose = document.getElementById('onbChatClose');
+                var form = document.getElementById('onbChatForm');
+                var input = document.getElementById('onbChatInput');
+                var messages = document.getElementById('onbChatMessages');
+                var actions = document.getElementById('onbChatActions');
+                var note = document.getElementById('onbChatNote');
+                var history = [];
+                var isBusy = false;
+                var isAuthenticated = {{ app.user ? 'true' : 'false' }};
+
+                function guestReply(text) {
+                    var q = (text || '').toLowerCase();
+                    if (q.includes('connect') || q.includes('login') || q.includes('compte')) {
+                        return 'Pour te connecter: clique sur "Se connecter", entre email + mot de passe, puis valide. Si tu n as pas de compte, clique "Creer un compte".';
+                    }
+                    if (q.includes('inscri') || q.includes('register') || q.includes('creer')) {
+                        return 'Pour creer un compte: ouvre "Creer un compte", choisis ton role (participant ou artiste), puis valide ton email depuis le lien recu.';
+                    }
+                    if (q.includes('event') || q.includes('evenement') || q.includes('reservation')) {
+                        return 'Tu peux explorer les evenements depuis "Voir les evenements". Pour reserver, il faut etre connecte avec un compte valide.';
+                    }
+                    if (q.includes('don') || q.includes('charit')) {
+                        return 'La plateforme permet aussi les dons. Une fois connecte, tu peux faire un don et suivre ton historique.';
+                    }
+                    if (q.includes('forum') || q.includes('communa')) {
+                        return 'Le forum sert a poser des questions et echanger avec la communaute. Connecte-toi pour participer.';
+                    }
+                    if (q.includes('shop') || q.includes('boutique') || q.includes('produit')) {
+                        return 'La boutique contient des produits solidaires. Connecte-toi pour commander et suivre tes commandes.';
+                    }
+                    if (q.includes('concept') || q.includes('plateforme') || q.includes('c est quoi') || q.includes('quoi')) {
+                        return 'Art Connect est une plateforme qui centralise evenements, dons, boutique solidaire et forum autour de la communaute artistique inclusive.';
+                    }
+
+                    return 'Je peux t aider sur: connexion, inscription, evenements, dons, boutique et forum. Pose une question plus precise et je te reponds.';
+                }
+
+                function scrollBottom() {
+                    messages.scrollTop = messages.scrollHeight;
+                }
+
+                function addMessage(role, content) {
+                    var div = document.createElement('div');
+                    div.className = role === 'user' ? 'onb-msg onb-msg-user' : 'onb-msg onb-msg-assistant';
+                    div.textContent = content;
+                    messages.appendChild(div);
+                    scrollBottom();
+                }
+
+                function setActions(list) {
+                    actions.innerHTML = '';
+                    if (!Array.isArray(list)) return;
+                    list.slice(0, 4).forEach(function(item) {
+                        if (!item || !item.label || !item.path) return;
+                        var a = document.createElement('a');
+                        a.className = 'onb-action';
+                        a.textContent = item.label;
+                        a.href = item.path;
+                        actions.appendChild(a);
+                    });
+                }
+
+                function setBusy(busy) {
+                    isBusy = busy;
+                    input.disabled = busy;
+                    form.querySelector('button[type="submit"]').disabled = busy;
+                }
+
+                function openPanel() {
+                    root.classList.add('open');
+                    input.focus();
+                }
+
+                function closePanel() {
+                    root.classList.remove('open');
+                }
+
+                panelToggle.addEventListener('click', function() {
+                    if (root.classList.contains('open')) closePanel();
+                    else openPanel();
+                });
+                panelClose.addEventListener('click', closePanel);
+
+                if (isAuthenticated) {
+                    addMessage('assistant', 'Salut, je suis ton assistant onboarding. Je peux te guider selon ton profil.');
+                } else {
+                    addMessage('assistant', 'Salut, je suis l assistant onboarding. Connecte-toi pour une guidance personnalisee.');
+                    setActions([
+                        { label: 'Se connecter', path: '/login' },
+                        { label: 'Creer un compte', path: '/register' },
+                        { label: 'Voir les evenements', path: '/events/' }
+                    ]);
+                }
+
+                form.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    if (isBusy) return;
+                    var text = input.value.trim();
+                    if (!text) return;
+
+                    addMessage('user', text);
+                    history.push({ role: 'user', content: text });
+                    input.value = '';
+
+                    setBusy(true);
+                    note.textContent = isAuthenticated ? 'Reponse en cours...' : 'Mode invite IA en cours...';
+
+                    try {
+                        var endpoint = isAuthenticated ? '/api/onboarding/chat' : '/api/onboarding/guest-chat';
+                        var res = await fetch(endpoint, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            credentials: 'same-origin',
+                            body: JSON.stringify({
+                                message: text,
+                                history: history.slice(-8)
+                            })
+                        });
+
+                        var data = await res.json();
+                        if (!res.ok) {
+                            throw new Error(data && data.error ? data.error : 'Erreur API');
+                        }
+
+                        var reply = (data.reply || '').toString();
+                        addMessage('assistant', reply || 'Je n ai pas pu generer une reponse.');
+                        history.push({ role: 'assistant', content: reply });
+                        setActions(data.suggestedActions || []);
+                        note.textContent = (isAuthenticated ? 'Source: ' : 'Mode invite source: ') + (data.provider || 'inconnue');
+                    } catch (err) {
+                        if (!isAuthenticated) {
+                            addMessage('assistant', guestReply(text));
+                        } else {
+                            addMessage('assistant', 'Erreur de connexion au chatbot. Reessaie dans quelques secondes.');
+                        }
+                        note.textContent = 'Erreur: ' + (err.message || 'inconnue');
+                    } finally {
+                        setBusy(false);
+                    }
+                });
+            })();
+        </script>
+    {% endif %}
+
     {% if layout == 'guest' %}
         <script>
             document.addEventListener('DOMContentLoaded', function() {

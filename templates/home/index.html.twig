@@ -632,6 +632,44 @@
             {% endif %}
         </div>
 
+        {# ---------- ML RECOMMENDED SECTION ---------- #}
+        {% if recommendedEvents|length > 0 %}
+        <div class="mb-5 mt-4" style="background: linear-gradient(135deg, rgba(30,15,117,0.03), rgba(191,140,225,0.05)); padding: 2rem 1.5rem; border-radius: 20px; border: 1px solid rgba(191,140,225,0.2);">
+            <div class="d-flex align-items-center mb-4">
+                <i class="fas fa-magic fs-4 me-3" style="color: #BF8CE1;"></i>
+                <h3 class="m-0" style="font-family: 'Sora', sans-serif; font-weight: 700; color: #1E0F75;">Recommandé pour vous par l'IA</h3>
+                <span class="ms-auto badge" style="background: #1E0F75; font-size: 0.75rem;">IA Hybride (NLP & Collaboratif)</span>
+            </div>
+            
+            <div class="row g-3">
+                {% for event in recommendedEvents %}
+                    <div class="col-sm-6 col-md-3">
+                        <a href="{{ path('app_evenement_show', {id: event.id}) }}" class="text-decoration-none">
+                            <div class="ev-card" style="box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                                <div class="ev-card-img" style="height: 140px;">
+                                    {% if event.image %}
+                                        <img src="{{ event.image }}" alt="{{ event.titre }}">
+                                    {% else %}
+                                        <div class="placeholder-art" style="background: linear-gradient({{ loop.index * 50 + 120 }}deg, rgba(30,15,117,0.1), rgba(55,133,216,0.15), rgba(191,140,225,0.1));">
+                                            {% set icons = ['✨', '🎯', '🔮', '🎭'] %}
+                                            {{ icons[loop.index0 % 4] }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="ev-card-body" style="padding: 1rem;">
+                                    <h3 style="font-size: 0.95rem;">{{ event.titre }}</h3>
+                                    <div class="ev-card-info" style="margin-bottom:0;">
+                                        <div><i class="fas fa-calendar-alt"></i> {{ event.dateDebut ? event.dateDebut|date('d/m/Y') : '' }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
         {# --- Event preview only; full filter is on /events page --- #}
         <div class="row g-3" id="eventsGrid">
             {% for event in latestEvents %}
@@ -932,6 +970,44 @@
             <a href="{{ path('app_evenement_index') }}" class="btn btn-light btn-hero me-2 mt-2">Découvrir les événements</a>
             <small style="opacity:0.9;">Utilisez <strong>Connexion</strong> ou <strong>Inscription</strong> dans la barre ci-dessus pour réserver.</small>
         </section>
+        {% endif %}
+
+        {# ---------- ML RECOMMENDED SECTION (GUEST) ---------- #}
+        {% if recommendedEvents|length > 0 %}
+        <div class="mb-5 mt-4" style="background: linear-gradient(135deg, rgba(30,15,117,0.03), rgba(191,140,225,0.05)); padding: 2rem 1.5rem; border-radius: 20px; border: 1px solid rgba(191,140,225,0.2);">
+            <div class="d-flex align-items-center mb-4">
+                <i class="fas fa-fire fs-4 me-3" style="color: #BF8CE1;"></i>
+                <h3 class="m-0" style="font-family: 'Sora', sans-serif; font-weight: 700; color: #1E0F75;">Les plus populaires</h3>
+                <span class="ms-auto badge" style="background: #1E0F75; font-size: 0.75rem;">Top Tendances</span>
+            </div>
+            
+            <div class="row g-3">
+                {% for event in recommendedEvents %}
+                    <div class="col-sm-6 col-md-3">
+                        <a href="{{ path('app_evenement_show', {id: event.id}) }}" class="text-decoration-none">
+                            <div class="ev-card" style="box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                                <div class="ev-card-img" style="height: 140px;">
+                                    {% if event.image %}
+                                        <img src="{{ event.image }}" alt="{{ event.titre }}">
+                                    {% else %}
+                                        <div class="placeholder-art" style="background: linear-gradient({{ loop.index * 50 + 120 }}deg, rgba(30,15,117,0.1), rgba(55,133,216,0.15), rgba(191,140,225,0.1));">
+                                            {% set icons = ['✨', '🎯', '🔮', '🎭'] %}
+                                            {{ icons[loop.index0 % 4] }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="ev-card-body" style="padding: 1rem;">
+                                    <h3 style="font-size: 0.95rem;">{{ event.titre }}</h3>
+                                    <div class="ev-card-info" style="margin-bottom:0;">
+                                        <div><i class="fas fa-calendar-alt"></i> {{ event.dateDebut ? event.dateDebut|date('d/m/Y') : '' }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
         {% endif %}
 
         {# ---------- EVENTS PREVIEW ---------- #}
