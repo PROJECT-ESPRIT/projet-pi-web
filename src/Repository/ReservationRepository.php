@@ -175,14 +175,25 @@ class ReservationRepository extends ServiceEntityRepository
             'event_date_asc' => ['e.dateDebut', 'ASC'],
         ];
 
-        $sortKey = $filters['sort'] ?? 'date_desc';
+        $sortKey = $filters['sort'] ?? 'event_date_asc';
         if (!isset($sortMap[$sortKey])) {
-            $sortKey = 'date_desc';
+            $sortKey = 'event_date_asc';
         }
 
-        [$sortField, $sortDir] = $sortMap[$sortKey];
-        $qb->addOrderBy($sortField, $sortDir)
-            ->addOrderBy('r.id', 'DESC');
+        $now = new \DateTime();
+
+        if ($sortKey === 'event_date_asc') {
+            // Upcoming events first (soonest first), then past events (most recent past first)
+            $qb->addSelect('CASE WHEN e.dateDebut >= :now THEN 0 ELSE 1 END AS HIDDEN isPast')
+                ->setParameter('now', $now)
+                ->addOrderBy('isPast', 'ASC')
+                ->addOrderBy('e.dateDebut', 'ASC')
+                ->addOrderBy('r.id', 'DESC');
+        } else {
+            [$sortField, $sortDir] = $sortMap[$sortKey];
+            $qb->addOrderBy($sortField, $sortDir)
+                ->addOrderBy('r.id', 'DESC');
+        }
 
         $query = $qb->getQuery()
             ->setFirstResult(($page - 1) * $perPage)
@@ -232,14 +243,24 @@ class ReservationRepository extends ServiceEntityRepository
             'event_date_asc' => ['e.dateDebut', 'ASC'],
         ];
 
-        $sortKey = $filters['sort'] ?? 'date_desc';
+        $sortKey = $filters['sort'] ?? 'event_date_asc';
         if (!isset($sortMap[$sortKey])) {
-            $sortKey = 'date_desc';
+            $sortKey = 'event_date_asc';
         }
 
-        [$sortField, $sortDir] = $sortMap[$sortKey];
-        $qb->addOrderBy($sortField, $sortDir)
-            ->addOrderBy('r.id', 'DESC');
+        $now = new \DateTime();
+
+        if ($sortKey === 'event_date_asc') {
+            $qb->addSelect('CASE WHEN e.dateDebut >= :now THEN 0 ELSE 1 END AS HIDDEN isPast')
+                ->setParameter('now', $now)
+                ->addOrderBy('isPast', 'ASC')
+                ->addOrderBy('e.dateDebut', 'ASC')
+                ->addOrderBy('r.id', 'DESC');
+        } else {
+            [$sortField, $sortDir] = $sortMap[$sortKey];
+            $qb->addOrderBy($sortField, $sortDir)
+                ->addOrderBy('r.id', 'DESC');
+        }
 
         $query = $qb->getQuery()
             ->setFirstResult(($page - 1) * $perPage)

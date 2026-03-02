@@ -5,6 +5,7 @@
 - PHP 8.2+
 - Composer
 - MySQL
+- Python 3.10+
 
 ## Installation
 
@@ -23,14 +24,21 @@
    php bin/console doctrine:migrations:migrate
    ```
 
-3. **Données de démo**
+3. **Dépendances Python** (moteurs de recommandation et hotness)
+
+   ```cmd
+   pip install -r python\requirements.txt
+   ```
+
+   Dépendances installées : `sqlalchemy`, `pymysql`, `scikit-learn`, `numpy`.
+
+4. **Données de démo**
 
    ```bash
    php bin/console app:seed
    ```
 
-
-4. **Lancer l'application**
+5. **Lancer l'application**
 
    ```bash
    php -S localhost:8000 -t public
@@ -39,6 +47,21 @@
    Ou avec Symfony CLI : `symfony server:start`
 
    Ouvrir http://localhost:8000
+
+## Tests
+
+```bash
+# Tests unitaires (PHPUnit)
+php bin/phpunit tests/Entity/
+
+# Analyse statique — vérifie les types sans exécuter le code (PHPStan)
+vendor/bin/phpstan analyse --no-progress
+
+# Vérifie la cohérence entre les entités et la base de données (Doctrine)
+php bin/console doctrine:schema:validate
+```
+
+---
 
 ## ngrok - Exposer l'application localement
 

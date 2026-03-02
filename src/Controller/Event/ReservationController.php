@@ -122,9 +122,9 @@ class ReservationController extends AbstractController
             return $this->redirectToRoute('app_evenement_index');
         }
 
-        $sortInput = trim((string) $request->query->get('sort', 'date_desc'));
+        $sortInput = trim((string) $request->query->get('sort', 'event_date_asc'));
         if ($sortInput === '') {
-            $sortInput = 'date_desc';
+            $sortInput = 'event_date_asc';
         }
 
         $filterInput = [
@@ -168,9 +168,9 @@ class ReservationController extends AbstractController
     #[IsGranted('ROLE_ARTISTE')]
     public function artistOwnerReservations(Request $request, ReservationRepository $reservationRepository): Response
     {
-        $sortInput = trim((string) $request->query->get('sort', 'date_desc'));
+        $sortInput = trim((string) $request->query->get('sort', 'event_date_asc'));
         if ($sortInput === '') {
-            $sortInput = 'date_desc';
+            $sortInput = 'event_date_asc';
         }
 
         $filterInput = [
@@ -437,7 +437,12 @@ class ReservationController extends AbstractController
         }
 
         $eventTitle = $reservation->getEvenement()->getTitre();
-        
+
+        if ($reservation->getStatus() === Reservation::STATUS_CANCELLED && !$isAdmin) {
+            $this->addFlash('error', 'Cette réservation est déjà annulée.');
+            return $this->redirectToRoute('app_reservation_my');
+        }
+
         if ($reservation->getEvenement()->getDateDebut() < new \DateTime() && !$isAdmin) {
             $this->addFlash('error', 'Impossible d\'annuler une réservation pour un événement déjà passé.');
             return $this->redirectToRoute('app_reservation_my');

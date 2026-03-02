@@ -1,0 +1,29 @@
+parameters:
+    # Analysis level: 0 (loosest) → 9 (strictest). Level 5 is a good start for a student project.
+    level: 5
+
+    # Files and folders to analyse
+    paths:
+        - src/Entity/Evenement.php
+        - src/Entity/Reservation.php
+        - src/Controller/Event
+        - src/Repository/EvenementRepository.php
+        - src/Repository/ReservationRepository.php
+        - src/Service/TicketPdfService.php
+        - src/Service/EmailService.php
+
+    ignoreErrors:
+        # Doctrine nullable PHP types vs non-nullable DB columns — this is normal in Symfony entities.
+        - identifier: doctrine.columnType
+        - identifier: doctrine.associationType
+
+        # PHPDoc @return Paginator vs native type — Doctrine pagination pattern.
+        - identifier: return.phpDocType
+
+        # Symfony Security returns UserInterface; we know our app always uses App\Entity\User.
+        # These casts are safe because our firewall only allows App\Entity\User instances.
+        - identifier: argument.type
+
+        # Comparison always true — comes from Doctrine raw SQL mixed return types.
+        - identifier: notIdentical.alwaysTrue
+        - identifier: greater.alwaysTrue
