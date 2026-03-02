@@ -72,7 +72,7 @@ class DonationImageValidator
 
     private function callLocalService(string $fullImagePath, string $expectedLabel): ?array
     {
-        $url = trim($this->serviceUrl ?? '');
+        $url = trim($this->serviceUrl);
         if ($url === '') {
             return null;
         }
