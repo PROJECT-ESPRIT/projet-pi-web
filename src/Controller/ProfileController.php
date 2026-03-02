@@ -16,13 +16,10 @@ class ProfileController extends AbstractController
         return $this->render('profile/participant.html.twig');
     }
 
-<<<<<<< HEAD
-=======
     #[Route('/artist/profile', name: 'artist_profile')]
     #[IsGranted('ROLE_ARTISTE')]
     public function artist(): Response
     {
         return $this->render('profile/artist.html.twig');
     }
->>>>>>> c4d1c44b0746a7387dc28bd3111400a167bda2d9
 }

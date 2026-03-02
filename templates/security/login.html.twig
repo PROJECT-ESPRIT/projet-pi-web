@@ -1,12 +1,11 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Connexion — Art Connect{% endblock %}
+{% block title %}Connexion â€” Art Connect{% endblock %}
 
 {% block guest_wrapper_open %}{% endblock %}
 {% block guest_wrapper_close %}{% endblock %}
 
 {% block body %}
-<<<<<<< HEAD
 {% include 'security/_auth_styles.html.twig' %}
 
 <div class="auth-page">
@@ -15,34 +14,7 @@
             <i class="fas fa-palette"></i><span>Art Connect</span>
         </div>
 
-        <p class="auth-sub">Connectez-vous à votre espace</p>
-=======
-<div class="row justify-content-center">
-    <div class="col-md-5 col-lg-4">
-        <div class="card shadow">
-            <div class="card-body p-4">
-                <h2 class="card-title text-center mb-4">Connexion</h2>
-
-                <div class="alert alert-info">
-                    Les comptes artistes doivent etre valides par l'admin avant la connexion.
-                </div>
-                
-                {% if error %}
-                    <div class="alert alert-danger">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
-                {% endif %}
-
-                    <div class="mb-3">
-                        <label for="inputEmail" class="form-label">Email</label>
-                        <input type="email" value="{{ last_username }}" name="_username" id="inputEmail" 
-                               placeholder="votre.email@example.com">
-                    </div>
-
-                    <div class="mb-4">
-                        <label for="inputPassword" class="form-label">Mot de passe</label>
-                        <input type="password" name="_password" id="inputPassword" 
-                               placeholder="Votre mot de passe">
-                    </div>
->>>>>>> c4d1c44b0746a7387dc28bd3111400a167bda2d9
+        <p class="auth-sub">Connectez-vous Ã  votre espace</p>
 
         <a href="{{ path('connect_google_start') }}" class="btn-social">
             <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
@@ -69,7 +41,7 @@
                            class="form-control" autocomplete="current-password" placeholder="Votre mot de passe">
                 </div>
                 <div class="text-end mt-1">
-                    <a href="{{ path('app_forgot_password') }}" class="auth-link">Mot de passe oublié ?</a>
+                    <a href="{{ path('app_forgot_password') }}" class="auth-link">Mot de passe oubliÃ© ?</a>
                 </div>
             </div>
 
@@ -83,17 +55,17 @@
 
         {% if error %}
             {% set errMsg = error.messageKey|trans(error.messageData, 'security') %}
-            {% if 'vérifier votre adresse email' in errMsg|lower %}
+            {% if 'vÃ©rifier votre adresse email' in errMsg|lower %}
                 <div class="text-center mt-2">
                     <a href="{{ path('app_registration_confirmation', {email: last_username}) }}" class="auth-link">
-                        <i class="fas fa-redo me-1"></i>Renvoyer le lien de vérification
+                        <i class="fas fa-redo me-1"></i>Renvoyer le lien de vÃ©rification
                     </a>
                 </div>
             {% endif %}
         {% endif %}
 
         <div class="auth-footer">
-            Pas encore de compte ? <a href="{{ path('register') }}">Créer un compte</a>
+            Pas encore de compte ? <a href="{{ path('register') }}">CrÃ©er un compte</a>
         </div>
     </div>
 </div>

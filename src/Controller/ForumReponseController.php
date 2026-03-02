@@ -2,16 +2,11 @@
 
 namespace App\Controller;
 
-<<<<<<< HEAD
-use App\Entity\ForumReponse;
-use App\Form\ForumReponseType;
-=======
 use App\Entity\Forum;
 use App\Entity\ForumReponse;
 use App\Entity\User;
 use App\Form\ForumReponseType;
 use App\Repository\ForumRepository;
->>>>>>> c4d1c44b0746a7387dc28bd3111400a167bda2d9
 use App\Repository\ForumReponseRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -28,7 +23,6 @@ final class ForumReponseController extends AbstractController
     #[Route(name: 'app_forum_reponse_index', methods: ['GET'])]
     public function index(Request $request, ForumReponseRepository $forumReponseRepository): Response
     {
-        // Récupérer les paramètres de recherche et tri
         $search = $request->query->get('search', '');
         $sortBy = $request->query->get('sort', 'dateReponse');
         $order = $request->query->get('order', 'DESC');
@@ -39,23 +33,20 @@ final class ForumReponseController extends AbstractController
 
         $sortBy = $allowedSortFields[$sortBy] ?? 'dateReponse';
         $order = strtoupper($order) === 'ASC' ? 'ASC' : 'DESC';
-        
-        // Créer la requête avec recherche et tri
+
         $queryBuilder = $forumReponseRepository->createQueryBuilder('fr')
             ->leftJoin('fr.forum', 'f')
             ->leftJoin('fr.auteur', 'a');
-        
-        // Recherche
+
         if ($search) {
             $queryBuilder->where('fr.contenu LIKE :search OR f.sujet LIKE :search OR a.nom LIKE :search')
                 ->setParameter('search', '%' . $search . '%');
         }
-        
-        // Tri
+
         $queryBuilder->orderBy('fr.' . $sortBy, $order);
-        
+
         $forumReponses = $queryBuilder->getQuery()->getResult();
-        
+
         return $this->render('forum_reponse/index.html.twig', [
             'forum_reponses' => $forumReponses,
             'search' => $search,
@@ -65,18 +56,12 @@ final class ForumReponseController extends AbstractController
     }
 
     #[Route('/new', name: 'app_forum_reponse_new', methods: ['GET', 'POST'])]
-<<<<<<< HEAD
-    public function new(Request $request, EntityManagerInterface $entityManager, MailerInterface $mailer): Response
-    {
-        $forumReponse = new ForumReponse();
-=======
     public function new(
         Request $request,
         EntityManagerInterface $entityManager,
         MailerInterface $mailer,
         ForumRepository $forumRepository
-    ): Response
-    {
+    ): Response {
         $forumReponse = new ForumReponse();
         $forumReponse->setDateReponse(new \DateTimeImmutable());
 
@@ -93,13 +78,10 @@ final class ForumReponseController extends AbstractController
             }
         }
 
->>>>>>> c4d1c44b0746a7387dc28bd3111400a167bda2d9
         $form = $this->createForm(ForumReponseType::class, $forumReponse);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-<<<<<<< HEAD
-=======
             $user = $this->getUser();
             if (!$user instanceof User) {
                 $this->addFlash('error', 'Vous devez etre connecte pour repondre.');
@@ -108,7 +90,6 @@ final class ForumReponseController extends AbstractController
 
             $forumReponse->setAuteur($user);
 
->>>>>>> c4d1c44b0746a7387dc28bd3111400a167bda2d9
             $entityManager->persist($forumReponse);
             $entityManager->flush();
 
@@ -121,17 +102,13 @@ final class ForumReponseController extends AbstractController
                     $email = (new Email())
                         ->from($from)
                         ->to($to)
-                        ->subject('Réponse à votre message : ' . ($forum?->getSujet() ?? ''))
+                        ->subject('Reponse a votre message : ' . ($forum?->getSujet() ?? ''))
                         ->text($forumReponse->getContenu() ?? '');
 
                     $mailer->send($email);
-                    $this->addFlash('success', 'Email envoyé à l\'utilisateur.');
+                    $this->addFlash('success', 'Email envoye a l utilisateur.');
                 } catch (TransportExceptionInterface $e) {
-<<<<<<< HEAD
-                    $this->addFlash('error', 'La réponse a été enregistrée, mais l\'envoi de l\'email a échoué.');
-=======
-                    // Reponse enregistree: on ignore silencieusement les erreurs d'email.
->>>>>>> c4d1c44b0746a7387dc28bd3111400a167bda2d9
+                    $this->addFlash('error', 'La reponse a ete enregistree, mais l envoi de l email a echoue.');
                 }
             }
 
@@ -173,7 +150,7 @@ final class ForumReponseController extends AbstractController
     #[Route('/{id}', name: 'app_forum_reponse_delete', methods: ['POST'])]
     public function delete(Request $request, ForumReponse $forumReponse, EntityManagerInterface $entityManager): Response
     {
-        if ($this->isCsrfTokenValid('delete'.$forumReponse->getId(), $request->getPayload()->getString('_token'))) {
+        if ($this->isCsrfTokenValid('delete' . $forumReponse->getId(), $request->getPayload()->getString('_token'))) {
             $entityManager->remove($forumReponse);
             $entityManager->flush();
         }

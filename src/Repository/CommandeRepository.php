@@ -21,7 +21,6 @@ class CommandeRepository extends ServiceEntityRepository
         parent::__construct($registry, Commande::class);
     }
 
-<<<<<<< HEAD
     public function getTotalRevenue(): float
     {
         return (float) $this->createQueryBuilder('c')
@@ -91,7 +90,8 @@ class CommandeRepository extends ServiceEntityRepository
         }
 
         return array_values($data);
-=======
+    }
+
     /**
      * @return Commande[]
      */
@@ -134,6 +134,5 @@ class CommandeRepository extends ServiceEntityRepository
         $qb->orderBy($allowedSorts[$sort] ?? 'c.dateCommande', $direction);
 
         return $qb->getQuery()->getResult();
->>>>>>> c4d1c44b0746a7387dc28bd3111400a167bda2d9
     }
 }

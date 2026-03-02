@@ -293,6 +293,45 @@
     <div class="st-card">
         <div class="st-card-title"><i class="fas fa-chart-area"></i> Inscriptions mensuelles</div>
         <div style="height:220px;"><canvas id="monthlyRegChart"></canvas></div>
+        <div style="margin-top:.75rem; padding:.65rem .75rem; border:1px solid #e5e7eb; border-radius:10px; background:#f9fafb;">
+            <div style="font-size:.68rem; color:#6b7280; text-transform:uppercase; font-weight:700; letter-spacing:.04em;">
+                Prediction IA - {{ nextMonthRegistrationPrediction.nextMonthLabel }}
+            </div>
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-top:.25rem; gap:.5rem;">
+                <div style="font-family:'Sora',sans-serif; font-size:1.45rem; font-weight:800; color:var(--ac-deep);">
+                    {{ nextMonthRegistrationPrediction.predictedCount }}
+                </div>
+                <div style="font-size:.72rem;">
+                    {% if nextMonthRegistrationPrediction.trend == 'up' %}
+                        <span class="badge" style="background:linear-gradient(135deg,#059669,#34d399); color:#fff;">Tendance: hausse</span>
+                    {% elseif nextMonthRegistrationPrediction.trend == 'down' %}
+                        <span class="badge" style="background:linear-gradient(135deg,#dc2626,#f87171); color:#fff;">Tendance: baisse</span>
+                    {% else %}
+                        <span class="badge" style="background:linear-gradient(135deg,#6b7280,#9ca3af); color:#fff;">Tendance: stable</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div style="margin-top:.35rem; display:grid; grid-template-columns:1fr 1fr; gap:.45rem; font-size:.68rem; color:#6b7280;">
+                <div>
+                    Confiance:
+                    <strong>
+                        {% if nextMonthRegistrationPrediction.confidence == 'high' %}
+                            elevee ({{ nextMonthRegistrationPrediction.confidenceScore }}/100)
+                        {% elseif nextMonthRegistrationPrediction.confidence == 'medium' %}
+                            moyenne ({{ nextMonthRegistrationPrediction.confidenceScore }}/100)
+                        {% else %}
+                            faible ({{ nextMonthRegistrationPrediction.confidenceScore }}/100)
+                        {% endif %}
+                    </strong>
+                </div>
+                <div>
+                    Intervalle: <strong>{{ nextMonthRegistrationPrediction.lowerBound }} - {{ nextMonthRegistrationPrediction.upperBound }}</strong>
+                </div>
+                <div style="grid-column:1/-1;">
+                    Facteur saisonnier: <strong>{{ (nextMonthRegistrationPrediction.seasonalityFactor * 100)|round(1) }}%</strong>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -501,13 +540,41 @@ document.addEventListener('DOMContentLoaded', function() {
     // Registrations
     var regCtx = document.getElementById('monthlyRegChart').getContext('2d');
     var regGrad = makeGradient(regCtx, C.lavender+'44', C.lavender+'05');
+    var regLabels = {{ monthlyRegistrations|map(m => m.month)|json_encode|raw }};
+    var regValues = {{ monthlyRegistrations|map(m => m.count)|json_encode|raw }};
+    var nextRegLabel = {{ nextMonthRegistrationPrediction.nextMonthLabel|json_encode|raw }};
+    var regPredicted = {{ nextMonthRegistrationPrediction.predictedCount|json_encode|raw }};
+    var regLower = {{ nextMonthRegistrationPrediction.lowerBound|json_encode|raw }};
+    var regUpper = {{ nextMonthRegistrationPrediction.upperBound|json_encode|raw }};
+    var lastActual = regValues.length > 0 ? regValues[regValues.length - 1] : null;
+
+    regLabels = regLabels.concat([nextRegLabel]);
+    var actualSeries = regValues.concat([null]);
+    var forecastSeries = new Array(regLabels.length).fill(null);
+    var lowerBandSeries = new Array(regLabels.length).fill(null);
+    var upperBandSeries = new Array(regLabels.length).fill(null);
+    if (regValues.length > 0) {
+        forecastSeries[regLabels.length - 2] = lastActual;
+        forecastSeries[regLabels.length - 1] = regPredicted;
+        lowerBandSeries[regLabels.length - 1] = regLower;
+        upperBandSeries[regLabels.length - 1] = regUpper;
+    }
+
     new Chart(regCtx, {
         type:'line',
-        data:{ labels:{{ monthlyRegistrations|map(m => m.month)|json_encode|raw }},
-            datasets:[{ data:{{ monthlyRegistrations|map(m => m.count)|json_encode|raw }},
+        data:{ labels:regLabels,
+            datasets:[
+            { data:actualSeries,
                 borderColor:C.lavender, backgroundColor:regGrad, borderWidth:2.5,
                 fill:true, tension:.4, pointBackgroundColor:'#fff', pointBorderColor:C.lavender,
-                pointBorderWidth:2, pointRadius:4, pointHoverRadius:6 }] },
+                pointBorderWidth:2, pointRadius:4, pointHoverRadius:6 },
+            { data:forecastSeries,
+                borderColor:C.deep, borderDash:[6,4], borderWidth:2,
+                fill:false, tension:.35, pointBackgroundColor:C.deep, pointBorderColor:'#fff',
+                pointBorderWidth:1.5, pointRadius:3, pointHoverRadius:5 },
+            { data:upperBandSeries, borderColor:'#9ca3af', borderDash:[2,4], borderWidth:1.5, fill:false, pointRadius:0 },
+            { data:lowerBandSeries, borderColor:'#9ca3af', borderDash:[2,4], borderWidth:1.5, fill:false, pointRadius:0 }
+            ] },
         options:commonLine
     });
 

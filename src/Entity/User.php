@@ -16,7 +16,6 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 #[UniqueEntity(fields: ['email'], message: 'Cet email est deja utilise.')]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
-<<<<<<< HEAD
     public const STATUS_EMAIL_PENDING = 'EMAIL_PENDING';
     public const STATUS_EMAIL_VERIFIED = 'EMAIL_VERIFIED';
     public const STATUS_APPROVED = 'APPROVED';
@@ -27,14 +26,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public const SEGMENT_ACTIF = 'ACTIF';
     public const SEGMENT_CHURN_RISK = 'CHURN_RISK';
     public const SEGMENT_DORMANT = 'DORMANT';
-=======
-    public const STATUS_PENDING = 'PENDING';
-    public const STATUS_APPROVED = 'APPROVED';
-    public const STATUS_REJECTED = 'REJECTED';
-    public const LEVEL_BRONZE = 'BRONZE';
-    public const LEVEL_SILVER = 'SILVER';
-    public const LEVEL_GOLD = 'GOLD';
->>>>>>> c4d1c44b0746a7387dc28bd3111400a167bda2d9
 
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -68,7 +59,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private ?\DateTimeImmutable $createdAt = null;
 
-<<<<<<< HEAD
     #[ORM\Column(length: 20, options: ['default' => self::STATUS_EMAIL_PENDING])]
     private string $status = self::STATUS_EMAIL_PENDING;
 
@@ -86,16 +76,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(length: 50, nullable: true)]
     private ?string $segment = null;
-=======
-    #[ORM\Column(length: 20, options: ['default' => self::STATUS_APPROVED])]
-    private string $status = self::STATUS_APPROVED;
-
-    #[ORM\Column(options: ['default' => 0])]
-    private int $points = 0;
-
-    #[ORM\Column(length: 20, options: ['default' => self::LEVEL_BRONZE])]
-    private string $loyaltyLevel = self::LEVEL_BRONZE;
->>>>>>> c4d1c44b0746a7387dc28bd3111400a167bda2d9
 
     public function __construct()
     {
@@ -292,7 +272,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setStatus(string $status): static
     {
         $this->status = $status;
-<<<<<<< HEAD
         return $this;
     }
 
@@ -350,36 +329,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->prenom . ' ' . $this->nom;
     }
 
-=======
-
-        return $this;
-    }
-
-    public function getPoints(): int
-    {
-        return $this->points;
-    }
-
-    public function setPoints(int $points): static
-    {
-        $this->points = max(0, $points);
-
-        return $this;
-    }
-
-    public function getLoyaltyLevel(): string
-    {
-        return $this->loyaltyLevel;
-    }
-
-    public function setLoyaltyLevel(string $loyaltyLevel): static
-    {
-        $this->loyaltyLevel = $loyaltyLevel;
-
-        return $this;
-    }
-
->>>>>>> c4d1c44b0746a7387dc28bd3111400a167bda2d9
     #[ORM\OneToMany(mappedBy: 'organisateur', targetEntity: Evenement::class)]
     private Collection $evenements;
 

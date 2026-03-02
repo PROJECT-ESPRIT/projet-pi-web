@@ -10,10 +10,7 @@ framework:
                     max_retries: 3
                     multiplier: 2
             failed: 'doctrine://default?queue_name=failed'
-<<<<<<< HEAD
             sync: 'sync://'
-=======
->>>>>>> c4d1c44b0746a7387dc28bd3111400a167bda2d9
 
         default_bus: messenger.bus.default
 
@@ -21,10 +18,7 @@ framework:
             messenger.bus.default: []
 
         routing:
-<<<<<<< HEAD
             # No routing for SendEmailMessage: mailer sends immediately (no queue)
-=======
->>>>>>> c4d1c44b0746a7387dc28bd3111400a167bda2d9
             Symfony\Component\Notifier\Message\ChatMessage: async
             Symfony\Component\Notifier\Message\SmsMessage: async
 

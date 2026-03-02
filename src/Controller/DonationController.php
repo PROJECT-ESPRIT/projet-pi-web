@@ -78,23 +78,17 @@ class DonationController extends AbstractController
 
     #[Route('/admin', name: 'app_donation_index', methods: ['GET'])]
     #[IsGranted('ROLE_ADMIN')]
-<<<<<<< HEAD
     public function index(Request $request, DonationRepository $donationRepository): Response
-=======
->>>>>>> c4d1c44b0746a7387dc28bd3111400a167bda2d9
     {
         $search = $request->query->getString('q');
         $sort = $request->query->getString('sort', 'dateDon');
         $direction = $request->query->getString('direction', 'DESC');
 
         return $this->render('donation/index.html.twig', [
-<<<<<<< HEAD
             'donations' => $donationRepository->findBySearchAndSort($search, $sort, $direction),
             'search' => $search,
             'sort' => $sort,
             'direction' => strtoupper($direction) === 'ASC' ? 'ASC' : 'DESC',
-=======
->>>>>>> c4d1c44b0746a7387dc28bd3111400a167bda2d9
         ]);
     }
 }

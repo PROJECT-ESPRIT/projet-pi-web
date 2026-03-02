@@ -21,7 +21,6 @@ class ProduitRepository extends ServiceEntityRepository
         parent::__construct($registry, Produit::class);
     }
 
-<<<<<<< HEAD
     public function getTotalStockValue(): float
     {
         return (float) $this->createQueryBuilder('p')
@@ -38,7 +37,8 @@ class ProduitRepository extends ServiceEntityRepository
             ->setParameter('threshold', $threshold)
             ->getQuery()
             ->getSingleScalarResult();
-=======
+    }
+
     /**
      * @return Produit[]
      */
@@ -62,6 +62,5 @@ class ProduitRepository extends ServiceEntityRepository
         $qb->orderBy($allowedSorts[$sort] ?? 'p.id', $direction);
 
         return $qb->getQuery()->getResult();
->>>>>>> c4d1c44b0746a7387dc28bd3111400a167bda2d9
     }
 }
