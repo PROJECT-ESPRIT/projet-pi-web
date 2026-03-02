@@ -3,6 +3,7 @@
 namespace App\Controller\Admin;
 
 use App\Repository\CommandeRepository;
+use App\Repository\CharityRepository;
 use App\Repository\DonationRepository;
 use App\Repository\EvenementRepository;
 use App\Repository\ForumRepository;
@@ -25,6 +26,7 @@ class StatsController extends AbstractController
         EvenementRepository $evenementRepository,
         CommandeRepository $commandeRepository,
         DonationRepository $donationRepository,
+        CharityRepository $charityRepository,
         ProduitRepository $produitRepository,
         ForumRepository $forumRepository,
         ForumReponseRepository $forumReponseRepository,
@@ -45,6 +47,7 @@ class StatsController extends AbstractController
 
         $totalOrders = $commandeRepository->count([]);
         $totalDonations = $donationRepository->count([]);
+        $totalCharities = $charityRepository->count([]);
         $totalProducts = $produitRepository->count([]);
         $totalForumPosts = $forumRepository->count([]);
 
@@ -53,9 +56,26 @@ class StatsController extends AbstractController
         $monthlyOrders = $commandeRepository->getMonthlyOrders(6);
         $monthlyRevenue = $commandeRepository->getMonthlyRevenue(6);
 
-        $donationsThisMonth = $donationRepository->countThisMonth();
-        $monthlyDonations = $donationRepository->getMonthlyDonations(6);
-        $donationsByType = $donationRepository->countByType();
+        $donationsThisMonth = $donationRepository->countThisMonth(true);
+        $monthlyDonations = $donationRepository->getMonthlyDonations(6, true);
+        $donationsByType = $donationRepository->countByType(true);
+
+        $charityRows = $charityRepository->findAllWithDonationCounts(true);
+        $charityStats = array_map(static function (array $row): array {
+            $charity = $row['charity'];
+            $count = $row['donationsCount'];
+            $amount = $row['donationsAmount'];
+            $goal = $charity->getGoalAmount();
+
+            return [
+                'charity' => $charity,
+                'donationsCount' => $count,
+                'donationsAmount' => $amount,
+                'progressPercent' => $goal ? round(($amount / $goal) * 100, 1) : 0,
+                'hasGoal' => $goal !== null,
+            ];
+        }, $charityRows);
+        usort($charityStats, static fn (array $a, array $b) => $b['donationsCount'] <=> $a['donationsCount']);
 
         $lowStockProducts = $produitRepository->countLowStock(5);
         $stockValue = $produitRepository->getTotalStockValue();
@@ -77,6 +97,7 @@ class StatsController extends AbstractController
             'monthlyEvents' => $monthlyEvents,
             'totalOrders' => $totalOrders,
             'totalDonations' => $totalDonations,
+            'totalCharities' => $totalCharities,
             'totalProducts' => $totalProducts,
             'totalForumPosts' => $totalForumPosts,
             'orderRevenue' => $orderRevenue,
@@ -86,6 +107,7 @@ class StatsController extends AbstractController
             'donationsThisMonth' => $donationsThisMonth,
             'monthlyDonations' => $monthlyDonations,
             'donationsByType' => $donationsByType,
+            'charityStats' => $charityStats,
             'lowStockProducts' => $lowStockProducts,
             'stockValue' => $stockValue,
             'totalForumReplies' => $totalForumReplies,

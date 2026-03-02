@@ -3,6 +3,7 @@
 namespace App\Command;
 
 use App\Entity\Commande;
+use App\Entity\Charity;
 use App\Entity\Donation;
 use App\Entity\Evenement;
 use App\Entity\Forum;
@@ -55,6 +56,9 @@ class SeedDatabaseCommand extends Command
         $io->section('Creating donation types');
         $types = $this->createTypeDons($io);
 
+        $io->section('Creating charities');
+        $charities = $this->createCharities($io, array_merge($artists, $participants));
+
         $io->section('Creating events');
         [$events, $hotEvents, $fillPctMap] = $this->createEvenements($io, $artists);
 
@@ -69,7 +73,7 @@ class SeedDatabaseCommand extends Command
         $this->createCommandes($io, $produits, $participants);
 
         $io->section('Creating donations');
-        $this->createDonations($io, $types, array_merge($artists, $participants));
+        $this->createDonations($io, $types, $charities, array_merge($artists, $participants));
 
         $io->section('Creating forum posts & replies');
         $this->createForums($io, $participants, $admin);
@@ -81,6 +85,7 @@ class SeedDatabaseCommand extends Command
             ['Users (core)',    1 + count($artists) + count($participants) + 1],
             ['Users (extras)',  count($extras)],
             ['TypeDon',         count($types)],
+            ['Charities',       count($charities)],
             ['Evenements (upcoming)', 16],
             ['Evenements (expired)',  12],
             ['Produits',        count($produits)],
@@ -102,7 +107,7 @@ class SeedDatabaseCommand extends Command
         foreach ([
             'forum_reponse', 'forum',
             'ligne_commande', 'commande',
-            'donation', 'type_don',
+            'donation', 'charity', 'type_don',
             'reservation', 'evenement',
             'produit', 'password_reset_token', 'user',
         ] as $table) {
@@ -261,10 +266,16 @@ class SeedDatabaseCommand extends Command
 
     private function createTypeDons(SymfonyStyle $io): array
     {
-        $labels = ['Matériel artistique', 'Argent', 'Vêtements', 'Meubles', 'Jouets éducatifs', 'Livres'];
+        $labels = ['Furniture', 'Clothes', 'Money'];
         $types = [];
 
         foreach ($labels as $label) {
+            $existing = $this->em->getRepository(TypeDon::class)->findOneBy(['libelle' => $label]);
+            if ($existing instanceof TypeDon) {
+                $types[] = $existing;
+                $io->text(" = $label");
+                continue;
+            }
             $t = new TypeDon();
             $t->setLibelle($label);
             $this->em->persist($t);
@@ -275,6 +286,40 @@ class SeedDatabaseCommand extends Command
         $this->em->flush();
 
         return $types;
+    }
+
+    // -----------------------------------------------------------------
+    //  CHARITIES
+    // -----------------------------------------------------------------
+
+    private function createCharities(SymfonyStyle $io, array $owners): array
+    {
+        $data = [
+            ['Association Espoir', 'Soutient les familles en situation précaire avec des aides matérielles et éducatives.', 20],
+            ['Fondation Enfance Créative', 'Finance des ateliers artistiques pour les enfants issus de quartiers défavorisés.', 15],
+            ['Solidarité Handicap Tunisie', 'Accompagne les personnes en situation de handicap à travers des programmes inclusifs.', 18],
+            ['Collectif Livres Pour Tous', 'Collecte et redistribue des livres et du matériel pédagogique aux écoles rurales.', 12],
+        ];
+
+        $charities = [];
+        $ownerIndex = 0;
+        foreach ($data as [$name, $description, $goal]) {
+            $charity = new Charity();
+            $charity->setName($name);
+            $charity->setDescription($description);
+            $charity->setGoalAmount($goal);
+            if (!empty($owners)) {
+                $charity->setOwner($owners[$ownerIndex % count($owners)]);
+                $ownerIndex++;
+            }
+            $this->em->persist($charity);
+            $charities[] = $charity;
+            $io->text(" + $name");
+        }
+
+        $this->em->flush();
+
+        return $charities;
     }
 
     // -----------------------------------------------------------------
@@ -629,15 +674,12 @@ class SeedDatabaseCommand extends Command
     //  DONATIONS
     // -----------------------------------------------------------------
 
-    private function createDonations(SymfonyStyle $io, array $types, array $users): void
+    private function createDonations(SymfonyStyle $io, array $types, array $charities, array $users): void
     {
         $descriptions = [
-            'Matériel artistique' => ['Boîte de 48 crayons de couleur et 3 blocs de dessin', 'Lot de pinceaux et tubes de peinture acrylique'],
-            'Argent' => ['Don de 50 TND pour soutenir les ateliers', 'Contribution de 100 TND au fonds de bourses'],
-            'Vêtements' => ['10 tabliers d\'artiste en bon état', 'Lot de t-shirts blancs pour la peinture'],
-            'Meubles' => ['2 tables basses en bois pour atelier enfants', 'Étagère murale pour ranger le matériel'],
-            'Jouets éducatifs' => ['Puzzle 3D en bois thème animaux', 'Jeu de construction créatif 200 pièces'],
-            'Livres' => ['Collection de 15 livres d\'art pour enfants', 'Encyclopédie illustrée de la peinture'],
+            'Furniture' => ['Mobilier en bon état pour espaces d\'atelier', 'Meubles solides pour salles de classe'],
+            'Clothes' => ['Lot de vêtements en bon état', 'Vêtements chauds pour enfants'],
+            'Money' => ['Don de 50 TND pour soutenir les ateliers', 'Contribution de 100 TND au fonds de bourses'],
         ];
 
         $count = 0;
@@ -648,6 +690,12 @@ class SeedDatabaseCommand extends Command
                 $d->setType($type);
                 $d->setDescription($desc);
                 $d->setDonateur($users[($count) % count($users)]);
+                $d->setCharity($charities[$count % count($charities)]);
+                $d->setIsAnonymous(random_int(1, 100) <= 30);
+                $d->setAmount(match ($type->getLibelle()) {
+                    'Money' => random_int(20, 200),
+                    default => 0,
+                });
                 $d->setDateDon((new \DateTimeImmutable())->modify('-' . random_int(1, 30) . ' days'));
                 $this->em->persist($d);
                 $count++;
