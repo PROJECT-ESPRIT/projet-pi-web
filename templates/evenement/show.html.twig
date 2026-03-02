@@ -3,6 +3,7 @@
 {% block title %}{{ evenement.titre }} — Art Connect{% endblock %}
 
 {% block body %}
+<<<<<<< HEAD
 <style>
     .ev-hero { position:relative; border-radius:20px; overflow:hidden; margin-bottom:1.5rem; }
     .ev-hero.ev-hero-past { filter:grayscale(50%); opacity:.92; }
@@ -13,12 +14,26 @@
     .ev-hero-overlay h1 { font-family:'Sora',sans-serif; font-weight:700; font-size:1.8rem; margin:0 0 .4rem; text-shadow:0 2px 8px rgba(0,0,0,.3); }
     .ev-hero-overlay .ev-meta { display:flex; flex-wrap:wrap; gap:.8rem; font-size:.88rem; opacity:.9; }
     .ev-hero-overlay .ev-meta i { margin-right:.3rem; }
+=======
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow mb-4">
+                <div class="card-body">
+                    <h1 class="card-title display-5 mb-4">{{ evenement.titre }}</h1>
+
+                    <div class="mb-4 text-muted">
+                        <i class="far fa-calendar-alt me-2"></i>
+                        <strong>Du</strong> {{ evenement.dateDebut|date('d/m/Y H:i') }}
+                        <strong>au</strong> {{ evenement.dateFin|date('d/m/Y H:i') }}
+                    </div>
+>>>>>>> c4d1c44b0746a7387dc28bd3111400a167bda2d9
 
     .ev-grid { display:grid; grid-template-columns:1fr 340px; gap:1.5rem; }
     @media(max-width:992px) { .ev-grid { grid-template-columns:1fr; } }
 
     .ev-card { background:#fff; border-radius:16px; padding:1.5rem; box-shadow:0 2px 12px rgba(0,0,0,.05); border:1px solid #f0f0f0; }
 
+<<<<<<< HEAD
     .ev-info-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
     .ev-info-item { display:flex; align-items:center; gap:.8rem; }
     .ev-info-icon { width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:1rem; flex-shrink:0; }
@@ -157,6 +172,135 @@
                         <div class="ev-info-value">{{ evenement.prix ? evenement.prix ~ ' TND' : 'Gratuit' }}</div>
                     </div>
                 </div>
+=======
+                    <div class="row mt-4">
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-light p-3 rounded me-3">📍</div>
+                                <div>
+                                    <small class="text-muted">Lieu</small>
+                                    <h5 class="mb-0">{{ evenement.lieu }}</h5>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-light p-3 rounded me-3">👶</div>
+                                <div>
+                                    <small class="text-muted">Age</small>
+                                    <h5 class="mb-0">
+                                        {% if evenement.ageMin and evenement.ageMax %}
+                                            {{ evenement.ageMin }} - {{ evenement.ageMax }} ans
+                                        {% elseif evenement.ageMin %}
+                                            Des {{ evenement.ageMin }} ans
+                                        {% elseif evenement.ageMax %}
+                                            Jusqu a {{ evenement.ageMax }} ans
+                                        {% else %}
+                                            Pour tous
+                                        {% endif %}
+                                    </h5>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-light p-3 rounded me-3">👥</div>
+                                <div>
+                                    <small class="text-muted">Places disponibles</small>
+                                    <h5 class="mb-0">{{ remaining_places|default(evenement.nbPlaces) }} / {{ evenement.nbPlaces }}</h5>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-light p-3 rounded me-3">💰</div>
+                                <div>
+                                    <small class="text-muted">Tarif</small>
+                                    <h5 class="mb-0">{{ evenement.prix ? evenement.prix ~ ' TND' : 'Gratuit' }}</h5>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-light p-3 rounded me-3">👤</div>
+                                <div>
+                                    <small class="text-muted">Organise par</small>
+                                    <h5 class="mb-0">{{ evenement.organisateur.prenom }} {{ evenement.organisateur.nom }}</h5>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow">
+                <div class="card-body">
+                    <h4 class="card-title mb-3">Reserver</h4>
+
+                    {% if is_granted('ROLE_ADMIN') %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i> Les administrateurs ne peuvent pas reserver.
+                        </div>
+                    {% elseif is_granted('ROLE_PARTICIPANT') %}
+                        {% set isEventPassed = "now"|date('Y-m-d H:i:s') > evenement.dateDebut|date('Y-m-d H:i:s') %}
+
+                        {% if hasReserved %}
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle me-2"></i> Vous avez deja reserve une place.
+                            </div>
+                        {% elseif isEventPassed %}
+                            <div class="alert alert-warning">
+                                <i class="fas fa-calendar-times me-2"></i> Les reservations sont closes pour cet evenement.
+                            </div>
+                        {% elseif (remaining_places|default(0)) > 0 %}
+                            <p>Reservez votre place des maintenant.</p>
+                            <div class="alert alert-light border mb-3 small">
+                                Promo famille: <strong>-10%</strong> des 3 places, <strong>-15%</strong> des 5 places.
+                            </div>
+                            <form action="{{ path('app_reservation_book', {'id': evenement.id}) }}" method="post">
+                                <div class="mb-3">
+                                    <label class="form-label">Nombre de places (max 6)</label>
+                                    <input type="number" name="quantite" min="1" max="6" value="1" class="form-control">
+                                    <small class="text-muted">Places restantes: {{ remaining_places|default(0) }}</small>
+                                </div>
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-success btn-lg">Reserver</button>
+                                </div>
+                            </form>
+                        {% else %}
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle me-2"></i> Cet evenement est complet.
+                            </div>
+                        {% endif %}
+                    {% elseif is_granted('ROLE_ARTISTE') %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i> Connectez-vous en tant que Participant pour reserver.
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            <a href="{{ path('login') }}">Connectez-vous</a> pour reserver.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if app.user and (app.user == evenement.organisateur or is_granted('ROLE_ADMIN')) %}
+                <div class="card shadow mt-4">
+                    <div class="card-body">
+                        <h5 class="card-title">Administration</h5>
+                        <div class="d-grid gap-2">
+                            <a href="{{ path('app_evenement_edit', {'id': evenement.id}) }}" class="btn btn-outline-primary">Modifier</a>
+                            {{ include('evenement/_delete_form.html.twig') }}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
+            <div class="mt-3 text-center">
+                <a href="{{ path('app_evenement_index') }}" class="text-decoration-none">Retour a la liste</a>
+>>>>>>> c4d1c44b0746a7387dc28bd3111400a167bda2d9
             </div>
         </div>
     </div>

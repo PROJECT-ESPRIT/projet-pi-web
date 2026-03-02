@@ -22,7 +22,7 @@
 
 {# ---- Identity ---- #}
 <div class="fs">
-    <div class="fs-title"><i class="fas fa-user"></i> Identité</div>
+    <div class="fs-title"><i class="fas fa-user"></i> IdentitÃ©</div>
     <div class="row">
         <div class="col-md-6 mb-f">
             {{ form_label(form.prenom) }}
@@ -66,15 +66,15 @@
             </div>
         </div>
         <div class="col-md-6">
-            <div class="fs-title"><i class="fas fa-lock"></i> Sécurité</div>
+            <div class="fs-title"><i class="fas fa-lock"></i> SÃ©curitÃ©</div>
             <div class="mb-f">
                 {{ form_label(form.plainPassword) }}
                 <div class="input-group">
                     <span class="input-group-text" style="border-radius:8px 0 0 8px; border:1.5px solid #e5e7eb; border-right:0; background:#f9fafb;"><i class="fas fa-key text-muted"></i></span>
-                    {{ form_widget(form.plainPassword, {'attr': {'class': 'form-control' ~ (form.plainPassword.vars.valid ? '' : ' is-invalid'), 'style': 'border-radius:0 8px 8px 0; border-left:0;', 'placeholder': '••••••••'}}) }}
+                    {{ form_widget(form.plainPassword, {'attr': {'class': 'form-control' ~ (form.plainPassword.vars.valid ? '' : ' is-invalid'), 'style': 'border-radius:0 8px 8px 0; border-left:0;', 'placeholder': 'â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢'}}) }}
                 </div>
                 {{ form_errors(form.plainPassword) }}
-                <span class="form-text">Min. 6 caractères. Vide = inchangé.</span>
+                <span class="form-text">Min. 6 caractÃ¨res. Vide = inchangÃ©.</span>
             </div>
         </div>
     </div>
@@ -82,7 +82,7 @@
 
 {# ---- Roles ---- #}
 <div class="fs">
-    <div class="fs-title"><i class="fas fa-shield-alt"></i> Rôle</div>
+    <div class="fs-title"><i class="fas fa-shield-alt"></i> RÃ´le</div>
     <div class="role-checks">
         {% for child in form.roles %}
             <label class="role-check">

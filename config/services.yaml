@@ -6,18 +6,29 @@ parameters:
     mailer_from: '%env(default:mailer_from_default:MAILER_FROM)%'
     email_verification_ttl_hours: '%env(int:EMAIL_VERIFICATION_TTL_HOURS)%'
     password_reset_ttl_minutes: '%env(int:PASSWORD_RESET_TTL_MINUTES)%'
+    account_deletion_ttl_minutes: '%env(int:ACCOUNT_DELETION_TTL_MINUTES)%'
+    ai_provider_default: 'openai'
+    ai_provider: '%env(default:ai_provider_default:AI_PROVIDER)%'
+    openai_model_default: 'gpt-4o-mini'
+    openai_model: '%env(default:openai_model_default:OPENAI_MODEL)%'
+    anthropic_model_default: 'claude-3-5-sonnet-latest'
+    anthropic_model: '%env(default:anthropic_model_default:ANTHROPIC_MODEL)%'
     stripe_publishable_key: '%env(default::STRIPE_PUBLISHABLE_KEY)%'
+    google_oauth_client_id: '%env(default::GOOGLE_OAUTH_CLIENT_ID)%'
+    google_oauth_client_secret: '%env(default::GOOGLE_OAUTH_CLIENT_SECRET)%'
+    google_oauth_redirect_uri: '%env(default::GOOGLE_OAUTH_REDIRECT_URI)%'
 
 services:
-    # Configuration par défaut
+    # Default service config
     _defaults:
         autowire: true
         autoconfigure: true
         bind:
             int $emailVerificationTtlHours: '%email_verification_ttl_hours%'
             int $passwordResetTtlMinutes: '%password_reset_ttl_minutes%'
+            int $accountDeletionTtlMinutes: '%account_deletion_ttl_minutes%'
 
-    # Enregistre toutes les classes de src/ comme services
+    # Register src/ classes as services
     App\:
         resource: '../src/'
         exclude:
@@ -25,12 +36,10 @@ services:
             - '../src/Entity/'
             - '../src/Kernel.php'
 
-    # Configuration explicite du service d'envoi d'email
     App\Service\ResetPasswordMailer:
         arguments:
             $fromEmail: '%mailer_from%'
 
-    # Configuration du service d'email personnalisé
     App\Service\EmailService:
         arguments:
             $adminEmail: '%mailer_from%'
@@ -46,3 +55,23 @@ services:
     App\Service\TicketPdfService:
         arguments:
             $projectDir: '%kernel.project_dir%'
+
+    App\Service\OnboardingChatbotService:
+        arguments:
+            $aiProvider: '%ai_provider%'
+            $openAiApiKey: '%env(default::OPENAI_API_KEY)%'
+            $openAiModel: '%openai_model%'
+            $anthropicApiKey: '%env(default::ANTHROPIC_API_KEY)%'
+            $anthropicModel: '%anthropic_model%'
+
+    App\Service\AccountDeletionLinkSigner:
+        arguments:
+            $appSecret: '%kernel.secret%'
+            $accountDeletionTtlMinutes: '%account_deletion_ttl_minutes%'
+
+    App\Controller\User\GoogleAuthController:
+        arguments:
+            $googleOauthClientId: '%google_oauth_client_id%'
+            $googleOauthClientSecret: '%google_oauth_client_secret%'
+            $googleOauthRedirectUri: '%google_oauth_redirect_uri%'
+            $appSecret: '%kernel.secret%'

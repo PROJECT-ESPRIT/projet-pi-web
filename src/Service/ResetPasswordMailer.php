@@ -18,7 +18,7 @@ class ResetPasswordMailer
         $email = (new TemplatedEmail())
             ->from($this->fromEmail)
             ->to($to)
-            ->subject('Code de réinitialisation — Art Connect')
+            ->subject('Code de rÃ©initialisation â€” Art Connect')
             ->htmlTemplate('emails/reset_password.html.twig')
             ->context([
                 'code' => $code,

@@ -3,38 +3,97 @@
 {% block title %}Gestion des Commandes{% endblock %}
 
 {% block body %}
-    <h1>Toutes les Commandes</h1>
+    <div class="row align-items-center mb-3">
+        <div class="col">
+            <h1>Toutes les Commandes</h1>
+        </div>
+    </div>
 
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Client</th>
-                <th>Date</th>
-                <th>Statut</th>
-                <th>Total</th>
-                <th>Produits</th>
-            </tr>
-        </thead>
-        <tbody>
-        {% for commande in commandes %}
-            <tr>
-                <td>{{ commande.id }}</td>
-                <td>{{ commande.user.prenom }} {{ commande.user.nom }}</td>
-                <td>{{ commande.dateCommande|date('d/m/Y H:i') }}</td>
-                <td><span class="badge bg-secondary">{{ commande.statut }}</span></td>
-                <td>{{ commande.total }} TND</td>
-                <td>
-                    {% for ligne in commande.ligneCommandes %}
-                        <div>- {{ ligne.produit.nom }} (x{{ ligne.quantite }})</div>
-                    {% endfor %}
-                </td>
-            </tr>
-        {% else %}
-            <tr>
-                <td colspan="6">Aucune commande.</td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+    <div class="card mb-3">
+        <div class="card-body">
+            <form method="get" action="{{ path('app_commande_index') }}" class="row g-2 align-items-end">
+                <div class="col-12 col-md-4">
+                    <label class="form-label">Recherche</label>
+                    <input type="text" name="q" class="form-control" placeholder="Client, statut, produit, ID..." value="{{ search|default('') }}">
+                </div>
+                <div class="col-6 col-md-3">
+                    <label class="form-label">Trier par</label>
+                    <select name="sort" class="form-select">
+                        <option value="dateCommande" {{ (sort|default('dateCommande')) == 'dateCommande' ? 'selected' : '' }}>Date</option>
+                        <option value="id" {{ (sort|default('dateCommande')) == 'id' ? 'selected' : '' }}>ID</option>
+                        <option value="client" {{ (sort|default('dateCommande')) == 'client' ? 'selected' : '' }}>Client</option>
+                        <option value="statut" {{ (sort|default('dateCommande')) == 'statut' ? 'selected' : '' }}>Statut</option>
+                        <option value="total" {{ (sort|default('dateCommande')) == 'total' ? 'selected' : '' }}>Total</option>
+                    </select>
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label">Ordre</label>
+                    <select name="direction" class="form-select">
+                        <option value="desc" {{ (direction|default('desc')) == 'desc' ? 'selected' : '' }}>Descendant</option>
+                        <option value="asc" {{ (direction|default('desc')) == 'asc' ? 'selected' : '' }}>Ascendant</option>
+                    </select>
+                </div>
+                <div class="col-12 col-md-3 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">Filtrer</button>
+                    <a href="{{ path('app_commande_index') }}" class="btn btn-outline-secondary">Reset</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Client</th>
+                        <th>Date</th>
+                        <th>Statut</th>
+                        <th>Total</th>
+                        <th>Produits</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for commande in commandes %}
+                    <tr>
+                        <td>{{ commande.id }}</td>
+                        <td>{{ commande.user.prenom }} {{ commande.user.nom }}</td>
+                        <td>{{ commande.dateCommande|date('d/m/Y H:i') }}</td>
+                        <td>
+                            <span class="badge {{ commande.statut == 'ACCEPTEE' ? 'bg-success' : (commande.statut == 'REFUSEE' ? 'bg-danger' : 'bg-warning text-dark') }}">
+                                {{ commande.statut }}
+                            </span>
+                        </td>
+                        <td>{{ commande.total }} TND</td>
+                        <td>
+                            {% for ligne in commande.ligneCommandes %}
+                                <div>- {{ ligne.produit.nom }} (x{{ ligne.quantite }})</div>
+                            {% endfor %}
+                        </td>
+                        <td>
+                            {% if commande.statut == 'EN_ATTENTE' %}
+                                <form method="post" action="{{ path('app_commande_approve', {'id': commande.id}) }}" class="d-inline">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('commande_approve' ~ commande.id) }}">
+                                    <button type="submit" class="btn btn-sm btn-success">Accepter</button>
+                                </form>
+                                <form method="post" action="{{ path('app_commande_reject', {'id': commande.id}) }}" class="d-inline">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('commande_reject' ~ commande.id) }}">
+                                    <button type="submit" class="btn btn-sm btn-danger">Refuser</button>
+                                </form>
+                            {% else %}
+                                <span class="text-muted">Traitee</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="7">Aucune commande.</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
 {% endblock %}

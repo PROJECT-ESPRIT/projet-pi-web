@@ -6,8 +6,8 @@ use App\Entity\Commande;
 use App\Entity\LigneCommande;
 use App\Entity\Produit;
 use App\Form\ProduitType;
-use App\Repository\CommandeRepository;
 use App\Repository\ProduitRepository;
+use App\Service\LoyaltyService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -27,18 +27,30 @@ class ProduitController extends AbstractController
     }
 
     #[Route('/admin', name: 'app_produit_admin_index', methods: ['GET'])]
-    #[IsGranted('ROLE_ADMIN')]
-    public function adminIndex(ProduitRepository $produitRepository): Response
+    public function adminIndex(Request $request, ProduitRepository $produitRepository): Response
     {
+        $this->denyAccessUnlessCanManage();
+
+        [$search, $sort, $direction] = $this->validateFilters(
+            $request,
+            ['id', 'nom', 'prix', 'stock'],
+            'id',
+            'asc'
+        );
+
         return $this->render('produit/admin_index.html.twig', [
-            'produits' => $produitRepository->findAll(),
+            'produits' => $produitRepository->findBySearchAndSort($search, $sort, $direction),
+            'search' => $search,
+            'sort' => $sort,
+            'direction' => $direction,
         ]);
     }
 
     #[Route('/admin/new', name: 'app_produit_new', methods: ['GET', 'POST'])]
-    #[IsGranted('ROLE_ADMIN')]
     public function new(Request $request, EntityManagerInterface $entityManager): Response
     {
+        $this->denyAccessUnlessCanManage();
+
         $produit = new Produit();
         $form = $this->createForm(ProduitType::class, $produit);
         $form->handleRequest($request);
@@ -65,9 +77,10 @@ class ProduitController extends AbstractController
     }
 
     #[Route('/admin/{id}/edit', name: 'app_produit_edit', methods: ['GET', 'POST'])]
-    #[IsGranted('ROLE_ADMIN')]
     public function edit(Request $request, Produit $produit, EntityManagerInterface $entityManager): Response
     {
+        $this->denyAccessUnlessCanManage();
+
         $form = $this->createForm(ProduitType::class, $produit);
         $form->handleRequest($request);
 
@@ -84,9 +97,10 @@ class ProduitController extends AbstractController
     }
 
     #[Route('/admin/{id}', name: 'app_produit_delete', methods: ['POST'])]
-    #[IsGranted('ROLE_ADMIN')]
     public function delete(Request $request, Produit $produit, EntityManagerInterface $entityManager): Response
     {
+        $this->denyAccessUnlessCanManage();
+
         if ($this->isCsrfTokenValid('delete'.$produit->getId(), $request->request->get('_token'))) {
             $entityManager->remove($produit);
             $entityManager->flush();
@@ -97,36 +111,75 @@ class ProduitController extends AbstractController
 
     #[Route('/commander/{id}', name: 'app_produit_commander', methods: ['POST'])]
     #[IsGranted('ROLE_USER')]
-    public function commander(Produit $produit, EntityManagerInterface $entityManager): Response
+    public function commander(Produit $produit, EntityManagerInterface $entityManager, LoyaltyService $loyaltyService): Response
     {
         if ($produit->getStock() <= 0) {
             $this->addFlash('danger', 'Ce produit est en rupture de stock.');
             return $this->redirectToRoute('app_produit_show', ['id' => $produit->getId()]);
         }
 
-        // Create Order
         $commande = new Commande();
         $commande->setUser($this->getUser());
         $commande->setStatut('EN_ATTENTE');
-        $commande->setTotal($produit->getPrix()); // Total for 1 item
+        $commande->setTotal($produit->getPrix());
 
-        // Create Order Line
         $ligne = new LigneCommande();
         $ligne->setProduit($produit);
-        $ligne->setQuantite(1); // Default 1 for simplicity
+        $ligne->setQuantite(1);
         $ligne->setPrixUnitaire($produit->getPrix());
-        
+
         $commande->addLigneCommande($ligne);
 
-        // Update Stock
         $produit->setStock($produit->getStock() - 1);
 
+        $user = $commande->getUser();
+        if ($user !== null) {
+            $loyaltyService->awardPoints($user, LoyaltyService::POINTS_COMMANDE);
+        }
+
         $entityManager->persist($commande);
-        // $entityManager->persist($ligne); // Cascaded
         $entityManager->flush();
 
-        $this->addFlash('success', 'Votre commande a été passée avec succès !');
+        $this->addFlash('success', 'Votre commande a ete passee avec succes ! +'.LoyaltyService::POINTS_COMMANDE.' points fidelite.');
 
         return $this->redirectToRoute('app_commande_my');
+    }
+
+    /**
+     * @return array{0:string,1:string,2:string}
+     */
+    private function validateFilters(
+        Request $request,
+        array $allowedSorts,
+        string $defaultSort,
+        string $defaultDirection
+    ): array {
+        $search = trim((string) $request->query->get('q', ''));
+        $sort = (string) $request->query->get('sort', $defaultSort);
+        $direction = strtolower((string) $request->query->get('direction', $defaultDirection));
+
+        if ($search !== '' && (mb_strlen($search) > 100 || !preg_match('/^[\p{L}\p{N}\s._\-\'@]+$/u', $search))) {
+            $this->addFlash('error', 'Recherche invalide. Utilisez uniquement lettres, chiffres, espaces et . _ - @ \' .');
+            $search = '';
+        }
+
+        if (!in_array($sort, $allowedSorts, true)) {
+            $this->addFlash('error', 'Champ de tri invalide.');
+            $sort = $defaultSort;
+        }
+
+        if (!in_array($direction, ['asc', 'desc'], true)) {
+            $this->addFlash('error', 'Direction de tri invalide.');
+            $direction = $defaultDirection;
+        }
+
+        return [$search, $sort, $direction];
+    }
+
+    private function denyAccessUnlessCanManage(): void
+    {
+        if (!$this->isGranted('ROLE_ADMIN') && !$this->isGranted('ROLE_ARTISTE')) {
+            throw $this->createAccessDeniedException('Acces refuse.');
+        }
     }
 }

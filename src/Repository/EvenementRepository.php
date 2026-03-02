@@ -164,7 +164,7 @@ class EvenementRepository extends ServiceEntityRepository
         }
 
         [$sortField, $sortDir, $nulls] = array_pad($sortMap[$sortKey], 3, null);
-        
+
         // For databases that support NULLS FIRST/LAST
         if ($nulls !== null) {
             $qb->addOrderBy("$sortField IS NULL");
@@ -172,7 +172,7 @@ class EvenementRepository extends ServiceEntityRepository
         } else {
             $qb->addOrderBy($sortField, $sortDir);
         }
-        
+
         $qb->addOrderBy('e.id', 'DESC');
 
         $query = $qb->getQuery()

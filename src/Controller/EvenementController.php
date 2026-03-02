@@ -87,6 +87,8 @@ class EvenementController extends AbstractController
     public function show(Evenement $evenement, ReservationRepository $reservationRepository): Response
     {
         $hasReserved = false;
+        $reservedPlaces = $reservationRepository->countReservedPlacesForEvent($evenement);
+        $remainingPlaces = max(0, $evenement->getNbPlaces() - $reservedPlaces);
         if ($this->getUser()) {
             $reservation = $reservationRepository->findOneBy([
                 'evenement' => $evenement,
@@ -98,6 +100,7 @@ class EvenementController extends AbstractController
         return $this->render('evenement/show.html.twig', [
             'evenement' => $evenement,
             'hasReserved' => $hasReserved,
+            'remaining_places' => $remainingPlaces,
         ]);
     }
 

@@ -6,6 +6,7 @@ use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\Tools\Pagination\Paginator;
 use Doctrine\Persistence\ManagerRegistry;
+use DateTimeImmutable;
 use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\PasswordUpgraderInterface;
@@ -36,13 +37,13 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
 
     public function getUsersByRole(): array
     {
-        // Récupérer tous les utilisateurs avec leurs rôles
+        // RÃ©cupÃ©rer tous les utilisateurs avec leurs rÃ´les
         $users = $this->createQueryBuilder('u')
             ->select('u.roles')
             ->getQuery()
             ->getResult();
         
-        // Initialiser les compteurs pour chaque rôle
+        // Initialiser les compteurs pour chaque rÃ´le
         $roleCounts = [
             'ROLE_ADMIN' => 0,
             'ROLE_ARTISTE' => 0,
@@ -50,7 +51,7 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
             'ROLE_USER' => 0
         ];
         
-        // Compter les utilisateurs par rôle
+        // Compter les utilisateurs par rÃ´le
         foreach ($users as $user) {
             $roles = $user['roles'];
             
@@ -65,7 +66,7 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
             }
         }
         
-        // Formater les résultats
+        // Formater les rÃ©sultats
         $formattedResults = [];
         foreach ($roleCounts as $role => $count) {
             if ($count > 0) {
@@ -84,14 +85,14 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
         $endDate = new \DateTime();
         $startDate = (clone $endDate)->modify("-$months months");
         
-        // Créer un tableau avec tous les mois de la période
+        // CrÃ©er un tableau avec tous les mois de la pÃ©riode
         $period = new \DatePeriod(
             new \DateTime($startDate->format('Y-m-01')), // Premier jour du mois
             new \DateInterval('P1M'), // Intervalle d'un mois
             new \DateTime($endDate->format('Y-m-t')) // Dernier jour du mois
         );
         
-        // Initialiser le tableau des résultats avec des zéros
+        // Initialiser le tableau des rÃ©sultats avec des zÃ©ros
         $results = [];
         foreach ($period as $date) {
             $monthKey = $date->format('Y-m');
@@ -101,7 +102,7 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
             ];
         }
         
-        // Récupérer toutes les dates de création
+        // RÃ©cupÃ©rer toutes les dates de crÃ©ation
         $users = $this->createQueryBuilder('u')
             ->select('u.createdAt')
             ->where('u.createdAt >= :startDate')

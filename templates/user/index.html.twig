@@ -1,6 +1,6 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Utilisateurs — Admin{% endblock %}
+{% block title %}Utilisateurs â€” Admin{% endblock %}
 
 {% block body %}
 <div class="bo-page-header">
@@ -18,14 +18,14 @@
     <div class="row g-2 align-items-end">
         <div class="col-12 col-md-4">
             <label><i class="fas fa-search me-1"></i>Recherche</label>
-            <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Email, nom, prénom, rôle…">
+            <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Email, nom, prÃ©nom, rÃ´leâ€¦">
         </div>
         <div class="col-6 col-md-2">
             <label><i class="fas fa-sort me-1"></i>Trier par</label>
             <select name="sort" class="form-select">
                 <option value="id" {{ sort == 'id' ? 'selected' }}>ID</option>
                 <option value="nom" {{ sort == 'nom' ? 'selected' }}>Nom</option>
-                <option value="prenom" {{ sort == 'prenom' ? 'selected' }}>Prénom</option>
+                <option value="prenom" {{ sort == 'prenom' ? 'selected' }}>PrÃ©nom</option>
                 <option value="email" {{ sort == 'email' ? 'selected' }}>Email</option>
             </select>
         </div>
@@ -33,7 +33,7 @@
             <label><i class="fas fa-arrows-alt-v me-1"></i>Ordre</label>
             <select name="dir" class="form-select">
                 <option value="asc" {{ dir == 'asc' ? 'selected' }}>Croissant</option>
-                <option value="desc" {{ dir == 'desc' ? 'selected' }}>Décroissant</option>
+                <option value="desc" {{ dir == 'desc' ? 'selected' }}>DÃ©croissant</option>
             </select>
         </div>
         <div class="col-12 col-md-4 d-flex gap-2">
@@ -56,8 +56,9 @@
                         <th>#</th>
                         <th>Utilisateur</th>
                         <th>Email</th>
-                        <th>Rôles</th>
+                        <th>RÃ´les</th>
                         <th>Statut</th>
+                        <th>Segment IA</th>
                         <th class="text-end">Actions</th>
                     </tr>
                 </thead>
@@ -92,23 +93,34 @@
                         </td>
                         <td>
                             {% if user.status == 'APPROVED' %}
-                                <span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>Approuvé</span>
+                                <span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>ApprouvÃ©</span>
                             {% elseif user.status == 'EMAIL_PENDING' %}
-                                <span class="badge bg-secondary"><i class="fas fa-envelope me-1"></i>Email non vérifié</span>
+                                <span class="badge bg-secondary"><i class="fas fa-envelope me-1"></i>Email non vÃ©rifiÃ©</span>
                             {% elseif user.status == 'EMAIL_VERIFIED' %}
                                 <span class="badge bg-warning"><i class="fas fa-clock me-1"></i>En attente admin</span>
                             {% elseif user.status == 'REJECTED' %}
-                                <span class="badge bg-danger"><i class="fas fa-times-circle me-1"></i>Refusé</span>
+                                <span class="badge bg-danger"><i class="fas fa-times-circle me-1"></i>RefusÃ©</span>
                             {% elseif user.status == 'SUSPENDED' %}
                                 <span class="badge bg-dark"><i class="fas fa-ban me-1"></i>Suspendu</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if user.segment == 'VIP' %}
+                                <span class="badge bg-warning text-dark"><i class="fas fa-crown me-1"></i>VIP</span>
+                            {% elseif user.segment == 'ACTIF' %}
+                                <span class="badge bg-success"><i class="fas fa-bolt me-1"></i>Actif</span>
+                            {% elseif user.segment == 'CHURN_RISK' %}
+                                <span class="badge bg-warning"><i class="fas fa-exclamation-triangle me-1"></i>Risque</span>
+                            {% elseif user.segment == 'DORMANT' %}
+                                <span class="badge bg-secondary"><i class="fas fa-bed me-1"></i>Dormant</span>
                             {% else %}
-                                <span class="badge bg-secondary">{{ user.status }}</span>
+                                <span class="text-muted fst-italic" style="font-size: 0.8rem;">Non calculÃ©</span>
                             {% endif %}
                         </td>
                         <td class="text-end">
                             <div class="d-flex gap-1 justify-content-end">
                                 <a href="{{ path('app_user_show', {id: user.id}) }}" class="btn-action btn-view" title="Voir"><i class="fas fa-eye"></i></a>
-                                <a href="{{ path('app_user_edit', {id: user.id}) }}" class="btn-action btn-edit" title="Éditer"><i class="fas fa-pen"></i></a>
+                                <a href="{{ path('app_user_edit', {id: user.id}) }}" class="btn-action btn-edit" title="Ã‰diter"><i class="fas fa-pen"></i></a>
                                 {% if user.status in ['EMAIL_VERIFIED', 'REJECTED', 'SUSPENDED'] %}
                                     <form method="post" action="{{ path('app_user_approve', {id: user.id}) }}" class="d-inline">
                                         <input type="hidden" name="_token" value="{{ csrf_token('approve' ~ user.id) }}">
@@ -158,8 +170,9 @@
     {% else %}
         <div class="bo-empty">
             <i class="fas fa-user-slash"></i>
-            <p>Aucun utilisateur trouvé</p>
+            <p>Aucun utilisateur trouvÃ©</p>
         </div>
     {% endif %}
 </div>
 {% endblock %}
+

@@ -8,10 +8,12 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: '`user`')]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
+#[UniqueEntity(fields: ['email'], message: 'Cet email est deja utilise.')]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     public const STATUS_EMAIL_PENDING = 'EMAIL_PENDING';
@@ -19,6 +21,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public const STATUS_APPROVED = 'APPROVED';
     public const STATUS_REJECTED = 'REJECTED';
     public const STATUS_SUSPENDED = 'SUSPENDED';
+
+    public const SEGMENT_VIP = 'VIP';
+    public const SEGMENT_ACTIF = 'ACTIF';
+    public const SEGMENT_CHURN_RISK = 'CHURN_RISK';
+    public const SEGMENT_DORMANT = 'DORMANT';
 
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -66,6 +73,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(length: 500, nullable: true)]
     private ?string $profileImageUrl = null;
+
+    #[ORM\Column(length: 50, nullable: true)]
+    private ?string $segment = null;
 
     public function __construct()
     {
@@ -150,6 +160,24 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         // If you store any temporary, sensitive data on the user, clear it here
         // $this->plainPassword = null;
+    }
+
+    public function __serialize(): array
+    {
+        return [
+            'id' => $this->id,
+            'email' => $this->email,
+            'password' => $this->password,
+            'roles' => $this->roles,
+        ];
+    }
+
+    public function __unserialize(array $data): void
+    {
+        $this->id = $data['id'] ?? null;
+        $this->email = $data['email'] ?? null;
+        $this->password = $data['password'] ?? null;
+        $this->roles = $data['roles'] ?? [];
     }
 
     public function getNom(): ?string
@@ -244,6 +272,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setStatus(string $status): static
     {
         $this->status = $status;
+        return $this;
+    }
+
+    public function getSegment(): ?string
+    {
+        return $this->segment;
+    }
+
+    public function setSegment(?string $segment): static
+    {
+        $this->segment = $segment;
         return $this;
     }
 

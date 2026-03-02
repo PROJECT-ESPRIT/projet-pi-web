@@ -16,6 +16,7 @@ security:
             lazy: true
             provider: app_user_provider
             user_checker: App\Security\UserChecker
+            access_denied_handler: App\Security\AccessDeniedHandler
             form_login:
                 login_path: login
                 check_path: login
@@ -28,12 +29,15 @@ security:
     # Easy way to control access for large sections of your site
     # Note: Only the *first* access control that matches will be used
     access_control:
+        - { path: ^/connect/google, roles: PUBLIC_ACCESS }
         - { path: ^/login, roles: PUBLIC_ACCESS }
         - { path: ^/register, roles: PUBLIC_ACCESS }
         - { path: ^/verify-email, roles: PUBLIC_ACCESS }
         - { path: ^/resend-verification, roles: PUBLIC_ACCESS }
         - { path: ^/forgot-password, roles: PUBLIC_ACCESS }
         - { path: ^/reset-password-code, roles: PUBLIC_ACCESS }
+        - { path: ^/participant/account/delete-confirm, roles: PUBLIC_ACCESS }
+        - { path: ^/api/onboarding/guest-chat, roles: PUBLIC_ACCESS }
         - { path: ^/stripe-webhook, roles: PUBLIC_ACCESS }
         - { path: ^/admin, roles: ROLE_ADMIN }
         # Allow home page to be public
