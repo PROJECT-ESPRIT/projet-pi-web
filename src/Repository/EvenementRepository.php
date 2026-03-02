@@ -42,7 +42,6 @@ class EvenementRepository extends ServiceEntityRepository
     }
 
     /**
-<<<<<<< HEAD
      * Count events where organisateur_id = connected user ID (artist's own events). Pure ID comparison.
      */
     public function countByOrganisateur(User $user): int
@@ -81,8 +80,6 @@ class EvenementRepository extends ServiceEntityRepository
     }
 
     /**
-=======
->>>>>>> c4d1c44b0746a7387dc28bd3111400a167bda2d9
      * @return Evenement[]
      */
     public function searchAndSort(array $filters, int $page, int $perPage): Paginator
@@ -125,7 +122,6 @@ class EvenementRepository extends ServiceEntityRepository
                 ->setParameter('prixMax', $filters['prix_max']);
         }
 
-<<<<<<< HEAD
         // Scope (artist): organisateur ID = connected user → mine; organisateur ID != connected user → others
         $ownerId = null;
         if (isset($filters['owner']) && $filters['owner'] instanceof User && $filters['owner']->getId() !== null) {
@@ -157,11 +153,6 @@ class EvenementRepository extends ServiceEntityRepository
             'date_desc' => ['e.dateDebut', 'DESC'],
             'prix_asc' => ['e.prix', 'ASC', 'NULLS FIRST'],
             'prix_desc' => ['e.prix', 'DESC', 'NULLS LAST'],
-=======
-        $sortMap = [
-            'date_asc' => ['e.dateDebut', 'ASC'],
-            'date_desc' => ['e.dateDebut', 'DESC'],
->>>>>>> c4d1c44b0746a7387dc28bd3111400a167bda2d9
             'titre_asc' => ['e.titre', 'ASC'],
             'titre_desc' => ['e.titre', 'DESC'],
             'created_desc' => ['e.createdAt', 'DESC'],
@@ -172,9 +163,8 @@ class EvenementRepository extends ServiceEntityRepository
             $sortKey = 'date_asc';
         }
 
-<<<<<<< HEAD
         [$sortField, $sortDir, $nulls] = array_pad($sortMap[$sortKey], 3, null);
-        
+
         // For databases that support NULLS FIRST/LAST
         if ($nulls !== null) {
             $qb->addOrderBy("$sortField IS NULL");
@@ -182,10 +172,8 @@ class EvenementRepository extends ServiceEntityRepository
         } else {
             $qb->addOrderBy($sortField, $sortDir);
         }
-        
+
         $qb->addOrderBy('e.id', 'DESC');
-=======
->>>>>>> c4d1c44b0746a7387dc28bd3111400a167bda2d9
 
         $query = $qb->getQuery()
             ->setFirstResult(($page - 1) * $perPage)
@@ -194,7 +182,6 @@ class EvenementRepository extends ServiceEntityRepository
         return new Paginator($query);
     }
 
-<<<<<<< HEAD
     /**
      * Count events matching the same filters as searchAndSort (no pagination).
      */
@@ -397,20 +384,4 @@ class EvenementRepository extends ServiceEntityRepository
 
         return $result;
     }
-=======
-//    /**
-//     * @return Evenement[] Returns an array of Evenement objects
-//     */
-//    public function findByExampleField($value): array
-//    {
-//        return $this->createQueryBuilder('e')
-//            ->andWhere('e.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->orderBy('e.id', 'ASC')
-//            ->setMaxResults(10)
-//            ->getQuery()
-//            ->getResult()
-//        ;
-//    }
->>>>>>> c4d1c44b0746a7387dc28bd3111400a167bda2d9
 }

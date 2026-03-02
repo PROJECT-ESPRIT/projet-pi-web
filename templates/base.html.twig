@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>{% block title %}Plateforme de RÃ©servation{% endblock %}</title>
+        <title>{% block title %}Plateforme de Réservation{% endblock %}</title>
         <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>ðŸŽ¨</text></svg>">
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -489,7 +489,7 @@
                 <div class="collapse navbar-collapse" id="guestNav">
                     <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                         <li class="nav-item"><a class="nav-link nav-link-guest" href="{{ path('home') }}"><i class="fas fa-home me-1"></i> Accueil</a></li>
-                        <li class="nav-item"><a class="nav-link nav-link-guest" href="{{ path('app_evenement_index') }}"><i class="fas fa-calendar-alt me-1"></i> Ã‰vÃ©nements</a></li>
+                        <li class="nav-item"><a class="nav-link nav-link-guest" href="{{ path('app_evenement_index') }}"><i class="fas fa-calendar-alt me-1"></i> Événements</a></li>
                         <li class="nav-item"><a class="nav-link nav-link-guest" href="{{ path('app_produit_index') }}"><i class="fas fa-store me-1"></i> Boutique</a></li>
                         <li class="nav-item"><a class="nav-link nav-link-guest" href="{{ path('app_donation_new') }}"><i class="fas fa-hand-holding-heart me-1"></i> Faire un Don</a></li>
                         <li class="nav-item"><a class="nav-link nav-link-guest" href="{{ path('app_forum_index') }}"><i class="fas fa-comments me-1"></i> Forum</a></li>
@@ -518,18 +518,18 @@
 
                     <li class="sidebar-section-label">Gestion</li>
                     <li><a href="{{ path('app_user_index') }}"><i class="fas fa-users"></i> Utilisateurs</a></li>
-                    <li><a href="{{ path('app_evenement_index') }}"><i class="fas fa-calendar-alt"></i> Ã‰vÃ©nements</a></li>
-                    <li><a href="{{ path('app_reservation_my') }}"><i class="fas fa-ticket-alt"></i> RÃ©servations</a></li>
+                    <li><a href="{{ path('app_evenement_index') }}"><i class="fas fa-calendar-alt"></i> Événements</a></li>
+                    <li><a href="{{ path('app_reservation_my') }}"><i class="fas fa-ticket-alt"></i> Réservations</a></li>
 
                     <li class="sidebar-section-label">Commerce</li>
                     <li><a href="{{ path('app_produit_admin_index') }}"><i class="fas fa-box"></i> Produits</a></li>
                     <li><a href="{{ path('app_commande_index') }}"><i class="fas fa-shopping-cart"></i> Commandes</a></li>
 
-                    <li class="sidebar-section-label">CommunautÃ©</li>
+                    <li class="sidebar-section-label">Communauté</li>
                     <li><a href="{{ path('app_donation_index') }}"><i class="fas fa-hand-holding-heart"></i> Dons</a></li>
-                    <li><a href="{{ path('app_type_don_index') }}"><i class="fas fa-tags"></i> Types de Don</a></li>
+                    <li><a href="{{ path('app_type_don_index') }}"><i class="fas fa-tags"></i> Types de don</a></li>
                     <li><a href="{{ path('app_forum_index') }}"><i class="fas fa-comments"></i> Forum</a></li>
-                    <li><a href="{{ path('app_forum_reponse_index') }}"><i class="fas fa-reply"></i> RÃ©ponses Forum</a></li>
+                    <li><a href="{{ path('app_forum_reponse_index') }}"><i class="fas fa-reply"></i> Réponses forum</a></li>
                 </ul>
 
                 <div class="sidebar-footer">
@@ -545,7 +545,7 @@
                         </div>
                     </div>
                     <a href="{{ path('logout') }}" class="btn btn-logout btn-sm">
-                        <i class="fas fa-sign-out-alt me-1"></i> DÃ©connexion
+                        <i class="fas fa-sign-out-alt me-1"></i> Déconnexion
                     </a>
                 </div>
             </nav>
@@ -577,7 +577,7 @@
                             <a class="nav-link" href="{{ path('home') }}"><i class="fas fa-home"></i> Accueil</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ path('app_evenement_index') }}"><i class="fas fa-calendar-alt"></i> Ã‰vÃ©nements</a>
+                            <a class="nav-link" href="{{ path('app_evenement_index') }}"><i class="fas fa-calendar-alt"></i> Événements</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="{{ path('app_produit_index') }}"><i class="fas fa-store"></i> Boutique</a>
@@ -594,11 +594,11 @@
                                     <i class="fas fa-paint-brush"></i> Gestion
                                 </a>
                                 <ul class="dropdown-menu">
-                                    <li><a class="dropdown-item" href="{{ path('app_evenement_new') }}"><i class="fas fa-plus-circle"></i> CrÃ©er un Ã‰vÃ©nement</a></li>
-                                    <li><a class="dropdown-item" href="{{ path('app_reservation_artist_owner') }}"><i class="fas fa-ticket-alt"></i> RÃ©servations reÃ§ues</a></li>
-                                    <li><a class="dropdown-item" href="{{ path('app_artist_event_stats') }}"><i class="fas fa-chart-line"></i> Stats Ã©vÃ©nements</a></li>
+                                    <li><a class="dropdown-item" href="{{ path('app_evenement_new') }}"><i class="fas fa-plus-circle"></i> Créer un événement</a></li>
+                                    <li><a class="dropdown-item" href="{{ path('app_reservation_artist_owner') }}"><i class="fas fa-ticket-alt"></i> Réservations reçues</a></li>
+                                    <li><a class="dropdown-item" href="{{ path('app_artist_event_stats') }}"><i class="fas fa-chart-line"></i> Stats événements</a></li>
                                     <li><a class="dropdown-item" href="{{ path('app_produit_admin_index') }}"><i class="fas fa-box"></i> Mes Produits</a></li>
-                                    <li><a class="dropdown-item" href="{{ path('app_commande_index') }}"><i class="fas fa-shopping-cart"></i> Commandes reÃ§ues</a></li>
+                                    <li><a class="dropdown-item" href="{{ path('app_commande_index') }}"><i class="fas fa-shopping-cart"></i> Commandes reçues</a></li>
                                 </ul>
                             </li>
                         {% endif %}
@@ -628,17 +628,17 @@
                                     </a>
                                 </li>
                                 {% if not is_granted('ROLE_ARTISTE') %}
-                                    <li><a class="dropdown-item" href="{{ path('app_reservation_my') }}"><i class="fas fa-ticket-alt"></i> Mes RÃ©servations</a></li>
+                                    <li><a class="dropdown-item" href="{{ path('app_reservation_my') }}"><i class="fas fa-ticket-alt"></i> Mes réservations</a></li>
                                 {% else %}
-                                    <li><a class="dropdown-item" href="{{ path('app_reservation_artist_owner') }}"><i class="fas fa-ticket-alt"></i> RÃ©servations reÃ§ues</a></li>
-                                    <li><a class="dropdown-item" href="{{ path('app_artist_event_stats') }}"><i class="fas fa-chart-line"></i> Stats Ã©vÃ©nements</a></li>
+                                    <li><a class="dropdown-item" href="{{ path('app_reservation_artist_owner') }}"><i class="fas fa-ticket-alt"></i> Réservations reçues</a></li>
+                                    <li><a class="dropdown-item" href="{{ path('app_artist_event_stats') }}"><i class="fas fa-chart-line"></i> Stats événements</a></li>
                                 {% endif %}
-                                <li><a class="dropdown-item" href="{{ path('app_commande_my') }}"><i class="fas fa-shopping-bag"></i> Mes Commandes</a></li>
-                                <li><a class="dropdown-item" href="{{ path('app_donation_my') }}"><i class="fas fa-heart"></i> Mes Dons</a></li>
+                                <li><a class="dropdown-item" href="{{ path('app_commande_my') }}"><i class="fas fa-shopping-bag"></i> Mes commandes</a></li>
+                                <li><a class="dropdown-item" href="{{ path('app_donation_my') }}"><i class="fas fa-heart"></i> Mes dons</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li>
                                     <a class="dropdown-item text-danger" href="{{ path('logout') }}">
-                                        <i class="fas fa-sign-out-alt"></i> DÃ©connexion
+                                        <i class="fas fa-sign-out-alt"></i> Déconnexion
                                     </a>
                                 </li>
                             </ul>
@@ -673,7 +673,7 @@
                         <div class="fo-footer-brand">
                             <i class="fas fa-palette"></i> Art Connect
                         </div>
-                        <p class="fo-footer-desc">Plateforme d'art inclusif dÃ©diÃ©e aux enfants. Nous croyons que chaque enfant mÃ©rite d'explorer sa crÃ©ativitÃ©.</p>
+                        <p class="fo-footer-desc">Plateforme d'art inclusif dédiée aux enfants. Nous croyons que chaque enfant mérite d'explorer sa créativité.</p>
                         <div class="fo-footer-social">
                             <a href="#"><i class="fab fa-facebook-f"></i></a>
                             <a href="#"><i class="fab fa-instagram"></i></a>
@@ -683,7 +683,7 @@
                     </div>
 
                     <div class="col-6 col-lg-2">
-                        <h6 class="fo-footer-title">DÃ©couvrir</h6>
+                        <h6 class="fo-footer-title">Découvrir</h6>
                         <ul class="fo-footer-links">
                             <li><a href="{{ path('home') }}">Accueil</a></li>
                             <li><a href="{{ path('login') }}">Connexion</a></li>
@@ -694,7 +694,7 @@
                     <div class="col-6 col-lg-2">
                         <h6 class="fo-footer-title">La Plateforme</h6>
                         <ul class="fo-footer-links">
-                            <li><a href="#">Ã‰vÃ©nements</a></li>
+                            <li><a href="{{ path('app_evenement_index') }}">Événements</a></li>
                             <li><a href="#">Boutique</a></li>
                             <li><a href="#">Forum</a></li>
                         </ul>
@@ -715,7 +715,7 @@
 
                 <hr class="fo-footer-hr">
                 <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-2">
-                    <small>&copy; {{ "now"|date("Y") }} Art Connect. Tous droits rÃ©servÃ©s.</small>
+                    <small>&copy; {{ "now"|date("Y") }} Art Connect. Tous droits réservés.</small>
                     <small>Fait avec <i class="fas fa-heart" style="color:var(--ac-pink);"></i> pour l'inclusion</small>
                 </div>
             </div>
@@ -743,7 +743,7 @@
                             </div>
                             <div class="mb-3">
                                 <label class="form-label fw-semibold" style="font-size:.85rem;">Message</label>
-                                <textarea class="form-control" rows="4" placeholder="Ã‰crivez votre message ici..." style="border-radius:10px; font-size:.88rem; border:1.5px solid #e5e7eb; padding:.6rem .8rem; resize:vertical;" required></textarea>
+                                <textarea class="form-control" rows="4" placeholder="Écrivez votre message ici..." style="border-radius:10px; font-size:.88rem; border:1.5px solid #e5e7eb; padding:.6rem .8rem; resize:vertical;" required></textarea>
                             </div>
                             <div class="d-grid">
                                 <button type="submit" class="btn" style="background:linear-gradient(135deg,var(--ac-deep),var(--ac-mid)); color:#fff; border:none; border-radius:10px; font-weight:700; font-size:.9rem; padding:.6rem;">
@@ -753,8 +753,8 @@
                         </form>
                         <div id="contactSuccessGuest" class="text-center d-none" style="padding:2rem 0;">
                             <i class="fas fa-check-circle" style="font-size:2.5rem; color:#22c55e;"></i>
-                            <p class="mt-2 mb-0 fw-semibold" style="color:#374151;">Message envoyÃ© avec succÃ¨s !</p>
-                            <small class="text-muted">Nous vous rÃ©pondrons dans les plus brefs dÃ©lais.</small>
+                            <p class="mt-2 mb-0 fw-semibold" style="color:#374151;">Message envoyé avec succès !</p>
+                            <small class="text-muted">Nous vous répondrons dans les plus brefs délais.</small>
                         </div>
                     </div>
                 </div>
@@ -777,7 +777,7 @@
                         <div class="fo-footer-brand">
                             <i class="fas fa-palette"></i> Art Connect
                         </div>
-                        <p class="fo-footer-desc">Plateforme d'art inclusif dÃ©diÃ©e aux enfants. Nous croyons que chaque enfant mÃ©rite d'explorer sa crÃ©ativitÃ©.</p>
+                        <p class="fo-footer-desc">Plateforme d'art inclusif dédiée aux enfants. Nous croyons que chaque enfant mérite d'explorer sa créativité.</p>
                         <div class="fo-footer-social">
                             <a href="#"><i class="fab fa-facebook-f"></i></a>
                             <a href="#"><i class="fab fa-instagram"></i></a>
@@ -790,7 +790,7 @@
                         <h6 class="fo-footer-title">Navigation</h6>
                         <ul class="fo-footer-links">
                             <li><a href="{{ path('home') }}">Accueil</a></li>
-                            <li><a href="{{ path('app_evenement_index') }}">Ã‰vÃ©nements</a></li>
+                            <li><a href="{{ path('app_evenement_index') }}">Événements</a></li>
                             <li><a href="{{ path('app_produit_index') }}">Boutique</a></li>
                             <li><a href="{{ path('app_forum_index') }}">Forum</a></li>
                         </ul>
@@ -800,13 +800,13 @@
                         <h6 class="fo-footer-title">Mon Compte</h6>
                         <ul class="fo-footer-links">
                             {% if not is_granted('ROLE_ARTISTE') %}
-                                <li><a href="{{ path('app_reservation_my') }}">RÃ©servations</a></li>
+                                <li><a href="{{ path('app_reservation_my') }}">Réservations</a></li>
                             {% else %}
-                                <li><a href="{{ path('app_reservation_artist_owner') }}">RÃ©servations reÃ§ues</a></li>
-                                <li><a href="{{ path('app_artist_event_stats') }}">Stats Ã©vÃ©nements</a></li>
+                                <li><a href="{{ path('app_reservation_artist_owner') }}">Réservations reçues</a></li>
+                                <li><a href="{{ path('app_artist_event_stats') }}">Stats événements</a></li>
                             {% endif %}
                             <li><a href="{{ path('app_commande_my') }}">Commandes</a></li>
-                            <li><a href="{{ path('app_donation_my') }}">Mes Dons</a></li>
+                            <li><a href="{{ path('app_donation_my') }}">Mes dons</a></li>
                             <li><a href="{{ path('app_donation_new') }}">Faire un Don</a></li>
                         </ul>
                     </div>
@@ -826,7 +826,7 @@
 
                 <hr class="fo-footer-hr">
                 <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-2">
-                    <small>&copy; {{ "now"|date("Y") }} Art Connect. Tous droits rÃ©servÃ©s.</small>
+                    <small>&copy; {{ "now"|date("Y") }} Art Connect. Tous droits réservés.</small>
                     <small>Fait avec <i class="fas fa-heart" style="color:var(--ac-pink);"></i> pour l'inclusion</small>
                 </div>
             </div>
@@ -850,7 +850,7 @@
                             </div>
                             <div class="mb-3">
                                 <label class="form-label fw-semibold" style="font-size:.85rem;">Message</label>
-                                <textarea class="form-control" rows="4" placeholder="Ã‰crivez votre message ici..." style="border-radius:10px; font-size:.88rem; border:1.5px solid #e5e7eb; padding:.6rem .8rem; resize:vertical;" required></textarea>
+                                <textarea class="form-control" rows="4" placeholder="Écrivez votre message ici..." style="border-radius:10px; font-size:.88rem; border:1.5px solid #e5e7eb; padding:.6rem .8rem; resize:vertical;" required></textarea>
                             </div>
                             <div class="d-grid">
                                 <button type="submit" class="btn" style="background:linear-gradient(135deg,var(--ac-deep),var(--ac-mid)); color:#fff; border:none; border-radius:10px; font-weight:700; font-size:.9rem; padding:.6rem;">
@@ -860,8 +860,8 @@
                         </form>
                         <div id="contactSuccess" class="text-center d-none" style="padding:2rem 0;">
                             <i class="fas fa-check-circle" style="font-size:2.5rem; color:#22c55e;"></i>
-                            <p class="mt-2 mb-0 fw-semibold" style="color:#374151;">Message envoyÃ© avec succÃ¨s !</p>
-                            <small class="text-muted">Nous vous rÃ©pondrons dans les plus brefs dÃ©lais.</small>
+                            <p class="mt-2 mb-0 fw-semibold" style="color:#374151;">Message envoyé avec succès !</p>
+                            <small class="text-muted">Nous vous répondrons dans les plus brefs délais.</small>
                         </div>
                     </div>
                 </div>
@@ -1097,7 +1097,7 @@
                 <div class="onb-chatbot-head">
                     <div>
                         <p class="onb-chatbot-title">Assistant onboarding</p>
-                        <p class="onb-chatbot-sub">Guide rapide pour bien demarrer</p>
+                        <p class="onb-chatbot-sub">Guide rapide pour bien démarrer</p>
                     </div>
                     <button type="button" class="onb-chatbot-close" id="onbChatClose" aria-label="Fermer">
                         <i class="fas fa-times"></i>
@@ -1113,9 +1113,9 @@
                 </form>
                 <p class="onb-chatbot-note" id="onbChatNote">
                     {% if app.user %}
-                        Connecte au service IA d onboarding.
+                        Connecté au service IA d'onboarding.
                     {% else %}
-                        Mode invite: connectez-vous pour activer l assistant IA complet.
+                        Mode invité : connectez-vous pour activer l'assistant IA complet.
                     {% endif %}
                 </p>
             </div>
@@ -1490,7 +1490,7 @@
                 if(!msg)return;
                 e.preventDefault();
                 pendingForm=form;
-                var title=form.getAttribute('data-confirm-title')||'ÃŠtes-vous sÃ»r ?';
+                var title=form.getAttribute('data-confirm-title')||'Êtes-vous sûr ?';
                 var btn=form.getAttribute('data-confirm-btn')||'Confirmer';
                 var cancelBtn=form.getAttribute('data-confirm-cancel');
                 var icon=el.querySelector('.confirm-modal-icon-wrap i');

@@ -18,7 +18,6 @@ class HomeController extends AbstractController
         ReservationRepository $reservationRepository,
         ProduitRepository $produitRepository,
         ForumRepository $forumRepository,
-        \App\Service\EventRecommendationService $eventRecommendationService
     ): Response {
         if ($this->isGranted('ROLE_ADMIN')) {
             return $this->redirectToRoute('admin_stats');
@@ -83,21 +82,11 @@ class HomeController extends AbstractController
         $myEventsThree    = $isArtist ? array_values(array_filter($latestThree, fn ($ev) => $ev->getOrganisateur() && $ev->getOrganisateur()->getId() === $user->getId())) : [];
         $otherEventsThree = $isArtist ? array_values(array_filter($latestThree, fn ($ev) => !$ev->getOrganisateur() || $ev->getOrganisateur()->getId() !== $user->getId())) : [];
 
-        // AI Event Recommendations
-        $recommendedEvents = [];
-        if ($user) {
-            $recommendedEvents = $eventRecommendationService->getHybridRecommendations($user, 4);
-        } else {
-            // For guests, we can show popular events
-            $recommendedEvents = $eventRecommendationService->getPopularEvents(4);
-        }
-
         return $this->render('home/index.html.twig', [
             'user'                 => $user,
             'isArtist'             => $isArtist,
             'latestEvents'         => $latestThree,
             'featuredEvents'       => $featuredEvents,
-            'recommendedEvents' => $recommendedEvents,
             'myEvents'             => $myEventsThree,
             'otherEvents'          => $otherEventsThree,
             'total_mine'           => $totalMine,
