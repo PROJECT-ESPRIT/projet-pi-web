@@ -453,6 +453,40 @@
     </div>
 </div>
 
+{# ===== Modal: Comment fonctionne la prédiction ML ===== #}
+<div class="ml-modal-backdrop" id="mlExplainBackdrop" aria-hidden="true">
+    <div class="ml-modal" role="dialog" aria-labelledby="mlModalTitle" aria-modal="true">
+        <div class="ml-modal-header">
+            <h3 id="mlModalTitle"><i class="fas fa-brain"></i> Comment la prédiction d'inscriptions fonctionne</h3>
+            <button type="button" class="ml-modal-close" id="mlModalClose" aria-label="Fermer"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="ml-modal-body">
+            <p>Les chiffres affichés sont calculés par le script Python <code>predict_registrations.py</code>, à partir de l’historique des inscriptions (nombre et date) enregistré dans la base. Voici les principes utilisés.</p>
+
+            <h4><i class="fas fa-chart-line" style="margin-right:.35rem;"></i> 1. Régression linéaire</h4>
+            <p>On ajuste une droite sur les derniers mois pour estimer la tendance. La prédiction au prochain mois est la valeur de cette droite à la prochaine période.</p>
+
+            <h4><i class="fas fa-tachometer-alt" style="margin-right:.35rem;"></i> 2. Moyenne mobile (3 mois)</h4>
+            <p>On calcule la moyenne des 3 derniers mois. Cela lisse les variations court terme et donne une valeur de référence récente.</p>
+
+            <h4><i class="fas fa-wave-square" style="margin-right:.35rem;"></i> 3. Lissage exponentiel</h4>
+            <p>On pondère les mois récents plus que les anciens (coefficient 0,45). Les inscriptions les plus récentes ont donc plus d’impact sur la prédiction.</p>
+
+            <h4><i class="fas fa-calendar-alt" style="margin-right:.35rem;"></i> 4. Facteur saisonnier</h4>
+            <p>On compare la moyenne des 3 derniers mois à celle des 3 mois précédents. Si l’activité augmente (ou baisse), un petit facteur positif (ou négatif) est appliqué à la prédiction, dans une fourchette limitée (±15 %).</p>
+
+            <h4><i class="fas fa-calculator" style="margin-right:.35rem;"></i> 5. Combinaison finale</h4>
+            <p>La prédiction est une combinaison pondérée : <strong>45 %</strong> régression linéaire, <strong>25 %</strong> moyenne mobile, <strong>30 %</strong> lissage exponentiel, le tout multiplié par (1 + facteur saisonnier).</p>
+
+            <h4><i class="fas fa-shield-alt" style="margin-right:.35rem;"></i> 6. Confiance et intervalle</h4>
+            <p>Le score de confiance (0–100) dépend de la régularité des données (faible variation = confiance plus élevée), de la proximité de la prédiction avec le dernier mois et du nombre de mois disponibles. L’<strong>intervalle</strong> (min – max) est une fourchette autour de la prédiction, plus large quand la confiance est faible.</p>
+        </div>
+        <div class="ml-modal-footer">
+            Script : <code>scripts/predict_registrations.py</code> — Aucune bibliothèque externe (Python standard uniquement).
+        </div>
+    </div>
+</div>
+
 {# ===== ROW 3: Revenue chart + Orders + Donations ===== #}
 <div class="st-grid st-3">
     <div class="st-card">
