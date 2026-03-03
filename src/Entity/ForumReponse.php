@@ -26,7 +26,7 @@ class ForumReponse
     private ?\DateTimeImmutable $dateReponse = null;
 
     #[ORM\ManyToOne(inversedBy: 'reponses')]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
     #[Assert\NotNull]
     private ?Forum $forum = null;
 

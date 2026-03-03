@@ -86,6 +86,13 @@ class HomeController extends AbstractController
         $myEventsThree    = $isArtist ? array_values(array_filter($latestThree, fn ($ev) => $ev->getOrganisateur() && $ev->getOrganisateur()->getId() === $user->getId())) : [];
         $otherEventsThree = $isArtist ? array_values(array_filter($latestThree, fn ($ev) => !$ev->getOrganisateur() || $ev->getOrganisateur()->getId() !== $user->getId())) : [];
 
+        $reservationCounts = [];
+        foreach (array_merge($featuredEvents, $latestThree) as $ev) {
+            if ($ev->getId() !== null && !isset($reservationCounts[$ev->getId()])) {
+                $reservationCounts[$ev->getId()] = $reservationRepository->countReservedPlacesForEvent($ev);
+            }
+        }
+
         return $this->render('home/index.html.twig', [
             'user'                 => $user,
             'isArtist'             => $isArtist,
@@ -102,6 +109,7 @@ class HomeController extends AbstractController
             'ai_has_history'       => $aiHasHistory,
             'latestProduits'       => $produitRepository->findBy([], ['id' => 'DESC'], 4),
             'latestForums'         => $forumRepository->findBy([], ['dateCreation' => 'DESC'], 3),
+            'reservationCounts'    => $reservationCounts,
         ]);
     }
 
