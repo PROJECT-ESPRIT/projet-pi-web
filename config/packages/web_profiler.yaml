@@ -1,12 +1,12 @@
+# https://symfony.com/doc/6.4/profiler.html
 when@dev:
     web_profiler:
         toolbar: true
-
-    framework:
-        profiler:
-            collect: true
-            collect_serializer_data: true
+        intercept_redirects: false
 
 when@test:
+    web_profiler:
+        toolbar: true
     framework:
-        profiler: { collect: false }
+        profiler:
+            collect: false
