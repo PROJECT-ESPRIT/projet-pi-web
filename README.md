@@ -46,16 +46,70 @@
 
 ## Tests
 
+Les tests unitaires suivent le workshop Symfony : ils valident les **règles métier** via des services dans `src/Service/` et des classes de test dans `tests/Service/` (PHPUnit TestCase, sans base de données ni kernel).
+
+**Structure (workshop) :**
+
+| Entité      | Service              | Règles métier |
+|------------|----------------------|----------------|
+| Evenement  | `EvenementManager`   | Date de fin > date de début ; nombre de places > 0 |
+| Reservation| `ReservationManager` | Statut parmi PENDING / CONFIRMED / CANCELLED ; montant payé ≥ 0 |
+| User       | `UserManager`        | Nom obligatoire ; email valide |
+
+**Générer un nouveau test unitaire :**
+
 ```bash
-# Tests unitaires (PHPUnit)
-php bin/phpunit tests/Entity/
-
-# Analyse statique — vérifie les types sans exécuter le code (PHPStan)
-vendor/bin/phpstan analyse --no-progress
-
-# Vérifie la cohérence entre les entités et la base de données (Doctrine)
-php bin/console doctrine:schema:validate
+php bin/console make:test
+# Choisir : TestCase
+# Nom de la classe : MonServiceTest
+# Déplacer le fichier généré dans tests/Service/
 ```
+
+**Exécuter les tests :**
+
+```bash
+# Tous les tests unitaires (services)
+php bin/phpunit tests/Service/
+
+# Ou l’ensemble des tests
+php bin/phpunit
+```
+
+**Analyse statique (PHPStan — workshop) :**
+
+```bash
+# Installer (dépendance de dev)
+composer require --dev phpstan/phpstan
+
+# Vérifier l’installation
+vendor/bin/phpstan --version
+
+# Analyser le code (avec config phpstan.neon)
+vendor/bin/phpstan analyse
+
+# Analyser uniquement src (sans config)
+vendor/bin/phpstan analyse src
+
+# Analyse ciblée
+vendor/bin/phpstan analyse src/Controller
+vendor/bin/phpstan analyse src/Service
+```
+
+**Schéma Doctrine :**
+
+
+**Doctrine Doctor (workshop) :**
+
+```bash
+# Installation (si erreur, utiliser la commande de fallback ci‑dessous)
+composer require --dev ahmed-bhs/doctrine-doctor
+
+# En cas d’erreur d’installation :
+composer require ahmed-bhs/doctrine-doctor:^1.0 webmozart/assert:^1.11 --with-all-dependencies
+composer require --dev ahmed-bhs/doctrine-doctor
+```
+
+En dev : ouvrir une page → Web Profiler → panneau **Doctrine Doctor** (intégrité, sécurité, requêtes lentes). Après chaque correction : `symfony server:stop` puis `php bin/console cache:clear`, relancer le serveur.
 
 ---
 
