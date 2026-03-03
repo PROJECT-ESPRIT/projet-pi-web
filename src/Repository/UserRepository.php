@@ -195,13 +195,14 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
      */
     public function searchAndSortPaginated(
         ?string $query,
+        ?string $status,
         string $sort,
         string $direction,
         int $page,
         int $perPage
     ): array
     {
-        $allowedSorts = ['nom', 'prenom', 'email', 'id'];
+        $allowedSorts = ['nom', 'prenom', 'email', 'id', 'status', 'createdAt'];
         $sortField = in_array($sort, $allowedSorts, true) ? $sort : 'nom';
         $sortDirection = strtolower($direction) === 'desc' ? 'desc' : 'asc';
 
@@ -221,6 +222,11 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
             )
             ->setParameter('q', $q)
             ->setParameter('qRole', $qRole);
+        }
+
+        if ($status !== null && trim($status) !== '' && $status !== 'all') {
+            $qb->andWhere('u.status = :status')
+               ->setParameter('status', $status);
         }
 
         $qb->orderBy('u.' . $sortField, $sortDirection)

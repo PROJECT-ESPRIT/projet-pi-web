@@ -16,7 +16,11 @@ final class RegistrationPredictionService
     public function __construct(KernelInterface $kernel)
     {
         $this->projectDir = $kernel->getProjectDir();
-        $this->pythonScript = $this->projectDir . \DIRECTORY_SEPARATOR . 'scripts' . \DIRECTORY_SEPARATOR . 'predict_registrations.py';
+        $pythonDir = $this->projectDir . \DIRECTORY_SEPARATOR . 'python' . \DIRECTORY_SEPARATOR . 'predict_registrations.py';
+        $scriptsDir = $this->projectDir . \DIRECTORY_SEPARATOR . 'scripts' . \DIRECTORY_SEPARATOR . 'predict_registrations.py';
+        $this->pythonScript = is_file($pythonDir) && is_readable($pythonDir)
+            ? $pythonDir
+            : $scriptsDir;
     }
 
     /**

@@ -118,45 +118,66 @@ class SeedDatabaseCommand extends Command
 
     private function createUsers(SymfonyStyle $io): array
     {
-        // Helper: random date within the past 6 months
-        $randCreated = fn() => '-' . random_int(1, 180) . ' days';
+        // Build registration dates so every month in the last 12 has inscriptions (chart + ML logic).
+        // 60 users total: spread 5 per month over last 12 months, on random days 2–9.
+        $endDate = new \DateTimeImmutable('today');
+        $startMonth = $endDate->modify('-11 months')->format('Y-m');
+        $registrationDates = [];
+        for ($i = 0; $i < 12; $i++) {
+            $m = (new \DateTimeImmutable($startMonth . '-01'))->modify("+{$i} months");
+            $ym = $m->format('Y-m');
+            $days = range(2, 9);
+            shuffle($days);
+            for ($j = 0; $j < 5; $j++) {
+                $registrationDates[] = $ym . '-' . sprintf('%02d', $days[$j]);
+            }
+        }
+        // 12 * 5 = 60 dates; shuffle so order isn't strictly by month
+        shuffle($registrationDates);
+        if ($registrationDates === []) {
+            $registrationDates = [$endDate->modify('-1 month')->format('Y-m') . '-05'];
+        }
+        $dateIndex = 0;
+        $nextDate = function () use (&$dateIndex, $registrationDates): string {
+            $date = $registrationDates[$dateIndex % count($registrationDates)];
+            $dateIndex++;
+            return $date;
+        };
 
-        $admin = $this->makeUser('admin@art.com', 'Admin', 'Super', ['ROLE_ADMIN'], User::STATUS_APPROVED, '1985-03-15', '-180 days');
+        $admin = $this->makeUser('admin@art.com', 'Admin', 'Super', ['ROLE_ADMIN'], User::STATUS_APPROVED, '1985-03-15', $nextDate());
         $io->text(' + admin@art.com (ADMIN)');
 
-        // [email, nom, prenom, birthDate, createdOffset]
         $artistData = [
-            ['leila.art@mail.tn',          'Ben Salah',  'Leila',   '1990-07-22', '-170 days'],
-            ['karim.design@mail.tn',       'Trabelsi',   'Karim',   '1988-11-05', '-155 days'],
-            ['nour.music@mail.tn',         'Gharbi',     'Nour',    '1995-02-14', '-130 days'],
-            ['yasminemaatougui9@gmail.com', 'Maatougui',  'Yasmine', '1992-09-30', '-110 days'],
+            ['leila.art@mail.tn',          'Ben Salah',  'Leila',   '1990-07-22'],
+            ['karim.design@mail.tn',       'Trabelsi',   'Karim',   '1988-11-05'],
+            ['nour.music@mail.tn',         'Gharbi',     'Nour',    '1995-02-14'],
+            ['yasminemaatougui9@gmail.com', 'Maatougui',  'Yasmine', '1992-09-30'],
         ];
 
         $artists = [];
-        foreach ($artistData as [$email, $nom, $prenom, $birth, $created]) {
-            $artists[] = $this->makeUser($email, $nom, $prenom, ['ROLE_ARTISTE'], User::STATUS_APPROVED, $birth, $created);
+        foreach ($artistData as [$email, $nom, $prenom, $birth]) {
+            $artists[] = $this->makeUser($email, $nom, $prenom, ['ROLE_ARTISTE'], User::STATUS_APPROVED, $birth, $nextDate());
             $io->text(" + $email (ARTISTE, born $birth)");
         }
 
-        // [email, nom, prenom, birthDate, createdOffset]
         $participantData = [
-            ['sara.parent@mail.tn',   'Hammami',  'Sara',    '1983-05-10', '-160 days'],
-            ['mehdi.family@mail.tn',  'Jebali',   'Mehdi',   '1980-12-28', '-140 days'],
-            ['amina.test@mail.tn',    'Riahi',    'Amina',   '1998-04-03', '-95 days'],
-            ['youssef.play@mail.tn',  'Bouazizi', 'Youssef', '2001-08-17', '-60 days'],
+            ['sara.parent@mail.tn',   'Hammami',  'Sara',    '1983-05-10'],
+            ['mehdi.family@mail.tn',  'Jebali',   'Mehdi',   '1980-12-28'],
+            ['amina.test@mail.tn',    'Riahi',    'Amina',   '1998-04-03'],
+            ['youssef.play@mail.tn',  'Bouazizi', 'Youssef', '2001-08-17'],
         ];
 
         $participants = [];
-        foreach ($participantData as [$email, $nom, $prenom, $birth, $created]) {
-            $participants[] = $this->makeUser($email, $nom, $prenom, ['ROLE_PARTICIPANT'], User::STATUS_APPROVED, $birth, $created);
+        foreach ($participantData as [$email, $nom, $prenom, $birth]) {
+            $participants[] = $this->makeUser($email, $nom, $prenom, ['ROLE_PARTICIPANT'], User::STATUS_APPROVED, $birth, $nextDate());
             $io->text(" + $email (PARTICIPANT, born $birth)");
         }
 
-        $emailPending = $this->makeUser('new.user@mail.tn', 'Chaabane', 'Omar', ['ROLE_PARTICIPANT'], User::STATUS_EMAIL_PENDING, '1999-06-21', '-3 days');
+        $emailPending = $this->makeUser('new.user@mail.tn', 'Chaabane', 'Omar', ['ROLE_PARTICIPANT'], User::STATUS_EMAIL_PENDING, '1999-06-21', $nextDate());
         $emailPending->setEmailVerificationToken(bin2hex(random_bytes(32)));
         $io->text(' + new.user@mail.tn (PARTICIPANT - EMAIL_PENDING)');
 
-        // Extra participants — createdAt spread randomly across past 6 months
+        // Extra participants — spread across last 12 months so chart and ML have data every month
         // [email, nom, prenom, birthDate]
         $extraData = [
             ['ines.b@mail.tn',       'Belhaj',    'Inès',      '1997-03-12'],
@@ -224,9 +245,20 @@ class SeedDatabaseCommand extends Command
 
         $extras = [];
         foreach ($extraData as [$email, $nom, $prenom, $birth]) {
-            $extras[] = $this->makeUser($email, $nom, $prenom, ['ROLE_PARTICIPANT'], User::STATUS_APPROVED, $birth, $randCreated());
+            $extras[] = $this->makeUser($email, $nom, $prenom, ['ROLE_PARTICIPANT'], User::STATUS_APPROVED, $birth, $nextDate());
         }
-        $io->text(' + ' . count($extras) . ' extra participants (createdAt spread over past 6 months)');
+        $io->text(' + ' . count($extras) . ' extra participants (registrations spread across last 12 months, 5 per month)');
+
+        // Fake-domain users for approval flow testing (ML fake-domain risk will show high %)
+        $fakeDomainData = [
+            ['test@mailinator.com', 'FakeOne', 'Alice', '1995-01-10'],
+            ['bob@tempmail.com', 'FakeTwo', 'Bob', '1990-06-15'],
+            ['demo@10minutemail.com', 'TempMail', 'Charlie', '1988-11-20'],
+        ];
+        foreach ($fakeDomainData as [$email, $nom, $prenom, $birth]) {
+            $this->makeUser($email, $nom, $prenom, ['ROLE_PARTICIPANT'], User::STATUS_EMAIL_VERIFIED, $birth, $nextDate());
+            $io->text(" + $email (PARTICIPANT - EMAIL_VERIFIED, fake domain for approval test)");
+        }
 
         $this->em->flush();
 

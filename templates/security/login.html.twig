@@ -1,6 +1,6 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Connexion â€” Art Connect{% endblock %}
+{% block title %}Connexion — Art Connect{% endblock %}
 
 {% block guest_wrapper_open %}{% endblock %}
 {% block guest_wrapper_close %}{% endblock %}
@@ -14,7 +14,7 @@
             <i class="fas fa-palette"></i><span>Art Connect</span>
         </div>
 
-        <p class="auth-sub">Connectez-vous Ã  votre espace</p>
+        <p class="auth-sub">Connectez-vous à votre espace</p>
 
         <a href="{{ path('connect_google_start') }}" class="btn-social">
             <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
@@ -41,7 +41,7 @@
                            class="form-control" autocomplete="current-password" placeholder="Votre mot de passe">
                 </div>
                 <div class="text-end mt-1">
-                    <a href="{{ path('app_forgot_password') }}" class="auth-link">Mot de passe oubliÃ© ?</a>
+                    <a href="{{ path('app_forgot_password') }}" class="auth-link">Mot de passe oublié ?</a>
                 </div>
             </div>
 
@@ -55,17 +55,17 @@
 
         {% if error %}
             {% set errMsg = error.messageKey|trans(error.messageData, 'security') %}
-            {% if 'vÃ©rifier votre adresse email' in errMsg|lower %}
+            {% if 'vérifier votre adresse email' in errMsg|lower %}
                 <div class="text-center mt-2">
                     <a href="{{ path('app_registration_confirmation', {email: last_username}) }}" class="auth-link">
-                        <i class="fas fa-redo me-1"></i>Renvoyer le lien de vÃ©rification
+                        <i class="fas fa-redo me-1"></i>Renvoyer le lien de vérification
                     </a>
                 </div>
             {% endif %}
         {% endif %}
 
         <div class="auth-footer">
-            Pas encore de compte ? <a href="{{ path('register') }}">CrÃ©er un compte</a>
+            Pas encore de compte ? <a href="{{ path('register') }}">Créer un compte</a>
         </div>
     </div>
 </div>
