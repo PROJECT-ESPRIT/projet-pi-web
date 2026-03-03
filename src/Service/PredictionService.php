@@ -5,6 +5,8 @@ namespace App\Service;
 
 use App\Repository\LigneCommandeRepository;
 use App\Entity\Produit;
+use Symfony\Component\Process\Process;
+use Symfony\Component\Process\Exception\ProcessFailedException;
 
 class PredictionService
 {
@@ -16,21 +18,16 @@ class PredictionService
     }
 
     /**
-     * Retourne l'historique mensuel (Jan → Déc)
+     * Retourne l'historique mensuel (Jan → Déc) pour un produit
      */
     public function getMonthlyHistory(Produit $produit): array
     {
-        $ventes = $this->ligneCommandeRepository
-            ->findQuantitesByProduit($produit->getId());
+        $ventes = $this->ligneCommandeRepository->findQuantitesByProduit($produit->getId());
 
-        // Tableau 12 mois index 0 → 11
         $history = array_fill(0, 12, 0);
 
         foreach ($ventes as $v) {
-
-            // Si SQL natif → date_commande est une string
             $month = (int) date('n', strtotime($v['date_commande'])) - 1;
-
             $history[$month] += (int) $v['quantite'];
         }
 
@@ -38,30 +35,33 @@ class PredictionService
     }
 
     /**
-     * Prédiction intelligente pour un mois donné
+     * Prédiction pour un mois donné via Python
      */
     public function predictForMonth(Produit $produit, int $mois): int
     {
         $history = $this->getMonthlyHistory($produit);
 
-        $total = array_sum($history);
-
-        if ($total === 0) {
-            return 0;
+        // Chemin absolu vers le script Python
+        $scriptPath = realpath(__DIR__ . '/../scripts/predict_sales.py');
+        if (!$scriptPath) {
+            throw new \RuntimeException("Le script Python predict_sales.py n'a pas été trouvé !");
         }
 
-        // Moyenne annuelle
-        $moyenne = $total / 12;
+        // Conversion en JSON pour passer en argument
+        $historyJson = json_encode($history);
 
-        // Facteur saisonnier basé sur historique du mois choisi
-        $moisIndex = $mois - 1;
+        // Exécution du script Python
+        $process = new Process(['python', $scriptPath, $historyJson, (string)$mois]);
+        $process->run();
 
-        $seasonFactor = $history[$moisIndex] > 0
-            ? $history[$moisIndex] / max($moyenne, 1)
-            : 1;
+        if (!$process->isSuccessful()) {
+            throw new ProcessFailedException($process);
+        }
 
-        $prediction = $moyenne * $seasonFactor;
+        // Récupère la sortie JSON du script Python
+        $result = json_decode($process->getOutput(), true);
 
-        return (int) round($prediction);
+        // Retourne la prédiction ou 0 si problème
+        return $result['prediction'] ?? 0;
     }
 }
