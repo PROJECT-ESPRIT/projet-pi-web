@@ -993,6 +993,10 @@ document.addEventListener('DOMContentLoaded', function() {
     var futureRegTotals = (futureByType || []).map(function(f){
         return (f.ROLE_USER||0)+(f.ROLE_PARTICIPANT||0)+(f.ROLE_ARTISTE||0)+(f.ROLE_ADMIN||0);
     });
+    if (futureRegLabels.length === 0) {
+        futureRegLabels = [{{ nextMonthRegistrationPrediction.nextMonthLabel|json_encode|raw }}];
+        futureRegTotals = [{{ nextMonthRegistrationPrediction.predictedCount|json_encode|raw }}];
+    }
     regLabels = regLabels.concat(futureRegLabels);
     var nHist = regValues.length;
     var nFuture = futureRegLabels.length;
@@ -1014,9 +1018,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 fill:true, tension:.4, pointBackgroundColor:'#fff', pointBorderColor:C.lavender,
                 pointBorderWidth:2, pointRadius:4, pointHoverRadius:6 },
             { data:forecastSeries,
-                borderColor:C.deep, borderDash:[6,4], borderWidth:2,
+                borderColor:C.deep, borderDash:[8,4], borderWidth:2.5,
                 fill:false, tension:.35, pointBackgroundColor:C.deep, pointBorderColor:'#fff',
-                pointBorderWidth:1.5, pointRadius:3, pointHoverRadius:5 },
+                pointBorderWidth:2, pointRadius:4, pointHoverRadius:6 },
             { data:upperBandSeries, borderColor:'#9ca3af', borderDash:[2,4], borderWidth:1.5, fill:false, pointRadius:0 },
             { data:lowerBandSeries, borderColor:'#9ca3af', borderDash:[2,4], borderWidth:1.5, fill:false, pointRadius:0 }
             ] },
