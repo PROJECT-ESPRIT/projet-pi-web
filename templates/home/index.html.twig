@@ -1000,37 +1000,148 @@
         </section>
 
         {# ---------- PRODUCTS PREVIEW ---------- #}
-        <section class="mb-4">
-            <div class="section-head">
-                <h2><i class="fas fa-store me-2" style="color:var(--ac-blue)"></i>Boutique</h2>
-                <a href="{{ path('app_produit_index') }}" class="see-all">Voir tout <i class="fas fa-arrow-right"></i></a>
-            </div>
-            <div class="row g-3">
-                {% for produit in latestProduits|slice(0, 4) %}
-                    <div class="col-sm-6 col-lg-3">
-                        <div class="prod-card">
-                            <div class="prod-card-img">
-                                {% if produit.image %}
-                                    <img src="{{ produit.image }}" alt="{{ produit.nom }}">
-                                {% else %}
-                                    🛍️
-                                {% endif %}
-                            </div>
-                            <div class="prod-card-body">
-                                <h3>{{ produit.nom }}</h3>
-                                <p>{{ produit.description|length > 80 ? produit.description|slice(0, 80) ~ '…' : produit.description }}</p>
-                                <div class="prod-card-foot">
-                                    <span class="prod-price">{{ produit.prix }} TND</span>
-                                </div>
-                            </div>
+
+<style>
+.prod-card {
+    background: #ffffff;
+    border-radius: 20px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+    position: relative;
+}
+
+.prod-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+}
+
+.prod-card-img {
+    height: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8f9fa;
+}
+
+.prod-card-img img {
+    max-height: 100%;
+    max-width: 100%;
+    object-fit: cover;
+}
+
+.prod-card-body {
+    padding: 15px;
+}
+
+.prod-card-body h3 {
+    font-size: 1.1rem;
+    margin-bottom: 8px;
+}
+
+.prod-card-body p {
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+.prod-price {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #0d6efd;
+}
+
+.wishlist-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: white;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #dc3545;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    transition: 0.3s;
+    z-index: 10;
+    text-decoration: none;
+}
+
+.wishlist-btn:hover {
+    background: #dc3545;
+    color: white;
+}
+</style>
+
+<section class="mb-4">
+    <div class="section-head">
+        <h2>
+            <i class="fas fa-store me-2" style="color:var(--ac-blue)"></i>
+            Boutique
+        </h2>
+        <a href="{{ path('app_produit_index') }}" class="see-all">
+            Voir tout <i class="fas fa-arrow-right"></i>
+        </a>
+    </div>
+
+    <div class="row g-4">
+        {% for produit in latestProduits|slice(0, 4) %}
+            <div class="col-sm-6 col-lg-3">
+                <div class="prod-card">
+
+                    {# ❤️ Icône Souhait #}
+                    <a href="#" class="wishlist-btn" title="Ajouter aux souhaits">
+                        <i class="far fa-heart"></i>
+                    </a>
+
+                    {# Image #}
+                    <div class="prod-card-img">
+                        {% if produit.image %}
+                            <img src="{{ produit.image }}" alt="{{ produit.nom }}">
+                        {% else %}
+                            🛍️
+                        {% endif %}
+                    </div>
+
+                    {# Body #}
+                    <div class="prod-card-body">
+                        <h3>{{ produit.nom }}</h3>
+                        <p>
+                            {{ produit.description|length > 80 
+                                ? produit.description|slice(0, 80) ~ '…' 
+                                : produit.description }}
+                        </p>
+
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="prod-price">
+                                {{ produit.prix }} TND
+                            </span>
                         </div>
                     </div>
-                {% else %}
-                    <div class="col-12"><div class="text-center text-muted py-3">Aucun produit pour le moment.</div></div>
-                {% endfor %}
-            </div>
-        </section>
 
+                    {# 🛒 Bouton Commander #}
+                    <div class="p-3 pt-0">
+                        <form method="post" action="{{ path('app_panier_add', {id: produit.id}) }}">
+                            <button type="submit" 
+                                    class="btn btn-primary w-100 rounded-pill shadow-sm">
+                                <i class="fas fa-shopping-cart me-2"></i>
+                                Commander
+                            </button>
+                        </form>
+                    </div>
+
+                </div>
+            </div>
+        {% else %}
+            <div class="col-12">
+                <div class="text-center text-muted py-3">
+                    Aucun produit pour le moment.
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</section>
         {# ---------- CTA ---------- #}
         <section class="cta-banner mb-4">
             <div class="row align-items-center">

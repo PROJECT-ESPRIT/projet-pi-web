@@ -1,23 +1,31 @@
 # This file is the entry point to configure your own services.
-# https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
+# https://symfony.com/doc/current/best_practices.html
 
 parameters:
+    # ================= EMAIL =================
     mailer_from_default: 'no-reply@artconnect.local'
     mailer_from: '%env(default:mailer_from_default:MAILER_FROM)%'
     email_verification_ttl_hours: '%env(int:EMAIL_VERIFICATION_TTL_HOURS)%'
     password_reset_ttl_minutes: '%env(int:PASSWORD_RESET_TTL_MINUTES)%'
-    stripe_publishable_key: '%env(default::STRIPE_PUBLISHABLE_KEY)%'
+
+    # ================= STRIPE =================
+    stripe_secret_key: '%env(STRIPE_SECRET_KEY)%'
+    stripe_publishable_key: '%env(STRIPE_PUBLISHABLE_KEY)%'
+    stripe_webhook_secret: '%env(STRIPE_WEBHOOK_SECRET)%'
+
 
 services:
-    # Configuration par défaut
+    # ================= CONFIGURATION GLOBALE =================
     _defaults:
         autowire: true
         autoconfigure: true
         bind:
             int $emailVerificationTtlHours: '%email_verification_ttl_hours%'
             int $passwordResetTtlMinutes: '%password_reset_ttl_minutes%'
+            string $stripeSecretKey: '%stripe_secret_key%'
+            string $stripeWebhookSecret: '%stripe_webhook_secret%'
 
-    # Enregistre toutes les classes de src/ comme services
+    # ================= AUTOLOAD DES SERVICES =================
     App\:
         resource: '../src/'
         exclude:
@@ -25,24 +33,26 @@ services:
             - '../src/Entity/'
             - '../src/Kernel.php'
 
-    # Configuration explicite du service d'envoi d'email
+    # ================= SERVICES EMAIL =================
     App\Service\ResetPasswordMailer:
         arguments:
             $fromEmail: '%mailer_from%'
 
-    # Configuration du service d'email personnalisé
     App\Service\EmailService:
         arguments:
             $adminEmail: '%mailer_from%'
 
+    # ================= SERVICE STRIPE =================
     App\Service\StripeService:
         arguments:
-            $stripeSecretKey: '%env(default::STRIPE_SECRET_KEY)%'
+            $stripeSecretKey: '%stripe_secret_key%'
 
+    # ================= WEBHOOK STRIPE =================
     App\Controller\Event\StripeWebhookController:
         arguments:
-            $stripeWebhookSecret: '%env(default::STRIPE_WEBHOOK_SECRET)%'
+            $stripeWebhookSecret: '%stripe_webhook_secret%'
 
+    # ================= PDF SERVICE =================
     App\Service\TicketPdfService:
         arguments:
             $projectDir: '%kernel.project_dir%'

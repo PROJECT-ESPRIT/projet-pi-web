@@ -10,32 +10,43 @@ use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 
 class SecurityController extends AbstractController
 {
-    #[Route('/login', name: 'login')]
-    public function login(AuthenticationUtils $authenticationUtils): Response
+    #[Route('/register', name: 'app_register')]
+    public function register(
+        Request $request,
+        UserPasswordHasherInterface $passwordHasher,
+        UserAuthenticatorInterface $userAuthenticator,
+        UserAuthenticator $authenticator,
+        EntityManagerInterface $em
+    ): Response
     {
-        // Redirect if already logged in
-        if ($this->getUser()) {
-            return $this->redirectToRoute('home');
+        $user = new User();
+        $form = $this->createForm(RegistrationFormType::class, $user);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+
+            // Hash du mot de passe
+            $user->setPassword(
+                $passwordHasher->hashPassword(
+                    $user,
+                    $form->get('plainPassword')->getData()
+                )
+            );
+
+            // Persiste l’utilisateur
+            $em->persist($user);
+            $em->flush();
+
+            // Connexion automatique + redirection
+            return $userAuthenticator->authenticateUser(
+                $user,
+                $authenticator,
+                $request
+            );
         }
 
-        // Get the login error if there is one
-        $error = $authenticationUtils->getLastAuthenticationError();
-        
-        // Last username entered by the user
-        $lastUsername = $authenticationUtils->getLastUsername();
-
-        $form = $this->createForm(LoginFormType::class);
-
-        return $this->render('security/login.html.twig', [
-            'loginForm' => $form,
-            'last_username' => $lastUsername,
-            'error' => $error,
+        return $this->render('registration/register.html.twig', [
+            'registrationForm' => $form->createView(),
         ]);
-    }
-
-    #[Route('/logout', name: 'logout')]
-    public function logout(): void
-    {
-        throw new \LogicException('This method can be blank - it will be intercepted by the logout key on your firewall.');
     }
 }

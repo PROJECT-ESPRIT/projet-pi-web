@@ -1,4 +1,14 @@
+{# templates/produit/_form.html.twig #}
+
 {{ form_start(form, {'attr': {'novalidate': 'novalidate'}}) }}
-    {{ form_widget(form) }}
-    <button class="btn btn-primary mt-3">{{ button_label|default('Enregistrer') }}</button>
+
+    {{ form_row(form.nom) }}
+    {{ form_row(form.description) }}
+    {{ form_row(form.prix) }}
+    {{ form_row(form.stock) }}
+    {{ form_row(form.image) }}
+
+    {# Le bouton submit est défini dans le FormType, donc on l'affiche ici #}
+    {{ form_row(form.save) }}
+
 {{ form_end(form) }}

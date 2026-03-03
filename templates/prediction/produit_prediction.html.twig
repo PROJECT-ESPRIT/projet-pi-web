@@ -1,0 +1,107 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Prédiction des ventes - {{ produit.nom }}{% endblock %}
+
+{% block body %}
+<div class="container mt-5">
+
+    {# ================= HEADER ================= #}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold">📊 Prédiction des ventes pour <span class="text-primary">{{ produit.nom }}</span></h2>
+        <a href="{{ path('app_produit_admin_index') }}" class="btn btn-secondary">← Retour aux produits</a>
+    </div>
+
+    {# ================= STATISTIQUES ================= #}
+    <div class="row mb-4 g-3">
+        <div class="col-md-3">
+            <div class="card shadow-sm text-center p-3 h-100">
+                <h6>Total ventes</h6>
+                <p class="fs-4 fw-bold">{{ totalVentes }}</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm text-center p-3 h-100">
+                <h6>Moyenne mensuelle</h6>
+                <p class="fs-4 fw-bold">{{ (totalVentes / 12)|round(1) }}</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm text-center p-3 h-100">
+                <h6>Prévision pour {{ ['Jan','Fév','Mar','Avr','Mai','Juin','Juil','Août','Sep','Oct','Nov','Déc'][mois-1] }}</h6>
+                <p class="fs-4 fw-bold text-danger">{{ prediction }}</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm text-center p-3 h-100">
+                <h6>Stock actuel</h6>
+                <p class="fs-4 fw-bold text-success">{{ produit.stock }}</p>
+            </div>
+        </div>
+    </div>
+
+    {# ================= GRAPHIQUE ================= #}
+    <div class="card shadow-sm p-4 rounded-4 mb-4">
+        <canvas id="chart" width="100%" height="40"></canvas>
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('chart').getContext('2d');
+
+    const labels = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
+
+    // Historique des ventes par mois (pré-calculé côté contrôleur)
+    const historyData = {{ historyData|json_encode|raw }};
+
+    // Prédiction : point rouge sur le mois sélectionné
+    const predictionData = historyData.map((v, index) => ((index + 1) === {{ mois }} ? {{ prediction }} : null));
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Historique des ventes',
+                    data: historyData,
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 5,
+                    pointBackgroundColor: 'rgba(54, 162, 235, 1)'
+                },
+                {
+                    label: 'Prédiction',
+                    data: predictionData,
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    fill: false,
+                    pointRadius: 8,
+                    pointBackgroundColor: 'rgba(255, 99, 132, 1)',
+                    borderDash: [5,5],
+                    tension: 0
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'top' },
+                tooltip: { mode: 'index', intersect: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: { display: true, text: 'Quantité vendue' }
+                },
+                x: {
+                    title: { display: true, text: 'Mois' }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

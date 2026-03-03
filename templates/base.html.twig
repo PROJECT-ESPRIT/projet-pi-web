@@ -488,12 +488,26 @@
                 </button>
                 <div class="collapse navbar-collapse" id="guestNav">
                     <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                        <li class="nav-item"><a class="nav-link nav-link-guest" href="{{ path('home') }}"><i class="fas fa-home me-1"></i> Accueil</a></li>
-                        <li class="nav-item"><a class="nav-link nav-link-guest" href="{{ path('app_evenement_index') }}"><i class="fas fa-calendar-alt me-1"></i> Événements</a></li>
-                        <li class="nav-item"><a class="nav-link nav-link-guest" href="{{ path('app_produit_index') }}"><i class="fas fa-store me-1"></i> Boutique</a></li>
-                        <li class="nav-item"><a class="nav-link nav-link-guest" href="{{ path('app_donation_new') }}"><i class="fas fa-hand-holding-heart me-1"></i> Faire un Don</a></li>
-                        <li class="nav-item"><a class="nav-link nav-link-guest" href="{{ path('app_forum_index') }}"><i class="fas fa-comments me-1"></i> Forum</a></li>
-                    </ul>
+    <li class="nav-item"><a class="nav-link nav-link-guest" href="{{ path('home') }}"><i class="fas fa-home me-1"></i> Accueil</a></li>
+    <li class="nav-item"><a class="nav-link nav-link-guest" href="{{ path('app_evenement_index') }}"><i class="fas fa-calendar-alt me-1"></i> Événements</a></li>
+    <li class="nav-item"><a class="nav-link nav-link-guest" href="{{ path('app_produit_index') }}"><i class="fas fa-store me-1"></i> Boutique</a></li>
+    <li class="nav-item"><a class="nav-link nav-link-guest" href="{{ path('app_donation_new') }}"><i class="fas fa-hand-holding-heart me-1"></i> Faire un Don</a></li>
+    <li class="nav-item"><a class="nav-link nav-link-guest" href="{{ path('app_forum_index') }}"><i class="fas fa-comments me-1"></i> Forum</a></li>
+    <!-- Nouveau lien Panier -->
+    <li class="nav-item">
+    <a class="nav-link" href="{{ path('app_panier_index') }}">
+        <i class="fas fa-shopping-cart me-1"></i> Panier
+        {% set cart = app.session.get('cart', {}) %}
+        {% if cart is not empty %}
+            {% set totalQuantity = 0 %}
+            {% for qty in cart %}
+                {% set totalQuantity = totalQuantity + qty %}
+            {% endfor %}
+            ({{ totalQuantity }})
+        {% endif %}
+    </a>
+</li>
+</ul>
                     <div class="d-flex align-items-center gap-2 flex-shrink-0">
                         <a href="{{ path('login') }}" class="btn btn-guest-login">Connexion</a>
                         <a href="{{ path('register') }}" class="btn btn-guest-register">Inscription</a>

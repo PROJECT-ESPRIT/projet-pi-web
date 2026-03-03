@@ -3,39 +3,104 @@
 {% block title %}Gestion des Produits{% endblock %}
 
 {% block body %}
-    <h1>Gestion des Produits</h1>
 
-    <div class="mb-3 text-end">
-        <a href="{{ path('app_produit_new') }}" class="btn btn-success">Ajouter un produit</a>
+<div class="container mt-4">
+
+    {# ================= HEADER ================= #}
+    <div class="bg-primary bg-gradient text-white p-4 rounded-4 d-flex justify-content-between align-items-center mb-4 shadow">
+        <h4 class="mb-0">
+            🛍 Gestion des Produits
+            <span class="badge bg-light text-dark">
+                {{ produits|length }}
+            </span>
+        </h4>
+        <a href="{{ path('app_produit_new') }}" class="btn btn-light">+ Ajouter un produit</a>
     </div>
 
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Id</th>
-                <th>Nom</th>
-                <th>Prix</th>
-                <th>Stock</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-        {% for produit in produits %}
-            <tr>
-                <td>{{ produit.id }}</td>
-                <td>{{ produit.nom }}</td>
-                <td>{{ produit.prix }} TND</td>
-                <td>{{ produit.stock }}</td>
-                <td>
-                    <a href="{{ path('app_produit_edit', {'id': produit.id}) }}" class="btn btn-sm btn-warning">Éditer</a>
-                    {{ include('produit/_delete_form.html.twig') }}
-                </td>
-            </tr>
-        {% else %}
-            <tr>
-                <td colspan="5">Aucun produit trouvé</td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+    {# ================= FILTRES ================= #}
+    <form method="get" class="card shadow-sm p-4 mb-4 rounded-4">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <input type="text" name="search" value="{{ app.request.get('search') }}" placeholder="Rechercher un produit..." class="form-control">
+            </div>
+            <div class="col-md-2">
+                <input type="number" step="0.1" name="min_price" value="{{ app.request.get('min_price') }}" placeholder="Prix min" class="form-control">
+            </div>
+            <div class="col-md-2">
+                <input type="number" step="0.1" name="max_price" value="{{ app.request.get('max_price') }}" placeholder="Prix max" class="form-control">
+            </div>
+            <div class="col-md-2">
+                <input type="number" name="min_stock" value="{{ app.request.get('min_stock') }}" placeholder="Stock min" class="form-control">
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-primary">Filtrer</button>
+                <a href="{{ path('app_produit_admin_index') }}" class="btn btn-secondary">Reset</a>
+            </div>
+        </div>
+    </form>
+
+    {# ================= TABLEAU ================= #}
+    <div class="card shadow-sm rounded-4 overflow-hidden">
+        <table class="table align-middle mb-0 table-hover">
+            <thead class="table-light">
+                <tr>
+                    <th>#</th>
+                    <th>Image</th>
+                    <th>Nom</th>
+                    <th>Prix</th>
+                    <th>Stock</th>
+                    <th>Statut</th>
+                    <th class="text-center">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for produit in produits %}
+                    <tr>
+                        <td>{{ produit.id }}</td>
+                        <td>
+                            {% if produit.image %}
+                                <img src="{{ asset('uploads/produits/' ~ produit.image) }}" alt="{{ produit.nom }}" class="rounded shadow-sm" style="height:60px; width:60px; object-fit:cover;">
+                            {% else %}
+                                <div class="bg-light d-flex align-items-center justify-content-center rounded" style="height:60px; width:60px;">
+                                    <i class="fas fa-box-open text-secondary"></i>
+                                </div>
+                            {% endif %}
+                        </td>
+                        <td class="fw-bold">{{ produit.nom }}</td>
+                        <td class="text-primary fw-bold">{{ produit.prix }} TND</td>
+                        <td>{{ produit.stock }}</td>
+                        <td>
+                            {% if produit.stock == 0 %}
+                                <span class="badge bg-danger">Rupture de stock</span>
+                            {% elseif produit.stock <= 10 %}
+                                <span class="badge bg-warning text-dark">Stock faible</span>
+                            {% else %}
+                                <span class="badge bg-success">Disponible</span>
+                            {% endif %}
+                        </td>
+                     <td class="text-center">
+    <a href="{{ path('app_produit_edit', {'id': produit.id}) }}" class="btn btn-sm btn-warning">Éditer</a>
+    
+    <form method="post" action="{{ path('app_produit_delete', {'id': produit.id}) }}" style="display:inline-block;" onsubmit="return confirm('Supprimer ce produit ?');">
+        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ produit.id) }}">
+        <button class="btn btn-sm btn-danger">Supprimer</button>
+    </form>
+
+    {# Bouton Prédiction #}
+    <a href="{{ path('app_prediction_produit', {'id': produit.id}) }}" class="btn btn-sm btn-info">
+        <i class="fas fa-chart-line"></i> Prédiction
+    </a>
+</td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center py-4">Aucun produit trouvé</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
 {% endblock %}
