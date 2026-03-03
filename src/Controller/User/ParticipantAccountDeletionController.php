@@ -81,9 +81,8 @@ class ParticipantAccountDeletionController extends AbstractController
         $current = $this->getUser();
         if ($current instanceof User && $current->getId() === $user->getId()) {
             $tokenStorage->setToken(null);
-            $session = $request->getSession();
-            if ($session) {
-                $session->invalidate();
+            if ($request->hasSession()) {
+                $request->getSession()->invalidate();
             }
         }
 

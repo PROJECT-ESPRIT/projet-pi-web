@@ -27,6 +27,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public const SEGMENT_CHURN_RISK = 'CHURN_RISK';
     public const SEGMENT_DORMANT = 'DORMANT';
 
+    public const LEVEL_GOLD = 'GOLD';
+    public const LEVEL_SILVER = 'SILVER';
+    public const LEVEL_BRONZE = 'BRONZE';
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -76,6 +80,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(length: 50, nullable: true)]
     private ?string $segment = null;
+
+    /**
+     * In-memory loyalty fields (no ORM mapping to avoid schema changes).
+     */
+    private int $points = 0;
+
+    private string $loyaltyLevel = self::LEVEL_BRONZE;
 
     public function __construct()
     {
@@ -283,6 +294,30 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setSegment(?string $segment): static
     {
         $this->segment = $segment;
+        return $this;
+    }
+
+    public function getPoints(): int
+    {
+        return $this->points;
+    }
+
+    public function setPoints(int $points): static
+    {
+        $this->points = max(0, $points);
+
+        return $this;
+    }
+
+    public function getLoyaltyLevel(): string
+    {
+        return $this->loyaltyLevel;
+    }
+
+    public function setLoyaltyLevel(string $level): static
+    {
+        $this->loyaltyLevel = $level;
+
         return $this;
     }
 

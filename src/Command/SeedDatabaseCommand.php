@@ -134,6 +134,7 @@ class SeedDatabaseCommand extends Command
         }
         // 12 * 5 = 60 dates; shuffle so order isn't strictly by month
         shuffle($registrationDates);
+        /** @phpstan-ignore-next-line dead-code – defensive fallback kept for safety */
         if ($registrationDates === []) {
             $registrationDates = [$endDate->modify('-1 month')->format('Y-m') . '-05'];
         }

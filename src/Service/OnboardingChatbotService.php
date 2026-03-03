@@ -233,10 +233,6 @@ class OnboardingChatbotService
         $normalized = [];
 
         foreach ($history as $item) {
-            if (!is_array($item)) {
-                continue;
-            }
-
             $role = strtolower((string) ($item['role'] ?? ''));
             $content = trim((string) ($item['content'] ?? ''));
 
