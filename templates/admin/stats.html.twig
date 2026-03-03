@@ -138,6 +138,84 @@
     .don-type-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
     .don-type-name { flex:1; font-size:.78rem; color:#374151; font-weight:500; }
     .don-type-count { font-size:.78rem; font-weight:700; color:var(--ac-deep); }
+
+    /* ---- Prediction IA enhanced ---- */
+    .prediction-ia-box {
+        margin-top:.85rem; padding:1rem 1.1rem; border-radius:14px;
+        background:linear-gradient(145deg, #f8f9fc 0%, #f0f2f8 100%);
+        border:1px solid rgba(30,15,117,.08);
+        position:relative;
+    }
+    .prediction-ia-box .pred-head {
+        display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:.5rem;
+        margin-bottom:.6rem;
+    }
+    .prediction-ia-box .pred-label {
+        font-size:.7rem; color:#6b7280; text-transform:uppercase; font-weight:700; letter-spacing:.05em;
+        display:flex; align-items:center; gap:.4rem;
+    }
+    .prediction-ia-box .pred-label i { color:var(--ac-mid); }
+    .prediction-ia-box .btn-ml-explain {
+        display:inline-flex; align-items:center; gap:.35rem;
+        font-size:.7rem; font-weight:600; color:var(--ac-mid);
+        background:rgba(30,15,117,.06); border:1px solid rgba(30,15,117,.12);
+        padding:.3rem .6rem; border-radius:8px; cursor:pointer;
+        transition: background .2s, color .2s, border-color .2s;
+    }
+    .prediction-ia-box .btn-ml-explain:hover { background:rgba(30,15,117,.12); color:var(--ac-deep); border-color:rgba(30,15,117,.2); }
+    .prediction-ia-box .pred-value-row {
+        display:flex; align-items:center; justify-content:space-between; gap:.75rem; flex-wrap:wrap;
+    }
+    .prediction-ia-box .pred-value {
+        font-family:'Sora',sans-serif; font-size:1.75rem; font-weight:800; color:var(--ac-deep);
+        line-height:1.1;
+    }
+    .prediction-ia-box .pred-meta {
+        margin-top:.6rem; display:grid; grid-template-columns:1fr 1fr; gap:.5rem;
+        font-size:.7rem; color:#6b7280;
+    }
+    .prediction-ia-box .pred-meta strong { color:#374151; }
+
+    /* ---- ML explanation modal ---- */
+    .ml-modal-backdrop {
+        position:fixed; inset:0; background:rgba(15,10,50,.5); backdrop-filter:blur(4px);
+        z-index:1050; display:none; align-items:center; justify-content:center;
+        padding:1.5rem; opacity:0; transition: opacity .25s ease;
+    }
+    .ml-modal-backdrop.is-open { display:flex; opacity:1; }
+    .ml-modal {
+        background:#fff; border-radius:20px; max-width:520px; width:100%;
+        max-height:90vh; overflow:hidden; display:flex; flex-direction:column;
+        box-shadow:0 25px 60px rgba(0,0,0,.2); border:1px solid rgba(30,15,117,.08);
+        transform:scale(0.95); transition: transform .25s ease;
+    }
+    .ml-modal-backdrop.is-open .ml-modal { transform:scale(1); }
+    .ml-modal-header {
+        padding:1.25rem 1.5rem; border-bottom:1px solid #eef0f5;
+        display:flex; align-items:center; justify-content:space-between;
+        background:linear-gradient(135deg, var(--ac-deep) 0%, var(--ac-mid) 100%);
+        color:#fff;
+    }
+    .ml-modal-header h3 { margin:0; font-family:'Sora',sans-serif; font-size:1rem; font-weight:700; display:flex; align-items:center; gap:.5rem; }
+    .ml-modal-header .ml-modal-close {
+        width:32px; height:32px; border-radius:10px; border:none; background:rgba(255,255,255,.2);
+        color:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center;
+        transition: background .2s;
+    }
+    .ml-modal-header .ml-modal-close:hover { background:rgba(255,255,255,.35); }
+    .ml-modal-body {
+        padding:1.25rem 1.5rem; overflow-y:auto; font-size:.82rem; line-height:1.55; color:#374151;
+    }
+    .ml-modal-body h4 { font-size:.8rem; color:var(--ac-deep); margin:.75rem 0 .35rem; font-weight:700; }
+    .ml-modal-body h4:first-child { margin-top:0; }
+    .ml-modal-body p { margin:0 0 .5rem; }
+    .ml-modal-body ul { margin:.35rem 0 .5rem; padding-left:1.2rem; }
+    .ml-modal-body li { margin-bottom:.2rem; }
+    .ml-modal-body code { background:#f0f2f8; padding:.1rem .35rem; border-radius:4px; font-size:.75rem; }
+    .ml-modal-footer {
+        padding:.85rem 1.5rem; border-top:1px solid #eef0f5; background:#f9fafb;
+        font-size:.7rem; color:#9ca3af;
+    }
 </style>
 
 {# ===== HEADER ===== #}
@@ -293,44 +371,62 @@
     <div class="st-card">
         <div class="st-card-title"><i class="fas fa-chart-area"></i> Inscriptions mensuelles</div>
         <div style="height:220px;"><canvas id="monthlyRegChart"></canvas></div>
-        <div style="margin-top:.75rem; padding:.65rem .75rem; border:1px solid #e5e7eb; border-radius:10px; background:#f9fafb;">
-            <div style="font-size:.68rem; color:#6b7280; text-transform:uppercase; font-weight:700; letter-spacing:.04em;">
-                Prediction IA - {{ nextMonthRegistrationPrediction.nextMonthLabel }}
+        <div class="prediction-ia-box">
+            <div class="pred-head">
+                <span class="pred-label"><i class="fas fa-brain"></i> Prédiction IA — {{ nextMonthRegistrationPrediction.nextMonthLabel }}</span>
+                <button type="button" class="btn-ml-explain" id="btnMlExplain" aria-label="Comment fonctionne la prédiction ?">
+                    <i class="fas fa-info-circle"></i> Comment ça marche ?
+                </button>
             </div>
-            <div style="display:flex; align-items:center; justify-content:space-between; margin-top:.25rem; gap:.5rem;">
-                <div style="font-family:'Sora',sans-serif; font-size:1.45rem; font-weight:800; color:var(--ac-deep);">
-                    {{ nextMonthRegistrationPrediction.predictedCount }}
-                </div>
-                <div style="font-size:.72rem;">
-                    {% if nextMonthRegistrationPrediction.trend == 'up' %}
-                        <span class="badge" style="background:linear-gradient(135deg,#059669,#34d399); color:#fff;">Tendance: hausse</span>
-                    {% elseif nextMonthRegistrationPrediction.trend == 'down' %}
-                        <span class="badge" style="background:linear-gradient(135deg,#dc2626,#f87171); color:#fff;">Tendance: baisse</span>
-                    {% else %}
-                        <span class="badge" style="background:linear-gradient(135deg,#6b7280,#9ca3af); color:#fff;">Tendance: stable</span>
-                    {% endif %}
-                </div>
+            <div class="pred-value-row">
+                <span class="pred-value">{{ nextMonthRegistrationPrediction.predictedCount }}</span>
+                {% if nextMonthRegistrationPrediction.trend == 'up' %}
+                    <span class="badge" style="background:linear-gradient(135deg,#059669,#34d399); color:#fff;">Tendance: hausse</span>
+                {% elseif nextMonthRegistrationPrediction.trend == 'down' %}
+                    <span class="badge" style="background:linear-gradient(135deg,#dc2626,#f87171); color:#fff;">Tendance: baisse</span>
+                {% else %}
+                    <span class="badge" style="background:linear-gradient(135deg,#6b7280,#9ca3af); color:#fff;">Tendance: stable</span>
+                {% endif %}
             </div>
-            <div style="margin-top:.35rem; display:grid; grid-template-columns:1fr 1fr; gap:.45rem; font-size:.68rem; color:#6b7280;">
-                <div>
-                    Confiance:
-                    <strong>
-                        {% if nextMonthRegistrationPrediction.confidence == 'high' %}
-                            elevee ({{ nextMonthRegistrationPrediction.confidenceScore }}/100)
-                        {% elseif nextMonthRegistrationPrediction.confidence == 'medium' %}
-                            moyenne ({{ nextMonthRegistrationPrediction.confidenceScore }}/100)
-                        {% else %}
-                            faible ({{ nextMonthRegistrationPrediction.confidenceScore }}/100)
-                        {% endif %}
-                    </strong>
-                </div>
-                <div>
-                    Intervalle: <strong>{{ nextMonthRegistrationPrediction.lowerBound }} - {{ nextMonthRegistrationPrediction.upperBound }}</strong>
-                </div>
-                <div style="grid-column:1/-1;">
-                    Facteur saisonnier: <strong>{{ (nextMonthRegistrationPrediction.seasonalityFactor * 100)|round(1) }}%</strong>
-                </div>
+            <div class="pred-meta">
+                <div>Fiabilité: <strong>{% if nextMonthRegistrationPrediction.confidence == 'high' %}élevée{% elseif nextMonthRegistrationPrediction.confidence == 'medium' %}moyenne{% else %}faible{% endif %} ({{ nextMonthRegistrationPrediction.confidenceScore }}/100)</strong></div>
+                <div>Fourchette probable: <strong>{{ nextMonthRegistrationPrediction.lowerBound }} – {{ nextMonthRegistrationPrediction.upperBound }}</strong> inscriptions</div>
+                <div style="grid-column:1/-1;">Variation saisonnière: <strong>{{ (nextMonthRegistrationPrediction.seasonalityFactor * 100)|round(1) }}%</strong></div>
             </div>
+        </div>
+    </div>
+</div>
+
+{# ===== Modal: Comment fonctionne la prédiction ML ===== #}
+<div class="ml-modal-backdrop" id="mlExplainBackdrop" aria-hidden="true">
+    <div class="ml-modal" role="dialog" aria-labelledby="mlModalTitle" aria-modal="true">
+        <div class="ml-modal-header">
+            <h3 id="mlModalTitle"><i class="fas fa-brain"></i> Comment la prédiction d'inscriptions fonctionne</h3>
+            <button type="button" class="ml-modal-close" id="mlModalClose" aria-label="Fermer"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="ml-modal-body">
+            <p>Les chiffres affichés sont calculés par le script Python <code>predict_registrations.py</code>, à partir de l’historique des inscriptions (nombre et date) enregistré dans la base. Voici les principes utilisés.</p>
+
+            <h4><i class="fas fa-chart-line" style="margin-right:.35rem;"></i> 1. Régression linéaire</h4>
+            <p>On ajuste une droite sur les derniers mois pour estimer la tendance. La prédiction au prochain mois est la valeur de cette droite à la prochaine période.</p>
+
+            <h4><i class="fas fa-tachometer-alt" style="margin-right:.35rem;"></i> 2. Moyenne mobile (3 mois)</h4>
+            <p>On calcule la moyenne des 3 derniers mois. Cela lisse les variations court terme et donne une valeur de référence récente.</p>
+
+            <h4><i class="fas fa-wave-square" style="margin-right:.35rem;"></i> 3. Lissage exponentiel</h4>
+            <p>On pondère les mois récents plus que les anciens (coefficient 0,45). Les inscriptions les plus récentes ont donc plus d’impact sur la prédiction.</p>
+
+            <h4><i class="fas fa-calendar-alt" style="margin-right:.35rem;"></i> 4. Facteur saisonnier</h4>
+            <p>On compare la moyenne des 3 derniers mois à celle des 3 mois précédents. Si l’activité augmente (ou baisse), un petit facteur positif (ou négatif) est appliqué à la prédiction, dans une fourchette limitée (±15 %).</p>
+
+            <h4><i class="fas fa-calculator" style="margin-right:.35rem;"></i> 5. Combinaison finale</h4>
+            <p>La prédiction est une combinaison pondérée : <strong>45 %</strong> régression linéaire, <strong>25 %</strong> moyenne mobile, <strong>30 %</strong> lissage exponentiel, le tout multiplié par (1 + facteur saisonnier).</p>
+
+            <h4><i class="fas fa-shield-alt" style="margin-right:.35rem;"></i> 6. Confiance et intervalle</h4>
+            <p>Le score de confiance (0–100) dépend de la régularité des données (faible variation = confiance plus élevée), de la proximité de la prédiction avec le dernier mois et du nombre de mois disponibles. L’<strong>intervalle</strong> (min – max) est une fourchette autour de la prédiction, plus large quand la confiance est faible.</p>
+        </div>
+        <div class="ml-modal-footer">
+            Script : <code>scripts/predict_registrations.py</code> — Aucune bibliothèque externe (Python standard uniquement).
         </div>
     </div>
 </div>
@@ -808,6 +904,19 @@
 document.addEventListener('DOMContentLoaded', function() {
     Chart.defaults.font.family = "'Manrope', sans-serif";
     Chart.defaults.font.size = 11;
+
+    // ML explanation modal
+    var backdrop = document.getElementById('mlExplainBackdrop');
+    var btnExplain = document.getElementById('btnMlExplain');
+    var btnClose = document.getElementById('mlModalClose');
+    if (backdrop && btnExplain) {
+        function openMlModal() { backdrop.classList.add('is-open'); backdrop.setAttribute('aria-hidden', 'false'); }
+        function closeMlModal() { backdrop.classList.remove('is-open'); backdrop.setAttribute('aria-hidden', 'true'); }
+        btnExplain.addEventListener('click', openMlModal);
+        if (btnClose) btnClose.addEventListener('click', closeMlModal);
+        backdrop.addEventListener('click', function(e) { if (e.target === backdrop) closeMlModal(); });
+        document.addEventListener('keydown', function(e) { if (e.key === 'Escape' && backdrop.classList.contains('is-open')) closeMlModal(); });
+    }
 
     var C = {
         deep:'#1E0F75', mid:'#1C1DAB', blue:'#3785D8', lavender:'#BF8CE1',

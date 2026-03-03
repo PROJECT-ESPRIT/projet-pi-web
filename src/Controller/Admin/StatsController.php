@@ -40,7 +40,10 @@ class StatsController extends AbstractController
         $totalUsers = $userRepository->count([]);
         $newUsersThisMonth = $userRepository->countNewThisMonth();
         $monthlyRegistrations = $userRepository->getMonthlyRegistrations(12);
-        $nextMonthRegistrationPrediction = $registrationPredictionService->predictNextMonth($monthlyRegistrations);
+        $monthlyRegistrationsByRole = $userRepository->getMonthlyRegistrationsByRole(12);
+        $predictions = $registrationPredictionService->getPredictionsFromPython($monthlyRegistrations, $monthlyRegistrationsByRole);
+        $nextMonthRegistrationPrediction = $predictions['next_month'];
+        $futureRegistrationsByType = $predictions['future_by_type'];
 
         $eventStats = $evenementRepository->getStatsOverview();
         $topEvents = $evenementRepository->getTopEvents(5);
@@ -76,6 +79,7 @@ class StatsController extends AbstractController
             'usersByRole' => $usersByRole,
             'monthlyRegistrations' => $monthlyRegistrations,
             'nextMonthRegistrationPrediction' => $nextMonthRegistrationPrediction,
+            'futureRegistrationsByType' => $futureRegistrationsByType,
             'eventStats' => $eventStats,
             'topEvents' => $topEvents,
             'monthlyEvents' => $monthlyEvents,

@@ -24,13 +24,9 @@
    php bin/console doctrine:migrations:migrate
    ```
 
-3. **Dépendances Python** (moteurs de recommandation et hotness)
+3. **Script Python (admin)**
 
-   ```cmd
-   pip install -r python\requirements.txt
-   ```
-
-   Dépendances installées : `sqlalchemy`, `pymysql`, `scikit-learn`, `numpy`.
+   Le tableau de bord admin utilise `scripts/predict_registrations.py`. Vérifier que `python` (Windows) ou `python3` (Linux/macOS) est disponible.
 
 4. **Données de démo**
 

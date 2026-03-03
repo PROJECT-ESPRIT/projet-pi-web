@@ -122,6 +122,61 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
     }
 
     /**
+     * Monthly registrations broken down by role (for ML prediction by type).
+     *
+     * @return array<int, array{month: string, ROLE_USER: int, ROLE_PARTICIPANT: int, ROLE_ARTISTE: int, ROLE_ADMIN: int}>
+     */
+    public function getMonthlyRegistrationsByRole(int $months = 12): array
+    {
+        $endDate = new \DateTime();
+        $startDate = (clone $endDate)->modify("-$months months");
+
+        $period = new \DatePeriod(
+            new \DateTime($startDate->format('Y-m-01')),
+            new \DateInterval('P1M'),
+            new \DateTime($endDate->format('Y-m-t'))
+        );
+
+        $results = [];
+        foreach ($period as $date) {
+            $monthKey = $date->format('Y-m');
+            $results[$monthKey] = [
+                'month' => $date->format('M'),
+                'ROLE_USER' => 0,
+                'ROLE_PARTICIPANT' => 0,
+                'ROLE_ARTISTE' => 0,
+                'ROLE_ADMIN' => 0,
+            ];
+        }
+
+        $users = $this->createQueryBuilder('u')
+            ->select('u.createdAt', 'u.roles')
+            ->where('u.createdAt >= :startDate')
+            ->setParameter('startDate', $startDate)
+            ->getQuery()
+            ->getResult();
+
+        foreach ($users as $user) {
+            $monthKey = $user['createdAt']->format('Y-m');
+            if (!isset($results[$monthKey])) {
+                continue;
+            }
+            $roles = $user['roles'];
+            if (\in_array('ROLE_ADMIN', $roles, true)) {
+                $results[$monthKey]['ROLE_ADMIN']++;
+            } elseif (\in_array('ROLE_ARTISTE', $roles, true)) {
+                $results[$monthKey]['ROLE_ARTISTE']++;
+            } elseif (\in_array('ROLE_PARTICIPANT', $roles, true)) {
+                $results[$monthKey]['ROLE_PARTICIPANT']++;
+            } else {
+                $results[$monthKey]['ROLE_USER']++;
+            }
+        }
+
+        return array_values($results);
+    }
+
+    /**
      * Used to upgrade (rehash) the user's password automatically over time.
      */
     public function upgradePassword(PasswordAuthenticatedUserInterface $user, string $newHashedPassword): void
