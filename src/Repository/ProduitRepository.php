@@ -38,4 +38,29 @@ class ProduitRepository extends ServiceEntityRepository
             ->getQuery()
             ->getSingleScalarResult();
     }
+
+    /**
+     * @return Produit[]
+     */
+    public function findBySearchAndSort(?string $search, string $sort, string $direction): array
+    {
+        $allowedSorts = [
+            'id' => 'p.id',
+            'nom' => 'p.nom',
+            'prix' => 'p.prix',
+            'stock' => 'p.stock',
+        ];
+
+        $qb = $this->createQueryBuilder('p');
+
+        if ($search !== null && $search !== '') {
+            $qb
+                ->andWhere('LOWER(p.nom) LIKE :search OR LOWER(COALESCE(p.description, \'\')) LIKE :search')
+                ->setParameter('search', '%'.mb_strtolower($search).'%');
+        }
+
+        $qb->orderBy($allowedSorts[$sort] ?? 'p.id', $direction);
+
+        return $qb->getQuery()->getResult();
+    }
 }

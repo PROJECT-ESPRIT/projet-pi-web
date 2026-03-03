@@ -10,6 +10,7 @@ use App\Repository\ForumReponseRepository;
 use App\Repository\ProduitRepository;
 use App\Repository\ReservationRepository;
 use App\Repository\UserRepository;
+use App\Service\RegistrationPredictionService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -28,6 +29,7 @@ class StatsController extends AbstractController
         ProduitRepository $produitRepository,
         ForumRepository $forumRepository,
         ForumReponseRepository $forumReponseRepository,
+        RegistrationPredictionService $registrationPredictionService,
     ): Response {
         $reservationsByStatus = $reservationRepository->countByStatus();
         $totalReservations = $reservationRepository->count([]);
@@ -37,7 +39,11 @@ class StatsController extends AbstractController
         $usersByRole = $userRepository->getUsersByRole();
         $totalUsers = $userRepository->count([]);
         $newUsersThisMonth = $userRepository->countNewThisMonth();
-        $monthlyRegistrations = $userRepository->getMonthlyRegistrations(6);
+        $monthlyRegistrations = $userRepository->getMonthlyRegistrations(12);
+        $monthlyRegistrationsByRole = $userRepository->getMonthlyRegistrationsByRole(12);
+        $predictions = $registrationPredictionService->getPredictionsFromPython($monthlyRegistrations, $monthlyRegistrationsByRole);
+        $nextMonthRegistrationPrediction = $predictions['next_month'];
+        $futureRegistrationsByType = $predictions['future_by_type'];
 
         $eventStats = $evenementRepository->getStatsOverview();
         $topEvents = $evenementRepository->getTopEvents(5);
@@ -72,6 +78,8 @@ class StatsController extends AbstractController
             'newUsersThisMonth' => $newUsersThisMonth,
             'usersByRole' => $usersByRole,
             'monthlyRegistrations' => $monthlyRegistrations,
+            'nextMonthRegistrationPrediction' => $nextMonthRegistrationPrediction,
+            'futureRegistrationsByType' => $futureRegistrationsByType,
             'eventStats' => $eventStats,
             'topEvents' => $topEvents,
             'monthlyEvents' => $monthlyEvents,

@@ -1,13 +1,13 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Gérer les Réponses{% endblock %}
+{% block title %}GÃ©rer les RÃ©ponses{% endblock %}
 
 {% block body %}
 <div class="container-fluid">
     <div class="row mb-4">
         <div class="col-12">
-            <h1 class="mb-3"><i class="fas fa-reply me-2"></i> Gérer les Réponses</h1>
-            <p class="text-muted">Répondez aux questions des utilisateurs.</p>
+            <h1 class="mb-3"><i class="fas fa-reply me-2"></i> GÃ©rer les RÃ©ponses</h1>
+            <p class="text-muted">RÃ©pondez aux questions des utilisateurs.</p>
         </div>
     </div>
 
@@ -28,7 +28,7 @@
                 </div>
                 <div class="col-md-2">
                     <select name="order" class="form-select">
-                        <option value="DESC" {% if order == 'DESC' %}selected{% endif %}>Décroissant</option>
+                        <option value="DESC" {% if order == 'DESC' %}selected{% endif %}>DÃ©croissant</option>
                         <option value="ASC" {% if order == 'ASC' %}selected{% endif %}>Croissant</option>
                     </select>
                 </div>
@@ -39,14 +39,14 @@
         </div>
     </div>
 
-    <!-- Bouton Nouvelle Réponse -->
+    <!-- Bouton Nouvelle RÃ©ponse -->
     <div class="mb-3">
         <a href="{{ path('app_forum_reponse_new') }}" class="btn btn-success">
-            <i class="fas fa-plus me-2"></i> Ajouter une Réponse
+            <i class="fas fa-plus me-2"></i> Ajouter une RÃ©ponse
         </a>
     </div>
 
-    <!-- Liste des réponses -->
+    <!-- Liste des rÃ©ponses -->
     <div class="row">
         {% for forum_reponse in forum_reponses %}
         <div class="col-md-12 mb-3">
@@ -55,10 +55,10 @@
                     <div>
                         <h5 class="mb-0">
                             <i class="fas fa-comment-dots text-success me-2"></i>
-                            Réponse à : {{ forum_reponse.forum.sujet }}
+                            RÃ©ponse Ã  : {{ forum_reponse.forum.sujet }}
                         </h5>
                         <small class="text-muted">
-                            Par {{ forum_reponse.auteur.prenom }} {{ forum_reponse.auteur.nom }} | {{ forum_reponse.dateReponse|date('d/m/Y à H:i') }}
+                            Par {{ forum_reponse.auteur.prenom }} {{ forum_reponse.auteur.nom }} | {{ forum_reponse.dateReponse|date('d/m/Y Ã  H:i') }}
                         </small>
                     </div>
                     
@@ -82,7 +82,7 @@
         {% else %}
         <div class="col-12">
             <div class="alert alert-info text-center">
-                <i class="fas fa-info-circle me-2"></i> Aucune réponse trouvée.
+                <i class="fas fa-info-circle me-2"></i> Aucune rÃ©ponse trouvÃ©e.
             </div>
         </div>
         {% endfor %}

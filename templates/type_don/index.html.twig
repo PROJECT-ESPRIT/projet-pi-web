@@ -3,35 +3,73 @@
 {% block title %}Types de Don{% endblock %}
 
 {% block body %}
-    <h1>Types de Don</h1>
-
-    <div class="mb-3 text-end">
-        <a href="{{ path('app_type_don_new') }}" class="btn btn-success">Créer un nouveau type</a>
+    <div class="row align-items-center mb-3">
+        <div class="col">
+            <h1>Types de Don</h1>
+        </div>
+        <div class="col-auto">
+            <a href="{{ path('app_type_don_new') }}" class="btn btn-success">Creer un nouveau type</a>
+        </div>
     </div>
 
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Id</th>
-                <th>Libellé</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-        {% for type_don in type_dons %}
-            <tr>
-                <td>{{ type_don.id }}</td>
-                <td>{{ type_don.libelle }}</td>
-                <td>
-                    <a href="{{ path('app_type_don_edit', {'id': type_don.id}) }}" class="btn btn-sm btn-warning">Éditer</a>
-                    {{ include('type_don/_delete_form.html.twig') }}
-                </td>
-            </tr>
-        {% else %}
-            <tr>
-                <td colspan="3">Aucun type trouvé</td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+    <div class="card mb-3">
+        <div class="card-body">
+            <form method="get" action="{{ path('app_type_don_index') }}" class="row g-2 align-items-end">
+                <div class="col-12 col-md-5">
+                    <label class="form-label">Recherche</label>
+                    <input type="text" name="q" class="form-control" placeholder="Rechercher un libelle..." value="{{ search|default('') }}">
+                </div>
+                <div class="col-6 col-md-3">
+                    <label class="form-label">Trier par</label>
+                    <select name="sort" class="form-select">
+                        <option value="id" {{ (sort|default('id')) == 'id' ? 'selected' : '' }}>ID</option>
+                        <option value="libelle" {{ (sort|default('id')) == 'libelle' ? 'selected' : '' }}>Libelle</option>
+                    </select>
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label">Ordre</label>
+                    <select name="direction" class="form-select">
+                        <option value="asc" {{ (direction|default('asc')) == 'asc' ? 'selected' : '' }}>Ascendant</option>
+                        <option value="desc" {{ (direction|default('asc')) == 'desc' ? 'selected' : '' }}>Descendant</option>
+                    </select>
+                </div>
+                <div class="col-12 col-md-2 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary w-100">Filtrer</button>
+                    <a href="{{ path('app_type_don_index') }}" class="btn btn-outline-secondary w-100">Reset</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Libelle</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for type_don in type_dons %}
+                    <tr>
+                        <td>{{ type_don.id }}</td>
+                        <td>{{ type_don.libelle }}</td>
+                        <td>
+                            <div class="d-flex flex-wrap gap-1">
+                                <a href="{{ path('app_type_don_edit', {'id': type_don.id}) }}" class="btn btn-sm btn-outline-primary">Editer</a>
+                                {{ include('type_don/_delete_form.html.twig') }}
+                            </div>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="3">Aucun type trouve</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
 {% endblock %}

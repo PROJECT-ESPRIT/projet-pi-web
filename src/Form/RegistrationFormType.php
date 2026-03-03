@@ -14,6 +14,8 @@ use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints\Length;
 use Symfony\Component\Validator\Constraints\NotBlank;
+use Symfony\Component\Validator\Constraints\NotCompromisedPassword;
+use Symfony\Component\Validator\Constraints\Regex;
 
 class RegistrationFormType extends AbstractType
 {
@@ -24,30 +26,30 @@ class RegistrationFormType extends AbstractType
                 'label' => 'Email',
                 'attr' => [
                     'class' => 'form-control',
-                    'placeholder' => 'votre.email@example.com'
-                ]
+                    'placeholder' => 'votre.email@example.com',
+                ],
             ])
             ->add('nom', TextType::class, [
                 'label' => 'Nom',
                 'attr' => [
                     'class' => 'form-control',
-                    'placeholder' => 'Votre nom'
-                ]
+                    'placeholder' => 'Votre nom',
+                ],
             ])
             ->add('prenom', TextType::class, [
-                'label' => 'Prénom',
+                'label' => 'Prenom',
                 'attr' => [
                     'class' => 'form-control',
-                    'placeholder' => 'Votre prénom'
-                ]
+                    'placeholder' => 'Votre prenom',
+                ],
             ])
             ->add('telephone', TelType::class, [
-                'label' => 'Téléphone',
+                'label' => 'Telephone',
                 'required' => false,
                 'attr' => [
                     'class' => 'form-control',
-                    'placeholder' => '06 12 34 56 78'
-                ]
+                    'placeholder' => '06 12 34 56 78',
+                ],
             ])
             ->add('role', ChoiceType::class, [
                 'label' => 'Type de compte',
@@ -57,8 +59,8 @@ class RegistrationFormType extends AbstractType
                     'Artiste' => 'ROLE_ARTISTE',
                 ],
                 'attr' => [
-                    'class' => 'form-control'
-                ]
+                    'class' => 'form-control',
+                ],
             ])
             ->add('plainPassword', RepeatedType::class, [
                 'type' => PasswordType::class,
@@ -66,30 +68,37 @@ class RegistrationFormType extends AbstractType
                 'options' => [
                     'attr' => [
                         'autocomplete' => 'new-password',
-                        'class' => 'form-control'
+                        'class' => 'form-control',
                     ],
                 ],
                 'first_options' => [
                     'label' => 'Mot de passe',
                     'attr' => [
-                        'placeholder' => 'Minimum 6 caractères'
-                    ]
+                        'placeholder' => 'Minimum 8 caracteres',
+                    ],
                 ],
                 'second_options' => [
                     'label' => 'Confirmer le mot de passe',
                     'attr' => [
-                        'placeholder' => 'Répétez le mot de passe'
-                    ]
+                        'placeholder' => 'Repetez le mot de passe',
+                    ],
                 ],
                 'invalid_message' => 'Les mots de passe doivent correspondre.',
                 'constraints' => [
                     new NotBlank([
-                        'message' => 'Veuillez entrer un mot de passe',
+                        'message' => 'Veuillez entrer un mot de passe.',
                     ]),
                     new Length([
-                        'min' => 6,
-                        'minMessage' => 'Votre mot de passe doit contenir au moins {{ limit }} caractères',
+                        'min' => 8,
+                        'minMessage' => 'Votre mot de passe doit contenir au moins {{ limit }} caracteres.',
                         'max' => 4096,
+                    ]),
+                    new Regex([
+                        'pattern' => '/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).+$/',
+                        'message' => 'Le mot de passe doit contenir une minuscule, une majuscule, un chiffre et un caractere special.',
+                    ]),
+                    new NotCompromisedPassword([
+                        'message' => 'Ce mot de passe est trop faible. Choisissez-en un autre.',
                     ]),
                 ],
             ]);

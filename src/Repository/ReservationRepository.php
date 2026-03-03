@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\User;
+use App\Entity\Evenement;
 use App\Entity\Reservation;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\Tools\Pagination\Paginator;
@@ -124,7 +125,6 @@ class ReservationRepository extends ServiceEntityRepository
 
         return array_map('intval', array_column($rows, 'eventId'));
     }
-
     public function searchAndSort(array $filters, int $page, int $perPage, ?User $participant, bool $isAdmin): Paginator
     {
         $qb = $this->createQueryBuilder('r')
@@ -168,14 +168,25 @@ class ReservationRepository extends ServiceEntityRepository
             'event_date_asc' => ['e.dateDebut', 'ASC'],
         ];
 
-        $sortKey = $filters['sort'] ?? 'date_desc';
+        $sortKey = $filters['sort'] ?? 'event_date_asc';
         if (!isset($sortMap[$sortKey])) {
-            $sortKey = 'date_desc';
+            $sortKey = 'event_date_asc';
         }
 
-        [$sortField, $sortDir] = $sortMap[$sortKey];
-        $qb->addOrderBy($sortField, $sortDir)
-            ->addOrderBy('r.id', 'DESC');
+        $now = new \DateTime();
+
+        if ($sortKey === 'event_date_asc') {
+            // Upcoming events first (soonest first), then past events (most recent past first)
+            $qb->addSelect('CASE WHEN e.dateDebut >= :now THEN 0 ELSE 1 END AS HIDDEN isPast')
+                ->setParameter('now', $now)
+                ->addOrderBy('isPast', 'ASC')
+                ->addOrderBy('e.dateDebut', 'ASC')
+                ->addOrderBy('r.id', 'DESC');
+        } else {
+            [$sortField, $sortDir] = $sortMap[$sortKey];
+            $qb->addOrderBy($sortField, $sortDir)
+                ->addOrderBy('r.id', 'DESC');
+        }
 
         $query = $qb->getQuery()
             ->setFirstResult(($page - 1) * $perPage)
@@ -224,14 +235,24 @@ class ReservationRepository extends ServiceEntityRepository
             'event_date_asc' => ['e.dateDebut', 'ASC'],
         ];
 
-        $sortKey = $filters['sort'] ?? 'date_desc';
+        $sortKey = $filters['sort'] ?? 'event_date_asc';
         if (!isset($sortMap[$sortKey])) {
-            $sortKey = 'date_desc';
+            $sortKey = 'event_date_asc';
         }
 
-        [$sortField, $sortDir] = $sortMap[$sortKey];
-        $qb->addOrderBy($sortField, $sortDir)
-            ->addOrderBy('r.id', 'DESC');
+        $now = new \DateTime();
+
+        if ($sortKey === 'event_date_asc') {
+            $qb->addSelect('CASE WHEN e.dateDebut >= :now THEN 0 ELSE 1 END AS HIDDEN isPast')
+                ->setParameter('now', $now)
+                ->addOrderBy('isPast', 'ASC')
+                ->addOrderBy('e.dateDebut', 'ASC')
+                ->addOrderBy('r.id', 'DESC');
+        } else {
+            [$sortField, $sortDir] = $sortMap[$sortKey];
+            $qb->addOrderBy($sortField, $sortDir)
+                ->addOrderBy('r.id', 'DESC');
+        }
 
         $query = $qb->getQuery()
             ->setFirstResult(($page - 1) * $perPage)
@@ -247,6 +268,16 @@ class ReservationRepository extends ServiceEntityRepository
             ->leftJoin('r.evenement', 'e')
             ->andWhere('e.organisateur = :owner')
             ->setParameter('owner', $owner)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    public function countReservedPlacesForEvent(Evenement $evenement): int
+    {
+        return (int) $this->createQueryBuilder('r')
+            ->select('COUNT(r.id)')
+            ->where('r.evenement = :evenement')
+            ->setParameter('evenement', $evenement)
             ->getQuery()
             ->getSingleScalarResult();
     }
