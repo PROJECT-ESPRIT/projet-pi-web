@@ -26,16 +26,12 @@
 
 3. **Script Python (admin)**
 
-   Le tableau de bord admin utilise les scripts Python (ex. `python/predict_registrations.py`). Installer les dépendances puis vérifier que `python` (Windows) ou `python3` (Linux/macOS) est disponible :
-
-   ```bash
-   pip install -r python/requirements.txt
-   ```
+   Le tableau de bord admin utilise `scripts/predict_registrations.py`. Vérifier que `python` (Windows) ou `python3` (Linux/macOS) est disponible.
 
 4. **Données de démo**
 
    ```bash
-   php bin/console app:seed --purge
+   php bin/console app:seed
    ```
 
 5. **Lancer l'application**
