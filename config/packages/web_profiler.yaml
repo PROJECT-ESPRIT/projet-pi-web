@@ -4,6 +4,12 @@ when@dev:
         toolbar: true
         intercept_redirects: false
 
+    framework:
+        profiler:
+            enabled: true
+            collect: true
+            only_exceptions: false
+
 when@test:
     web_profiler:
         toolbar: true
