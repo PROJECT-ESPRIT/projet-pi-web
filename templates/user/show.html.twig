@@ -1,6 +1,6 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}{{ user.prenom }} {{ user.nom }} â€” Art Connect{% endblock %}
+{% block title %}{{ user.prenom }} {{ user.nom }} — Art Connect{% endblock %}
 
 {% block body %}
 <style>
@@ -46,7 +46,7 @@
         <div class="up-hero-meta">
             <span><i class="fas fa-envelope"></i> {{ user.email }}</span>
             {% if user.telephone %}<span><i class="fas fa-phone"></i> {{ user.telephone }}</span>{% endif %}
-            <span><i class="fas fa-calendar"></i> Inscrit le {{ user.createdAt ? user.createdAt|date('d/m/Y') : 'â€”' }}</span>
+            <span><i class="fas fa-calendar"></i> Inscrit le {{ user.createdAt ? user.createdAt|date('d/m/Y') : '—' }}</span>
             {% for role in user.roles %}
                 {% if role == 'ROLE_ADMIN' %}
                     <span class="badge bg-danger" style="font-size:.72rem;">Admin</span>
@@ -59,13 +59,13 @@
                 {% endif %}
             {% endfor %}
             {% if user.status == 'APPROVED' %}
-                <span class="badge bg-success bg-opacity-75" style="font-size:.72rem;"><i class="fas fa-check me-1"></i>ApprouvÃ©</span>
+                <span class="badge bg-success bg-opacity-75" style="font-size:.72rem;"><i class="fas fa-check me-1"></i>Approuvé</span>
             {% elseif user.status == 'EMAIL_PENDING' %}
-                <span class="badge bg-secondary bg-opacity-75" style="font-size:.72rem;"><i class="fas fa-envelope me-1"></i>Email non vÃ©rifiÃ©</span>
+                <span class="badge bg-secondary bg-opacity-75" style="font-size:.72rem;"><i class="fas fa-envelope me-1"></i>Email non vérifié</span>
             {% elseif user.status == 'EMAIL_VERIFIED' %}
                 <span class="badge bg-warning text-dark" style="font-size:.72rem;"><i class="fas fa-clock me-1"></i>En attente admin</span>
             {% elseif user.status == 'REJECTED' %}
-                <span class="badge bg-danger" style="font-size:.72rem;"><i class="fas fa-times me-1"></i>RefusÃ©</span>
+                <span class="badge bg-danger" style="font-size:.72rem;"><i class="fas fa-times me-1"></i>Refusé</span>
             {% elseif user.status == 'SUSPENDED' %}
                 <span class="badge bg-dark" style="font-size:.72rem;"><i class="fas fa-ban me-1"></i>Suspendu</span>
             {% endif %}
@@ -79,23 +79,23 @@
     <div>
         {# Reservations #}
         <div class="up-card">
-            <h5><i class="fas fa-ticket-alt"></i> RÃ©servations <span class="badge bg-primary bg-opacity-75 ms-1" style="font-size:.68rem;">{{ user.reservations|length }}</span></h5>
+            <h5><i class="fas fa-ticket-alt"></i> Réservations <span class="badge bg-primary bg-opacity-75 ms-1" style="font-size:.68rem;">{{ user.reservations|length }}</span></h5>
             {% if user.reservations|length > 0 %}
                 <table class="up-mini-table">
-                    <thead><tr><th>Ã‰vÃ©nement</th><th>Date</th><th>Place</th><th>Statut</th></tr></thead>
+                    <thead><tr><th>Événement</th><th>Date</th><th>Place</th><th>Statut</th></tr></thead>
                     <tbody>
                         {% for res in user.reservations %}
                         <tr>
                             <td>
                                 <a href="{{ path('app_evenement_show', {id: res.evenement.id}) }}" style="color:var(--ac-mid); font-weight:600; text-decoration:none;">
-                                    {{ res.evenement.titre|length > 30 ? res.evenement.titre|slice(0,30) ~ 'â€¦' : res.evenement.titre }}
+                                    {{ res.evenement.titre|length > 30 ? res.evenement.titre|slice(0,30) ~ '…' : res.evenement.titre }}
                                 </a>
                             </td>
                             <td>{{ res.evenement.dateDebut|date('d/m/Y') }}</td>
-                            <td>{% if res.seatLabel %}<span class="badge bg-info" style="font-size:.68rem;">{{ res.seatLabel }}</span>{% else %}â€”{% endif %}</td>
+                            <td>{% if res.seatLabel %}<span class="badge bg-info" style="font-size:.68rem;">{{ res.seatLabel }}</span>{% else %}—{% endif %}</td>
                             <td>
-                                {% if res.status == 'CONFIRMED' %}<span class="badge bg-success" style="font-size:.65rem;">ConfirmÃ©</span>
-                                {% elseif res.status == 'CANCELLED' %}<span class="badge bg-danger" style="font-size:.65rem;">AnnulÃ©</span>
+                                {% if res.status == 'CONFIRMED' %}<span class="badge bg-success" style="font-size:.65rem;">Confirmé</span>
+                                {% elseif res.status == 'CANCELLED' %}<span class="badge bg-danger" style="font-size:.65rem;">Annulé</span>
                                 {% else %}<span class="badge bg-secondary" style="font-size:.65rem;">{{ res.status }}</span>{% endif %}
                             </td>
                         </tr>
@@ -103,26 +103,26 @@
                     </tbody>
                 </table>
             {% else %}
-                <div class="up-empty"><i class="fas fa-inbox"></i> Aucune rÃ©servation</div>
+                <div class="up-empty"><i class="fas fa-inbox"></i> Aucune réservation</div>
             {% endif %}
         </div>
 
         {# Events organized (if artiste) #}
         {% if user.evenements|length > 0 %}
         <div class="up-card">
-            <h5><i class="fas fa-calendar-alt"></i> Ã‰vÃ©nements organisÃ©s <span class="badge bg-primary bg-opacity-75 ms-1" style="font-size:.68rem;">{{ user.evenements|length }}</span></h5>
+            <h5><i class="fas fa-calendar-alt"></i> Événements organisés <span class="badge bg-primary bg-opacity-75 ms-1" style="font-size:.68rem;">{{ user.evenements|length }}</span></h5>
             <table class="up-mini-table">
-                <thead><tr><th>Titre</th><th>Date</th><th>Lieu</th><th>Places</th><th>RÃ©s.</th></tr></thead>
+                <thead><tr><th>Titre</th><th>Date</th><th>Lieu</th><th>Places</th><th>Rés.</th></tr></thead>
                 <tbody>
                     {% for ev in user.evenements %}
                     <tr>
                         <td>
                             <a href="{{ path('app_evenement_show', {id: ev.id}) }}" style="color:var(--ac-mid); font-weight:600; text-decoration:none;">
-                                {{ ev.titre|length > 25 ? ev.titre|slice(0,25) ~ 'â€¦' : ev.titre }}
+                                {{ ev.titre|length > 25 ? ev.titre|slice(0,25) ~ '…' : ev.titre }}
                             </a>
                         </td>
                         <td>{{ ev.dateDebut|date('d/m/Y') }}</td>
-                        <td style="font-size:.75rem;">{{ ev.lieu|length > 20 ? ev.lieu|slice(0,20) ~ 'â€¦' : ev.lieu }}</td>
+                        <td style="font-size:.75rem;">{{ ev.lieu|length > 20 ? ev.lieu|slice(0,20) ~ '…' : ev.lieu }}</td>
                         <td>{{ ev.nbPlaces }}</td>
                         <td><span class="badge bg-info" style="font-size:.65rem;">{{ ev.reservations|length }}</span></td>
                     </tr>
@@ -162,7 +162,7 @@
                     <tr>
                         <td class="fw-bold">#{{ cmd.id }}</td>
                         <td>{{ cmd.total|number_format(2, '.', ' ') }} TND</td>
-                        <td>{{ cmd.dateCommande ? cmd.dateCommande|date('d/m/Y') : 'â€”' }}</td>
+                        <td>{{ cmd.dateCommande ? cmd.dateCommande|date('d/m/Y') : '—' }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -181,7 +181,7 @@
                 <span class="up-val">#{{ user.id }}</span>
             </div>
             <div class="up-info-row">
-                <span class="up-lbl">PrÃ©nom</span>
+                <span class="up-lbl">Prénom</span>
                 <span class="up-val">{{ user.prenom }}</span>
             </div>
             <div class="up-info-row">
@@ -192,21 +192,37 @@
                 <span class="up-lbl">Email</span>
                 <span class="up-val" style="font-size:.78rem;">{{ user.email }}</span>
             </div>
+            {% if fake_domain_risk is defined and fake_domain_risk is not null %}
             <div class="up-info-row">
-                <span class="up-lbl">TÃ©lÃ©phone</span>
-                <span class="up-val">{{ user.telephone ?? 'â€”' }}</span>
+                <span class="up-lbl">Risque domaine email</span>
+                <span class="up-val">
+                    <span title="Score estimé par un petit modèle ML (domaines jetables + motifs). Indication pour votre décision."
+                        data-bs-toggle="tooltip" data-bs-placement="top" style="cursor:help;">
+                        {{ fake_domain_risk.percent }}&#37; ({{ fake_domain_risk.label }})
+                        {% if fake_domain_risk.percent >= 70 %}
+                            <i class="fas fa-exclamation-circle text-danger ms-1" style="font-size:.8rem;"></i>
+                        {% elseif fake_domain_risk.percent >= 30 %}
+                            <i class="fas fa-exclamation-triangle text-warning ms-1" style="font-size:.8rem;"></i>
+                        {% endif %}
+                    </span>
+                </span>
+            </div>
+            {% endif %}
+            <div class="up-info-row">
+                <span class="up-lbl">Téléphone</span>
+                <span class="up-val">{{ user.telephone ?? '—' }}</span>
             </div>
             <div class="up-info-row">
                 <span class="up-lbl">Inscription</span>
-                <span class="up-val">{{ user.createdAt ? user.createdAt|date('d/m/Y H:i') : 'â€”' }}</span>
+                <span class="up-val">{{ user.createdAt ? user.createdAt|date('d/m/Y H:i') : '—' }}</span>
             </div>
             <div class="up-info-row">
                 <span class="up-lbl">Statut</span>
                 <span class="up-val">
-                    {% if user.status == 'APPROVED' %}<span class="badge bg-success" style="font-size:.7rem;">ApprouvÃ©</span>
-                    {% elseif user.status == 'EMAIL_PENDING' %}<span class="badge bg-secondary" style="font-size:.7rem;">Email non vÃ©rifiÃ©</span>
+                    {% if user.status == 'APPROVED' %}<span class="badge bg-success" style="font-size:.7rem;">Approuvé</span>
+                    {% elseif user.status == 'EMAIL_PENDING' %}<span class="badge bg-secondary" style="font-size:.7rem;">Email non vérifié</span>
                     {% elseif user.status == 'EMAIL_VERIFIED' %}<span class="badge bg-warning text-dark" style="font-size:.7rem;">En attente admin</span>
-                    {% elseif user.status == 'REJECTED' %}<span class="badge bg-danger" style="font-size:.7rem;">RefusÃ©</span>
+                    {% elseif user.status == 'REJECTED' %}<span class="badge bg-danger" style="font-size:.7rem;">Refusé</span>
                     {% elseif user.status == 'SUSPENDED' %}<span class="badge bg-dark" style="font-size:.7rem;">Suspendu</span>
                     {% else %}<span class="badge bg-secondary" style="font-size:.7rem;">{{ user.status }}</span>{% endif %}
                 </span>
@@ -223,12 +239,12 @@
                     {% elseif user.segment == 'DORMANT' %}
                         <span class="badge bg-secondary" style="font-size:.7rem;"><i class="fas fa-bed me-1"></i>Dormant</span>
                     {% else %}
-                        <span class="text-muted fst-italic" style="font-size:.7rem;">Non calculÃ©</span>
+                        <span class="text-muted fst-italic" style="font-size:.7rem;">Non calculé</span>
                     {% endif %}
                 </span>
             </div>
             <div class="up-info-row">
-                <span class="up-lbl">RÃ´les</span>
+                <span class="up-lbl">Rôles</span>
                 <span class="up-val">
                     {% for role in user.roles %}
                         {% if role == 'ROLE_ADMIN' %}<span class="badge bg-danger" style="font-size:.65rem;">Admin</span>
@@ -242,13 +258,13 @@
 
         {# Activity summary #}
         <div class="up-card">
-            <h5><i class="fas fa-chart-pie"></i> ActivitÃ©</h5>
+            <h5><i class="fas fa-chart-pie"></i> Activité</h5>
             <div class="up-info-row">
-                <span class="up-lbl">RÃ©servations</span>
+                <span class="up-lbl">Réservations</span>
                 <span class="up-val">{{ user.reservations|length }}</span>
             </div>
             <div class="up-info-row">
-                <span class="up-lbl">Ã‰vÃ©nements crÃ©Ã©s</span>
+                <span class="up-lbl">Événements créés</span>
                 <span class="up-val">{{ user.evenements|length }}</span>
             </div>
             <div class="up-info-row">
@@ -265,6 +281,12 @@
         {% if user.status != 'APPROVED' or true %}
         <div class="up-card">
             <h5><i class="fas fa-user-check"></i> Validation</h5>
+            {% if fake_domain_risk is defined and fake_domain_risk is not null and fake_domain_risk.percent >= 70 %}
+            <p class="text-warning mb-2" style="font-size:.8rem;">
+                <i class="fas fa-robot me-1" title="Modèle ML"></i>
+                Risque domaine élevé ({{ fake_domain_risk.percent }}&#37;) : domaine souvent jetable ou suspect. Utilisez ce score comme indication, pas comme refus automatique.
+            </p>
+            {% endif %}
             <div class="d-grid gap-2">
                 {% if user.status in ['EMAIL_VERIFIED', 'REJECTED', 'SUSPENDED'] %}
                     <form method="post" action="{{ path('app_user_approve', {id: user.id}) }}">
@@ -286,7 +308,7 @@
                 {% endif %}
                 {% if user.status == 'EMAIL_PENDING' %}
                     <p class="text-muted text-center mb-0" style="font-size:.8rem;">
-                        <i class="fas fa-info-circle me-1"></i> L'utilisateur n'a pas encore vÃ©rifiÃ© son email.
+                        <i class="fas fa-info-circle me-1"></i> L'utilisateur n'a pas encore vérifié son email.
                     </p>
                 {% endif %}
             </div>
@@ -298,7 +320,7 @@
             <h5><i class="fas fa-cog"></i> Gestion</h5>
             <div class="d-grid gap-2">
                 <a href="{{ path('app_user_edit', {id: user.id}) }}" class="btn btn-outline-warning"><i class="fas fa-pen me-1"></i> Modifier</a>
-                <form method="post" action="{{ path('app_user_delete', {id: user.id}) }}" data-confirm-title="Supprimer cet utilisateur" data-confirm="Cette action est irrÃ©versible. Voulez-vous continuer ?">
+                <form method="post" action="{{ path('app_user_delete', {id: user.id}) }}" data-confirm-title="Supprimer cet utilisateur" data-confirm="Cette action est irréversible. Voulez-vous continuer ?">
                     <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ user.id) }}">
                     <button class="btn btn-outline-danger w-100"><i class="fas fa-trash me-1"></i> Supprimer</button>
                 </form>

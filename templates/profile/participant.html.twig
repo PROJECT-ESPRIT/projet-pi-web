@@ -1,6 +1,6 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Mon profil â€” Art Connect{% endblock %}
+{% block title %}Mon profil — Art Connect{% endblock %}
 
 {% block stylesheets %}
     {{ parent() }}
@@ -12,7 +12,7 @@
     <div class="fo-profile-header">
         <div>
             <h1 class="fo-profile-title"><i class="fas fa-user"></i> Mon profil</h1>
-            <p class="fo-profile-subtitle">GÃ©rez vos informations personnelles et votre image.</p>
+            <p class="fo-profile-subtitle">Gérez vos informations personnelles et votre image.</p>
         </div>
     </div>
 
@@ -33,9 +33,9 @@
                         <p class="fo-profile-name">{{ app.user.prenom }} {{ app.user.nom }}</p>
                         <p class="fo-profile-age">
                             {% if app.user.dateNaissance %}
-                                {{ app.user.age }} ans &middot; NÃ©(e) le {{ app.user.dateNaissance|date('d/m/Y') }}
+                                {{ app.user.age }} ans &middot; Né(e) le {{ app.user.dateNaissance|date('d/m/Y') }}
                             {% else %}
-                                Date de naissance non renseignÃ©e
+                                Date de naissance non renseignée
                             {% endif %}
                         </p>
                     </div>
@@ -55,16 +55,16 @@
                     <p class="value">{{ app.user.email }}</p>
                 </div>
                 <div class="fo-profile-meta">
-                    <p class="label"><i class="fas fa-phone me-1" style="color:var(--ac-blue);"></i>TÃ©lÃ©phone</p>
-                    <p class="value">{{ app.user.telephone ?: 'Non renseignÃ©' }}</p>
+                    <p class="label"><i class="fas fa-phone me-1" style="color:var(--ac-blue);"></i>Téléphone</p>
+                    <p class="value">{{ app.user.telephone ?: 'Non renseigné' }}</p>
                 </div>
                 <div class="fo-profile-meta">
                     <p class="label"><i class="fas fa-birthday-cake me-1" style="color:var(--ac-lavender);"></i>Date de naissance</p>
-                    <p class="value">{{ app.user.dateNaissance ? app.user.dateNaissance|date('d/m/Y') : 'Non renseignÃ©e' }}</p>
+                    <p class="value">{{ app.user.dateNaissance ? app.user.dateNaissance|date('d/m/Y') : 'Non renseignée' }}</p>
                 </div>
                 <div class="fo-profile-meta">
                     <p class="label"><i class="fas fa-image me-1" style="color:var(--ac-lavender);"></i>Image de profil</p>
-                    <p class="value text-truncate">{{ app.user.profileImageUrl ? 'Photo personnalisÃ©e' : 'Initiales (par dÃ©faut)' }}</p>
+                    <p class="value text-truncate">{{ app.user.profileImageUrl ? 'Photo personnalisée' : 'Initiales (par défaut)' }}</p>
                 </div>
             </div>
 
@@ -73,7 +73,7 @@
                 {% if not app.user.dateNaissance %}
                     Vous pouvez renseigner votre date de naissance une seule fois.
                 {% else %}
-                    Votre date de naissance est verrouillÃ©e aprÃ¨s la premiÃ¨re saisie.
+                    Votre date de naissance est verrouillée après la première saisie.
                 {% endif %}
             </div>
             <div class="mt-3 p-3 rounded-3" style="border:1px solid rgba(220,38,38,.25); background:rgba(220,38,38,.04);">

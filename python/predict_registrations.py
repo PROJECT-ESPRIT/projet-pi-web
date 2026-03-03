@@ -1,36 +1,27 @@
 #!/usr/bin/env python3
 """
-Registration prediction script — Python standard library only.
-Same usage pattern as event_hotness.py / event_recommender.py: argparse, .env, optional DB.
-
-Modes:
-  - Stdin:  read JSON from stdin (used by PHP RegistrationPredictionService).
-  - --input FILE: read JSON from file (analyse a full export).
-  - --fetch-db:   load DATABASE_URL from .env, run mysql CLI, analyse all registration
-                  data from the database (no external Python libs; requires mysql in PATH).
-
-Input JSON: {"monthly": [{"month": "Jan", "count": 5}, ...], "monthly_by_role": [...]}
-Output:     {"next_month": {...}, "future_by_type": [...]}
+Registration prediction — Ridge regression on lagged monthly counts.
+Input: JSON with monthly + monthly_by_role. Output: next_month + future_by_type.
+Modes: stdin, --input FILE, --fetch-db (mysql CLI).
 """
 import argparse
 import json
-import math
 import os
-import re
 import subprocess
 import sys
 from datetime import datetime
 
+import numpy as np
+from sklearn.linear_model import Ridge
+
 ROLES = ["ROLE_USER", "ROLE_PARTICIPANT", "ROLE_ARTISTE", "ROLE_ADMIN"]
-FUTURE_MONTHS = 6
+LAG = 6
+MIN_SAMPLES = 2
+RIDGE_ALPHA = 1.0
+RANDOM_STATE = 42
 
-
-# ---------------------------------------------------------------------------
-# .env and DB (stdlib only — same pattern as event_hotness / event_recommender)
-# ---------------------------------------------------------------------------
 
 def load_db_url_from_env(env_path=None):
-    """Read DATABASE_URL from the nearest .env file (stdlib only)."""
     if env_path is None:
         current = os.path.dirname(os.path.abspath(__file__))
         for _ in range(5):
@@ -52,7 +43,6 @@ def load_db_url_from_env(env_path=None):
 
 
 def parse_db_url(url):
-    """Parse mysql://user:pass@host:port/dbname into components (stdlib only)."""
     if not url or not url.startswith("mysql://"):
         return None
     url = url.replace("mysql://", "", 1).split("?")[0]
@@ -72,10 +62,6 @@ def parse_db_url(url):
 
 
 def fetch_registrations_from_db(months=12):
-    """
-    Run mysql CLI to query the database and return the same structure as PHP
-    (monthly + monthly_by_role). Requires mysql client in PATH. Stdlib only.
-    """
     url = load_db_url_from_env()
     if not url:
         return None, "DATABASE_URL not found in .env"
@@ -84,7 +70,6 @@ def fetch_registrations_from_db(months=12):
     if not parsed:
         return None, "Invalid DATABASE_URL"
 
-    # Monthly counts
     q1 = (
         "SELECT DATE_FORMAT(created_at, '%Y-%m') AS ym, DATE_FORMAT(created_at, '%b') AS month, COUNT(*) AS cnt "
         "FROM `user` WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL {} MONTH) "
@@ -96,7 +81,7 @@ def fetch_registrations_from_db(months=12):
         "-h", parsed["host"],
         "-P", str(parsed["port"]),
         "-u", parsed["user"],
-        "-N", "-B",  # no headers, tab-separated
+        "-N", "-B",
         parsed["dbname"],
         "-e", q1,
     ]
@@ -125,7 +110,6 @@ def fetch_registrations_from_db(months=12):
         if len(parts) >= 3:
             monthly.append({"month": parts[1], "ym": parts[0], "count": int(parts[2])})
 
-    # Monthly by role (roles column: JSON array like ["ROLE_PARTICIPANT"])
     q2 = (
         "SELECT DATE_FORMAT(created_at, '%b') AS month, DATE_FORMAT(created_at, '%Y-%m') AS ym, "
         "CASE "
@@ -153,7 +137,6 @@ def fetch_registrations_from_db(months=12):
     if out2.returncode != 0:
         return {"monthly": monthly, "monthly_by_role": _monthly_by_role_from_monthly(monthly)}, None
 
-    # Pivot: (month, ym) -> {ROLE_*: count}
     by_month = {}
     for line in out2.stdout.strip().splitlines():
         parts = line.split("\t")
@@ -166,7 +149,6 @@ def fetch_registrations_from_db(months=12):
         if role in ROLES:
             by_month[key][role] = cnt
 
-    # Preserve same order as monthly (chronological); drop internal "ym" from output
     order = [(row.get("ym"), row["month"]) for row in monthly]
     seen = set()
     monthly_by_role = []
@@ -181,23 +163,16 @@ def fetch_registrations_from_db(months=12):
             seen.add(k)
     if not monthly_by_role and monthly:
         monthly_by_role = [{"month": row["month"], **{r: 0 for r in ROLES}} for row in monthly]
-    # Strip "ym" from monthly so output format matches PHP
     monthly = [{"month": row["month"], "count": row["count"]} for row in monthly]
 
     return {"monthly": monthly, "monthly_by_role": monthly_by_role}, None
 
 
 def _monthly_by_role_from_monthly(monthly):
-    """Fallback: no role breakdown, use zeros for all roles."""
     return [{"month": row["month"], **{r: 0 for r in ROLES}} for row in monthly]
 
 
-# ---------------------------------------------------------------------------
-# Prediction (stdlib only: math, datetime, json)
-# ---------------------------------------------------------------------------
-
 def add_months(dt, months):
-    """Add months to datetime using stdlib only."""
     y, m = dt.year, dt.month
     m += months
     while m > 12:
@@ -209,39 +184,63 @@ def add_months(dt, months):
     return datetime(y, m, 1)
 
 
-def linear_regression_prediction(values):
-    n = len(values)
-    if n <= 1:
-        return float(values[0]) if values else 0.0
-    sum_x = sum(i for i in range(n))
-    sum_y = sum(values)
-    sum_xy = sum(i * y for i, y in enumerate(values))
-    sum_x2 = sum(i * i for i in range(n))
-    denom = n * sum_x2 - sum_x * sum_x
-    if abs(denom) < 1e-9:
-        return float(values[-1])
-    slope = (n * sum_xy - sum_x * sum_y) / denom
-    intercept = (sum_y - slope * sum_x) / n
-    return intercept + slope * n
+def _build_lag_matrix(values, lag=LAG):
+    arr = np.asarray(values, dtype=float).ravel()
+    n = len(arr)
+    if n < 2:
+        return None, None
+    lag_used = min(lag, n - 1)
+    X_list = []
+    y_list = []
+    for i in range(lag_used, n):
+        row = list(arr[i - lag_used : i])
+        while len(row) < lag:
+            row.insert(0, np.mean(arr[:i]) if i else 0.0)
+        row = row[-lag:]
+        row.append(float(i))
+        X_list.append(row)
+        y_list.append(arr[i])
+    if not X_list:
+        return None, None
+    return np.array(X_list), np.array(y_list)
 
 
-def moving_average(values, window=3):
-    if not values:
-        return 0.0
-    slice_ = values[-max(1, window):]
-    return sum(slice_) / len(slice_)
+def _fit_predict_ridge(values, steps=1):
+    arr = np.asarray([max(0.0, float(v)) for v in values], dtype=float).ravel()
+    n = len(arr)
+    if n == 0:
+        return [0.0] * max(1, steps), 0.0, None
+    if n == 1 or (n < LAG and steps >= 1):
+        last = float(arr[-1])
+        return [last] * max(1, steps), float(np.std(arr)) if n > 1 else 0.0, None
+
+    X, y = _build_lag_matrix(arr.tolist(), LAG)
+    if X is None or len(X) < MIN_SAMPLES:
+        last = float(arr[-1])
+        return [last] * max(1, steps), 0.0, None
+
+    model = Ridge(alpha=RIDGE_ALPHA, random_state=RANDOM_STATE)
+    model.fit(X, y)
+    residual_std = float(np.sqrt(np.mean((y - model.predict(X)) ** 2)))
+
+    current = list(arr)
+    predictions = []
+    for _ in range(steps):
+        row = list(current[-LAG:])
+        while len(row) < LAG:
+            row.insert(0, np.mean(current) if current else 0.0)
+        row = row[-LAG:]
+        row.append(float(len(current)))
+        X_next = np.array([row])
+        next_val = float(model.predict(X_next)[0])
+        next_val = max(0.0, next_val)
+        predictions.append(next_val)
+        current.append(next_val)
+
+    return predictions, residual_std, model
 
 
-def exponential_smoothing(values, alpha=0.45):
-    if not values:
-        return 0.0
-    level = values[0]
-    for i in range(1, len(values)):
-        level = alpha * values[i] + (1.0 - alpha) * level
-    return level
-
-
-def seasonality_factor(values):
+def _seasonality_factor(values):
     n = len(values)
     if n < 8:
         return 0.0
@@ -249,42 +248,30 @@ def seasonality_factor(values):
     older = values[-6:-3]
     if len(older) < 3:
         return 0.0
-    recent_avg = sum(recent) / len(recent)
-    older_avg = sum(older) / len(older)
+    recent_avg = np.mean(recent)
+    older_avg = np.mean(older)
     if older_avg <= 1e-9:
         return 0.0
     raw = (recent_avg - older_avg) / older_avg
-    return max(-0.15, min(0.15, raw * 0.35))
+    return float(max(-0.15, min(0.15, raw * 0.35)))
 
 
-def confidence_score(values, prediction):
-    n = len(values)
-    if n < 3:
+def _confidence_from_residuals(residual_std, n, prediction):
+    if n < 2:
         return 35
-    mean = sum(values) / n
-    if mean <= 1e-9:
-        return 50
-    variance = sum((v - mean) ** 2 for v in values) / n
-    std = math.sqrt(variance)
-    coef_var = std / mean
+    sample_score = min(45.0, (n / 12.0) * 45.0)
+    mean_val = prediction
+    if residual_std <= 1e-9 or mean_val <= 1e-9:
+        return min(100, int(50 + sample_score))
+    coef_var = residual_std / max(mean_val, 1.0)
     volatility_score = (1.0 - min(1.0, coef_var)) * 55.0
-    last = values[-1]
-    drift = abs(prediction - last) / max(1.0, mean) if mean else 1.0
-    drift_score = (1.0 - min(1.0, drift)) * 30.0
-    sample_score = min(15.0, (n / 12.0) * 15.0)
-    score = int(round(volatility_score + drift_score + sample_score))
+    score = int(round(volatility_score + sample_score))
     return max(0, min(100, score))
 
 
-def confidence_band(values, prediction, confidence_score_val):
-    n = len(values)
-    if n == 0:
-        return 0, 0
-    mean = sum(values) / n
-    variance = sum((v - mean) ** 2 for v in values) / n
-    std = math.sqrt(variance)
+def _confidence_band(prediction, residual_std, confidence_score_val):
     uncertainty = 1.35 - (confidence_score_val / 100.0) * 0.8
-    margin = max(1.0, std * uncertainty)
+    margin = max(1.0, residual_std * uncertainty)
     lower = max(0, round(prediction - margin))
     upper = max(lower, round(prediction + margin))
     return int(lower), int(upper)
@@ -320,11 +307,9 @@ def predict_next_month(counts):
             "seasonalityFactor": 0.0,
             "nextMonthLabel": next_month_label(),
         }
-    reg = linear_regression_prediction(counts)
-    ma = moving_average(counts, 3)
-    exp = exponential_smoothing(counts, 0.45)
-    seas = seasonality_factor(counts)
-    prediction = (0.45 * reg + 0.25 * ma + 0.30 * exp) * (1.0 + seas)
+
+    preds, residual_std, _ = _fit_predict_ridge(counts, steps=1)
+    prediction = preds[0] if preds else 0.0
     prediction = max(0.0, prediction)
     last = counts[-1]
     delta = max(1.0, last * 0.07)
@@ -333,8 +318,11 @@ def predict_next_month(counts):
         trend = "up"
     elif prediction < last - delta:
         trend = "down"
-    conf_score = confidence_score(counts, prediction)
-    lower, upper = confidence_band(counts, prediction, conf_score)
+
+    seas = _seasonality_factor(counts)
+    conf_score = _confidence_from_residuals(residual_std, n, prediction)
+    lower, upper = _confidence_band(prediction, residual_std, conf_score)
+
     return {
         "predictedCount": int(round(prediction)),
         "trend": trend,
@@ -348,23 +336,13 @@ def predict_next_month(counts):
 
 
 def predict_series(values, steps=1):
-    """Predict next `steps` values for a series using same ML blend."""
-    values = [max(0.0, float(v)) for v in values]
-    out = []
-    current = list(values)
-    for _ in range(steps):
-        if not current:
-            out.append(0.0)
-            continue
-        reg = linear_regression_prediction(current)
-        ma = moving_average(current, 3)
-        exp = exponential_smoothing(current, 0.45)
-        seas = seasonality_factor(current) if len(current) >= 8 else 0.0
-        pred = (0.45 * reg + 0.25 * ma + 0.30 * exp) * (1.0 + seas)
-        pred = max(0.0, pred)
-        out.append(pred)
-        current.append(pred)
-    return out
+    preds, _, _ = _fit_predict_ridge(values, steps=max(1, steps))
+    return preds[: max(1, steps)]
+
+
+def months_remaining_in_year():
+    """Number of months left in the current year (from next month through December)."""
+    return max(0, 12 - datetime.now().month)
 
 
 def future_month_labels(count):
@@ -379,7 +357,6 @@ def future_month_labels(count):
 
 
 def run_predictions(data):
-    """Compute next_month and future_by_type from input data (monthly + monthly_by_role)."""
     monthly = data.get("monthly") or []
     monthly_by_role = data.get("monthly_by_role") or []
 
@@ -392,7 +369,8 @@ def run_predictions(data):
             role_series[r].append(float(row.get(r, 0) or 0))
 
     future_by_type = []
-    labels = future_month_labels(FUTURE_MONTHS)
+    n_future = months_remaining_in_year()
+    labels = future_month_labels(n_future)
     for step, label in enumerate(labels):
         row = {"month": label}
         for r in ROLES:
@@ -404,14 +382,8 @@ def run_predictions(data):
     return {"next_month": next_month, "future_by_type": future_by_type}
 
 
-# ---------------------------------------------------------------------------
-# CLI (argparse like event_hotness / event_recommender)
-# ---------------------------------------------------------------------------
-
 def parse_args():
-    p = argparse.ArgumentParser(
-        description="Registration prediction (stdlib only). Read JSON from stdin, file, or DB."
-    )
+    p = argparse.ArgumentParser(description="Registration prediction. JSON from stdin, file, or --fetch-db.")
     p.add_argument(
         "--input", "-i",
         type=str,
@@ -446,7 +418,6 @@ def main():
         if err:
             sys.stderr.write(f"DB fetch failed: {err}\n")
             return 1
-        # data is the full input for run_predictions
     else:
         if args.input:
             try:
