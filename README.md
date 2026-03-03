@@ -94,7 +94,7 @@ composer require ahmed-bhs/doctrine-doctor:^1.0 webmozart/assert:^1.11 --with-al
 composer require --dev ahmed-bhs/doctrine-doctor
 ```
 
-En dev : ouvrir une page puis soit la **barre Symfony en bas** (toolbar), soit aller directement sur **`http://localhost:8000/_profiler`** → cliquer sur la dernière requête → panneau **Doctrine Doctor** (intégrité, sécurité, requêtes lentes). Après chaque correction : `symfony server:stop` puis `php bin/console cache:clear`, relancer le serveur.
+En dev : ouvrir une page → Web Profiler → panneau **Doctrine Doctor** (intégrité, sécurité, requêtes lentes). Après chaque correction : `symfony server:stop` puis `php bin/console cache:clear`, relancer le serveur.
 
 ---
 

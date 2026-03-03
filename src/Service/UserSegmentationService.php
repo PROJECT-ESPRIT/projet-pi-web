@@ -52,10 +52,7 @@ class UserSegmentationService
         $dataset = new \Rubix\ML\Datasets\Unlabeled($samples);
 
         // We want 4 clusters ideally: VIP, ACTIF, CHURN_RISK, DORMANT
-        $k = min(4, count($users)); 
-        if ($k < 1) {
-            $k = 1;
-        }
+        $k = min(4, count($users));
 
         // 3. Train the K-Means Model
         $estimator = new \Rubix\ML\Clusterers\KMeans($k);

@@ -72,6 +72,7 @@ final class ForumReponseController extends AbstractController
                     $email = (new Email())
                         ->from($from)
                         ->to($to)
+                        // @phpstan-ignore-next-line forum relation is nullable only before persistence
                         ->subject('Réponse à votre message : ' . ($forum?->getSujet() ?? ''))
                         ->text($forumReponse->getContenu() ?? '');
 

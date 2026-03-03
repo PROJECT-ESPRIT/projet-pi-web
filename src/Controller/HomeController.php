@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Entity\User;
 use App\Repository\EvenementRepository;
 use App\Repository\ForumRepository;
 use App\Repository\ProduitRepository;
@@ -23,6 +24,9 @@ class HomeController extends AbstractController
             return $this->redirectToRoute('admin_stats');
         }
         $user = $this->getUser();
+        if ($user !== null && !$user instanceof User) {
+            $user = null;
+        }
         $allUpcoming = $evenementRepository->findBy([], ['dateDebut' => 'ASC'], 12);
 
         $myEvents = [];
@@ -46,7 +50,7 @@ class HomeController extends AbstractController
         $aiRecommendations = null;
         $aiHasHistory      = false;
 
-        if ($user && !$this->isGranted('ROLE_ADMIN')) {
+        if ($user) {
             if (in_array('ROLE_ARTISTE', $user->getRoles(), true)) {
                 $isArtist = true;
                 $totalMine = $evenementRepository->countByFilters(array_merge($baseFilters, ['owner_id' => $user->getId(), 'exclude_owner_id' => null]));
@@ -82,6 +86,13 @@ class HomeController extends AbstractController
         $myEventsThree    = $isArtist ? array_values(array_filter($latestThree, fn ($ev) => $ev->getOrganisateur() && $ev->getOrganisateur()->getId() === $user->getId())) : [];
         $otherEventsThree = $isArtist ? array_values(array_filter($latestThree, fn ($ev) => !$ev->getOrganisateur() || $ev->getOrganisateur()->getId() !== $user->getId())) : [];
 
+        $reservationCounts = [];
+        foreach (array_merge($featuredEvents, $latestThree) as $ev) {
+            if ($ev->getId() !== null && !isset($reservationCounts[$ev->getId()])) {
+                $reservationCounts[$ev->getId()] = $reservationRepository->countReservedPlacesForEvent($ev);
+            }
+        }
+
         return $this->render('home/index.html.twig', [
             'user'                 => $user,
             'isArtist'             => $isArtist,
@@ -98,6 +109,7 @@ class HomeController extends AbstractController
             'ai_has_history'       => $aiHasHistory,
             'latestProduits'       => $produitRepository->findBy([], ['id' => 'DESC'], 4),
             'latestForums'         => $forumRepository->findBy([], ['dateCreation' => 'DESC'], 3),
+            'reservationCounts'    => $reservationCounts,
         ]);
     }
 
@@ -135,6 +147,7 @@ class HomeController extends AbstractController
 
     private function buildDbUrl(): string
     {
+        /** @phpstan-ignore-next-line superglobal access is intentionally guarded */
         $raw = $_ENV['DATABASE_URL'] ?? getenv('DATABASE_URL') ?? '';
         if ($raw === '') return 'mysql+pymysql://root:@127.0.0.1:3306/projet_pi_web';
         return preg_replace('/\?.*$/', '', preg_replace('#^mysql://#', 'mysql+pymysql://', $raw));

@@ -32,7 +32,7 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
             ->setParameter('start', $startDate)
             ->setParameter('end', $endDate)
             ->getQuery()
-            ->getSingleScalarResult() ?? 0;
+            ->getSingleScalarResult();
     }
 
     public function getUsersByRole(): array

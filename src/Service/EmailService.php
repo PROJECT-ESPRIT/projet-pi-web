@@ -41,6 +41,31 @@ class EmailService
         $this->logger?->info('Verification email sent', ['to' => $user->getEmail()]);
     }
 
+    /**
+     * Simple generic confirmation email used by test endpoint.
+     */
+    public function sendConfirmationEmail(
+        string $toEmail,
+        string $recipientName,
+        string $eventName,
+        \DateTimeInterface $eventDate,
+        string $location
+    ): void {
+        $email = (new TemplatedEmail())
+            ->from($this->adminEmail)
+            ->to($toEmail)
+            ->subject('Confirmation — ' . $eventName)
+            ->htmlTemplate('emails/reservation_confirmation.html.twig')
+            ->context([
+                'name' => $recipientName,
+                'event' => $eventName,
+                'date' => $eventDate,
+                'lieu' => $location,
+            ]);
+
+        $this->mailer->send($email);
+    }
+
     public function sendAccountApproved(User $user): void
     {
         $email = (new TemplatedEmail())
