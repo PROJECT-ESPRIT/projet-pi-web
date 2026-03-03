@@ -10,39 +10,23 @@
 ## Installation
 
 1. **Dépendances**
-
-   ```bash
+  ```bash
    composer install
-   ```
-
+  ```
 2. **Base de données**
-
-   Configurer `DATABASE_URL` dans `.env`, puis :
-
-   ```bash
-   php bin/console doctrine:database:create
-   php bin/console doctrine:migrations:migrate
-   ```
-
+  Configurer `DATABASE_URL` dans `.env`, puis :
 3. **Script Python (admin)**
-
-   Le tableau de bord admin utilise `scripts/predict_registrations.py`. Vérifier que `python` (Windows) ou `python3` (Linux/macOS) est disponible.
-
+  Le tableau de bord admin utilise `scripts/predict_registrations.py`. Vérifier que `python` (Windows) ou `python3` (Linux/macOS) est disponible.
 4. **Données de démo**
-
-   ```bash
+  ```bash
    php bin/console app:seed
-   ```
-
+  ```
 5. **Lancer l'application**
-
-   ```bash
+  ```bash
    php -S localhost:8000 -t public
-   ```
-
+  ```
    Ou avec Symfony CLI : `symfony server:start`
-
-   Ouvrir http://localhost:8000
+   Ouvrir [http://localhost:8000](http://localhost:8000)
 
 ## Tests
 
@@ -50,11 +34,13 @@ Les tests unitaires suivent le workshop Symfony : ils valident les **règles mé
 
 **Structure (workshop) :**
 
-| Entité      | Service              | Règles métier |
-|------------|----------------------|----------------|
-| Evenement  | `EvenementManager`   | Date de fin > date de début ; nombre de places > 0 |
-| Reservation| `ReservationManager` | Statut parmi PENDING / CONFIRMED / CANCELLED ; montant payé ≥ 0 |
-| User       | `UserManager`        | Nom obligatoire ; email valide |
+
+| Entité      | Service              | Règles métier                                                   |
+| ----------- | -------------------- | --------------------------------------------------------------- |
+| Evenement   | `EvenementManager`   | Date de fin > date de début ; nombre de places > 0              |
+| Reservation | `ReservationManager` | Statut parmi PENDING / CONFIRMED / CANCELLED ; montant payé ≥ 0 |
+| User        | `UserManager`        | Nom obligatoire ; email valide                                  |
+
 
 **Générer un nouveau test unitaire :**
 
@@ -97,7 +83,6 @@ vendor/bin/phpstan analyse src/Service
 
 **Schéma Doctrine :**
 
-
 **Doctrine Doctor (workshop) :**
 
 ```bash
@@ -117,10 +102,6 @@ En dev : ouvrir une page → Web Profiler → panneau **Doctrine Doctor** (inté
 
 Pour tester les webhooks Stripe ou accéder à l'application depuis l'extérieur :
 
-   ```bash
-   ngrok http 8000
-   ```
-
 Cela génère une URL publique (ex: `https://xxxx-xx-xxx-xxx-xx.ngrok.io`) à utiliser pour configurer les webhooks Stripe.
 
 ## Stripe Webhook
@@ -128,6 +109,7 @@ Cela génère une URL publique (ex: `https://xxxx-xx-xxx-xxx-xx.ngrok.io`) à ut
 Endpoint : `POST /stripe-webhook`
 
 **Configuration** :
+
 1. Exposer l'app avec ngrok : `ngrok http 8000`
 2. Copier l'URL ngrok générée
 3. Dans Stripe Dashboard > Developers > Webhooks, ajouter l'endpoint : `https://votre-url.ngrok.io/stripe-webhook`
@@ -135,7 +117,7 @@ Endpoint : `POST /stripe-webhook`
 5. Copier le Signing Secret dans `.env` : `STRIPE_WEBHOOK_SECRET=whsec_...`
 
 **Flux** :
+
 - Paiement → Webhook reçu → Réservation confirmée → Emails envoyés + Ticket généré
 
 **Logs** : `var/log/dev.log`
-
