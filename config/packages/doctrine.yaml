@@ -32,9 +32,9 @@ when@test:
 when@dev:
     doctrine:
         dbal:
-            # Prevent OOM in dev when many queries are executed (deletes, cascades, etc.)
-            profiling: false
-            profiling_collect_backtrace: false
+            # Enable DB profiling and backtraces in dev for tools like Doctrine Doctor
+            profiling: true
+            profiling_collect_backtrace: true
             profiling_collect_schema_errors: false
 
 when@prod:
