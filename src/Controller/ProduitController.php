@@ -14,6 +14,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Component\HttpClient\HttpClient;
 
 #[Route('/boutique')]
 class ProduitController extends AbstractController
@@ -27,6 +28,63 @@ class ProduitController extends AbstractController
     }
 
     #[Route('/admin', name: 'app_produit_admin_index', methods: ['GET'])]
+<<<<<<< HEAD
+#[IsGranted('ROLE_ADMIN')]
+public function adminIndex(
+    ProduitRepository $produitRepository,
+    CommandeRepository $commandeRepository
+): Response {
+
+    $produits = $produitRepository->findAll();
+    $client = HttpClient::create();
+
+    $predictions = [];
+
+    foreach ($produits as $produit) {
+
+        $ventesMensuelles = [];
+
+        // 4 derniers mois
+        for ($i = 3; $i >= 0; $i--) {
+
+            $dateDebut = new \DateTimeImmutable("first day of -$i month 00:00:00");
+            $dateFin = new \DateTimeImmutable("last day of -$i month 23:59:59");
+
+            $total = 0;
+
+            $commandes = $commandeRepository->createQueryBuilder('c')
+                ->join('c.ligneCommandes', 'l')
+                ->where('l.produit = :produit')
+                ->andWhere('c.dateCommande BETWEEN :start AND :end')
+                ->setParameter('produit', $produit)
+                ->setParameter('start', $dateDebut)
+                ->setParameter('end', $dateFin)
+                ->getQuery()
+                ->getResult();
+
+            foreach ($commandes as $commande) {
+                foreach ($commande->getLigneCommandes() as $ligne) {
+                    if ($ligne->getProduit() === $produit) {
+                        $total += $ligne->getQuantite();
+                    }
+                }
+            }
+
+            $ventesMensuelles[] = $total;
+        }
+
+        // éviter erreur si aucune vente
+        if (array_sum($ventesMensuelles) == 0) {
+            $ventesMensuelles = [0, 0, 0, 0];
+        }
+
+        // Appel API Python
+        $response = $client->request('POST', 'http://127.0.0.1:8000/predict', [
+            'json' => [
+                'ventes_mensuelles' => $ventesMensuelles,
+                'stock_actuel' => $produit->getStock()
+            ]
+=======
     public function adminIndex(Request $request, ProduitRepository $produitRepository): Response
     {
         $this->denyAccessUnlessCanManage();
@@ -43,8 +101,24 @@ class ProduitController extends AbstractController
             'search' => $search,
             'sort' => $sort,
             'direction' => $direction,
+>>>>>>> 0fa83a3c8c69b9b4980567bb2faa12289b7c6a4b
         ]);
+
+        $data = $response->toArray();
+
+        $predictions[$produit->getId()] = [
+            'prediction' => $data['prediction'],
+            'rupture' => $data['rupture_risque'],
+            'historique' => $ventesMensuelles
+        ];
     }
+
+    return $this->render('produit/admin_index.html.twig', [
+        'produits' => $produits,
+        'predictions' => $predictions
+    ]);
+}
+
 
     #[Route('/admin/new', name: 'app_produit_new', methods: ['GET', 'POST'])]
     public function new(Request $request, EntityManagerInterface $entityManager): Response
