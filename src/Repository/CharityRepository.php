@@ -90,7 +90,7 @@ class CharityRepository extends ServiceEntityRepository
             ->groupBy('c.id');
 
         if (!$includeHidden) {
-            $qb->andWhere('c.isHidden = 0');
+            $qb->andWhere("c.status != 'HIDDEN'");
         }
     }
 

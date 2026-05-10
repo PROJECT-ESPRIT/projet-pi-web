@@ -11,25 +11,36 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity(repositoryClass: CharityRepository::class)]
 class Charity
 {
+    public const STATUS_PENDING = 'PENDING';
+    public const STATUS_APPROVED = 'APPROVED';
+    public const STATUS_HIDDEN = 'HIDDEN';
+    public const STATUS_REJECTED = 'REJECTED';
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(name: 'title', length: 255)]
     private ?string $name = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $description = null;
 
-    #[ORM\Column(name: 'goal_amount', nullable: true)]
-    private ?int $goalAmount = null;
+    #[ORM\Column(name: 'target_amount', type: Types::DECIMAL, precision: 12, scale: 2, options: ['default' => '0.00'])]
+    private ?string $goalAmount = '0.00';
 
-    #[ORM\Column(name: 'image_path', length: 255, nullable: true)]
+    #[ORM\Column(name: 'collected_amount', type: Types::DECIMAL, precision: 12, scale: 2, options: ['default' => '0.00'])]
+    private ?string $collectedAmount = '0.00';
+
+    #[ORM\Column(name: 'image_url', length: 512, nullable: true)]
     private ?string $imagePath = null;
 
-    #[ORM\Column(name: 'is_hidden')]
-    private bool $isHidden = false;
+    #[ORM\Column(length: 32, options: ['default' => self::STATUS_PENDING])]
+    private string $status = self::STATUS_PENDING;
+
+    #[ORM\Column(name: 'rejection_reason', length: 512, nullable: true)]
+    private ?string $rejectionReason = null;
 
     #[ORM\Column]
     private ?\DateTimeImmutable $createdAt = null;
@@ -83,13 +94,32 @@ class Charity
 
     public function getGoalAmount(): ?int
     {
+        return $this->goalAmount !== null ? (int) $this->goalAmount : null;
+    }
+
+    public function setGoalAmount(int|float|null $goalAmount): static
+    {
+        $this->goalAmount = $goalAmount !== null
+            ? number_format(max(1, (float) $goalAmount), 2, '.', '')
+            : null;
+        return $this;
+    }
+
+    public function getTargetAmount(): ?string
+    {
         return $this->goalAmount;
     }
 
-    public function setGoalAmount(?int $goalAmount): static
+    public function getCollectedAmount(): ?string
     {
-        $this->goalAmount = $goalAmount !== null ? max(1, $goalAmount) : null;
+        return $this->collectedAmount;
+    }
 
+    public function setCollectedAmount(int|float|string|null $collectedAmount): static
+    {
+        $this->collectedAmount = $collectedAmount === null
+            ? null
+            : number_format((float) $collectedAmount, 2, '.', '');
         return $this;
     }
 
@@ -105,15 +135,40 @@ class Charity
         return $this;
     }
 
+    public function getStatus(): string
+    {
+        return $this->status;
+    }
+
+    public function setStatus(string $status): static
+    {
+        $this->status = $status;
+        return $this;
+    }
+
+    public function getRejectionReason(): ?string
+    {
+        return $this->rejectionReason;
+    }
+
+    public function setRejectionReason(?string $reason): static
+    {
+        $this->rejectionReason = $reason;
+        return $this;
+    }
+
     public function isHidden(): bool
     {
-        return $this->isHidden;
+        return $this->status === self::STATUS_HIDDEN;
     }
 
     public function setIsHidden(bool $isHidden): static
     {
-        $this->isHidden = $isHidden;
-
+        if ($isHidden) {
+            $this->status = self::STATUS_HIDDEN;
+        } elseif ($this->status === self::STATUS_HIDDEN) {
+            $this->status = self::STATUS_APPROVED;
+        }
         return $this;
     }
 
