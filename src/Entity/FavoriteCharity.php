@@ -11,12 +11,12 @@ class FavoriteCharity
 {
     #[ORM\Id]
     #[ORM\ManyToOne]
-    #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
+    #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id', onDelete: 'CASCADE')]
     private ?User $user = null;
 
     #[ORM\Id]
     #[ORM\ManyToOne]
-    #[ORM\JoinColumn(name: 'charity_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
+    #[ORM\JoinColumn(name: 'charity_id', referencedColumnName: 'id', onDelete: 'CASCADE')]
     private ?Charity $charity = null;
 
     #[ORM\Column(name: 'created_at')]

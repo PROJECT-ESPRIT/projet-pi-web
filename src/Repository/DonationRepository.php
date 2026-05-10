@@ -44,7 +44,7 @@ class DonationRepository extends ServiceEntityRepository
             ->orderBy($sortField, $direction);
 
         if (!$includeHidden) {
-            $qb->andWhere('d.isHidden = 0');
+            $qb->andWhere("d.status != 'HIDDEN'");
         }
 
         $search = trim((string) $search);
@@ -69,7 +69,7 @@ class DonationRepository extends ServiceEntityRepository
             ->setParameter('start', new \DateTimeImmutable('first day of this month midnight'));
 
         if (!$includeHidden) {
-            $qb->andWhere('d.isHidden = 0');
+            $qb->andWhere("d.status != 'HIDDEN'");
         }
 
         return (int) $qb->getQuery()->getSingleScalarResult();
@@ -78,11 +78,11 @@ class DonationRepository extends ServiceEntityRepository
     public function getMonthlyDonations(int $months = 6, bool $includeHidden = false): array
     {
         $conn = $this->getEntityManager()->getConnection();
-        $hiddenSql = $includeHidden ? '' : ' AND is_hidden = 0';
+        $hiddenSql = $includeHidden ? '' : " AND status != 'HIDDEN'";
         $rows = $conn->executeQuery("
-            SELECT DATE_FORMAT(date_don, '%Y-%m') AS m, COUNT(*) AS c
+            SELECT DATE_FORMAT(created_at, '%Y-%m') AS m, COUNT(*) AS c
             FROM donation
-            WHERE date_don >= DATE_SUB(CURRENT_DATE, INTERVAL :months MONTH){$hiddenSql}
+            WHERE created_at >= DATE_SUB(CURRENT_DATE, INTERVAL :months MONTH){$hiddenSql}
             GROUP BY m ORDER BY m
         ", ['months' => $months])->fetchAllAssociative();
 
@@ -111,7 +111,7 @@ class DonationRepository extends ServiceEntityRepository
             ->orderBy('count', 'DESC');
 
         if (!$includeHidden) {
-            $qb->andWhere('d.isHidden = 0');
+            $qb->andWhere("d.status != 'HIDDEN'");
         }
 
         return $qb->getQuery()->getResult();
@@ -125,7 +125,7 @@ class DonationRepository extends ServiceEntityRepository
             ->setParameter('charity', $charity);
 
         if (!$includeHidden) {
-            $qb->andWhere('d.isHidden = 0');
+            $qb->andWhere("d.status != 'HIDDEN'");
         }
 
         return (int) $qb->getQuery()->getSingleScalarResult();
@@ -150,7 +150,7 @@ class DonationRepository extends ServiceEntityRepository
             ->orderBy('d.dateDon', 'DESC');
 
         if (!$includeHidden) {
-            $qb->andWhere('d.isHidden = 0');
+            $qb->andWhere("d.status != 'HIDDEN'");
         }
 
         $donations = $qb->getQuery()->getResult();
@@ -187,7 +187,7 @@ class DonationRepository extends ServiceEntityRepository
             ->setMaxResults($limit);
 
         if (!$includeHidden) {
-            $qb->andWhere('d.isHidden = 0');
+            $qb->andWhere("d.status != 'HIDDEN'");
         }
 
         return $qb->getQuery()->getResult();
@@ -201,7 +201,7 @@ class DonationRepository extends ServiceEntityRepository
             ->setParameter('charity', $charity);
 
         if (!$includeHidden) {
-            $qb->andWhere('d.isHidden = 0');
+            $qb->andWhere("d.status != 'HIDDEN'");
         }
 
         return (int) $qb->getQuery()->getSingleScalarResult();
@@ -217,7 +217,7 @@ class DonationRepository extends ServiceEntityRepository
             ->leftJoin('d.charity', 'charity')
             ->addSelect('type', 'charity')
             ->andWhere('d.donateur = :user')
-            ->andWhere('d.isHidden = 0')
+            ->andWhere("d.status != 'HIDDEN'")
             ->setParameter('user', $user)
             ->orderBy('d.dateDon', 'DESC')
             ->getQuery()

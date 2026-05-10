@@ -9,13 +9,18 @@ class DonationImageValidator
 {
     private const ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent';
 
+    private string $apiKey;
+    private string $model;
+
     public function __construct(
         private HttpClientInterface $httpClient,
-        private string $apiKey,
-        private string $model,
+        ?string $apiKey,
+        ?string $model,
         private int $timeoutSeconds,
         private bool $allowSkip,
     ) {
+        $this->apiKey = (string) $apiKey;
+        $this->model = $model !== null && $model !== '' ? $model : 'gemini-2.5-flash';
     }
 
     /**

@@ -279,12 +279,14 @@
                                     <div class="donation-thread-item">
                                         <div class="d-flex justify-content-between align-items-start">
                                             <div>
-                                                <strong>{{ donation.type.libelle }}</strong>
+                                                <strong>{{ donation.type ? donation.type.libelle : donation.donationType }}</strong>
                                                 <div class="small text-muted">
                                                     {% if donation.isAnonymous and not is_granted('ROLE_ADMIN') %}
                                                         Donateur anonyme
-                                                    {% else %}
+                                                    {% elseif donation.donateur %}
                                                         {{ donation.donateur.prenom }} {{ donation.donateur.nom }}
+                                                    {% else %}
+                                                        {{ donation.donorName ?: 'Donateur' }}
                                                     {% endif %}
                                                     {% if donation.isAnonymous %}
                                                         <span class="badge text-bg-secondary ms-1">Anonyme</span>
