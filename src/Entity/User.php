@@ -57,14 +57,29 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 255)]
     private ?string $prenom = null;
 
-    #[ORM\Column(length: 20, nullable: true)]
+    #[ORM\Column(length: 255, nullable: true)]
     private ?string $telephone = null;
+
+    #[ORM\Column(length: 500, nullable: true)]
+    private ?string $adresse = null;
 
     #[ORM\Column]
     private ?\DateTimeImmutable $createdAt = null;
 
-    #[ORM\Column(length: 20, options: ['default' => self::STATUS_EMAIL_PENDING])]
+    #[ORM\Column(length: 50, options: ['default' => self::STATUS_APPROVED])]
     private string $status = self::STATUS_EMAIL_PENDING;
+
+    #[ORM\Column(name: 'is_confirmed', options: ['default' => true])]
+    private bool $isConfirmed = false;
+
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $confirmedAt = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $lastLogin = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $googleId = null;
 
     #[ORM\Column(length: 64, nullable: true)]
     private ?string $emailVerificationToken = null;
@@ -75,10 +90,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $dateNaissance = null;
 
-    #[ORM\Column(length: 500, nullable: true)]
+    #[ORM\Column(name: 'avatar_url', length: 512, nullable: true)]
     private ?string $profileImageUrl = null;
 
-    #[ORM\Column(length: 50, nullable: true)]
+    #[ORM\Column(name: 'segment_ia', length: 100, nullable: true)]
     private ?string $segment = null;
 
     /**
@@ -363,6 +378,61 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function getFullName(): string
     {
         return $this->prenom . ' ' . $this->nom;
+    }
+
+    public function getAdresse(): ?string
+    {
+        return $this->adresse;
+    }
+
+    public function setAdresse(?string $adresse): static
+    {
+        $this->adresse = $adresse;
+        return $this;
+    }
+
+    public function isConfirmed(): bool
+    {
+        return $this->isConfirmed;
+    }
+
+    public function setIsConfirmed(bool $isConfirmed): static
+    {
+        $this->isConfirmed = $isConfirmed;
+        return $this;
+    }
+
+    public function getConfirmedAt(): ?\DateTimeImmutable
+    {
+        return $this->confirmedAt;
+    }
+
+    public function setConfirmedAt(?\DateTimeImmutable $confirmedAt): static
+    {
+        $this->confirmedAt = $confirmedAt;
+        return $this;
+    }
+
+    public function getLastLogin(): ?\DateTimeImmutable
+    {
+        return $this->lastLogin;
+    }
+
+    public function setLastLogin(?\DateTimeImmutable $lastLogin): static
+    {
+        $this->lastLogin = $lastLogin;
+        return $this;
+    }
+
+    public function getGoogleId(): ?string
+    {
+        return $this->googleId;
+    }
+
+    public function setGoogleId(?string $googleId): static
+    {
+        $this->googleId = $googleId;
+        return $this;
     }
 
     #[ORM\OneToMany(mappedBy: 'organisateur', targetEntity: Evenement::class)]
