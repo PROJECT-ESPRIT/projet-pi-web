@@ -80,7 +80,7 @@ class CharityRepository extends ServiceEntityRepository
         if ($includeHidden) {
             $qb->leftJoin('c.donations', 'd');
         } else {
-            $qb->leftJoin('c.donations', 'd', 'WITH', 'd.isHidden = 0');
+            $qb->leftJoin('c.donations', 'd', 'WITH', "d.status != 'HIDDEN'");
         }
 
         $qb
