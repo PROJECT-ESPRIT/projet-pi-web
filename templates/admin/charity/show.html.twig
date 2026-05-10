@@ -47,9 +47,9 @@
                 {% for donation in donations %}
                     <tr>
                         <td>{{ donation.dateDon|date('d/m/Y H:i') }}</td>
-                        <td>{{ donation.type.libelle }}</td>
+                        <td>{{ donation.type ? donation.type.libelle : donation.donationType }}</td>
                         <td>{{ donation.amount }}</td>
-                        <td>{{ donation.donateur.prenom }} {{ donation.donateur.nom }} ({{ donation.donateur.email }})</td>
+                        <td>{% if donation.donateur %}{{ donation.donateur.prenom }} {{ donation.donateur.nom }} ({{ donation.donateur.email }}){% else %}{{ donation.donorName ?: '—' }}{% if donation.donorEmail %} ({{ donation.donorEmail }}){% endif %}{% endif %}</td>
                         <td>{{ donation.isAnonymous ? 'Oui' : 'Non' }}</td>
                         <td>{{ donation.description }}</td>
                     </tr>

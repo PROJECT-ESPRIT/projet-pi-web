@@ -51,14 +51,15 @@ class FavoriteCharityRepository extends ServiceEntityRepository
      */
     public function findCharitiesByUser(User $user): array
     {
-        return $this->createQueryBuilder('f')
-            ->select('c')
+        $favorites = $this->createQueryBuilder('f')
+            ->select('f', 'c')
             ->join('f.charity', 'c')
             ->where('f.user = :user')
             ->setParameter('user', $user)
             ->orderBy('f.createdAt', 'DESC')
             ->getQuery()
             ->getResult();
+        return array_map(static fn (FavoriteCharity $f) => $f->getCharity(), $favorites);
     }
 
     public function countForCharity(Charity $charity): int

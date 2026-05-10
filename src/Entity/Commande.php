@@ -19,17 +19,23 @@ class Commande
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column]
+    #[ORM\Column(name: 'created_at')]
     private ?\DateTimeImmutable $dateCommande = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 32, options: ['default' => self::STATUT_EN_ATTENTE])]
     private ?string $statut = null;
 
-    #[ORM\Column]
+    #[ORM\Column(name: 'montant_total')]
     private ?float $total = null;
 
+    #[ORM\Column(length: 64, nullable: true)]
+    private ?string $reference = null;
+
+    #[ORM\Column(name: 'validated_at', nullable: true)]
+    private ?\DateTimeImmutable $validatedAt = null;
+
     #[ORM\ManyToOne(inversedBy: 'commandes')]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\JoinColumn(nullable: true)]
     private ?User $user = null;
 
     #[ORM\OneToMany(mappedBy: 'commande', targetEntity: LigneCommande::class, cascade: ['persist', 'remove'], orphanRemoval: true)]
@@ -80,6 +86,28 @@ class Commande
     {
         $this->total = $total;
 
+        return $this;
+    }
+
+    public function getReference(): ?string
+    {
+        return $this->reference;
+    }
+
+    public function setReference(?string $reference): static
+    {
+        $this->reference = $reference;
+        return $this;
+    }
+
+    public function getValidatedAt(): ?\DateTimeImmutable
+    {
+        return $this->validatedAt;
+    }
+
+    public function setValidatedAt(?\DateTimeImmutable $validatedAt): static
+    {
+        $this->validatedAt = $validatedAt;
         return $this;
     }
 
