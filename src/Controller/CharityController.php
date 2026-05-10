@@ -392,6 +392,8 @@ class CharityController extends AbstractController
         $donation->setIsAnonymous($isAnonymous);
         $donation->setAmount($isMoney ? max(0, $amount) : 0);
         $donation->setDonateur($user);
+        $donation->setDonationType($isMoney ? Donation::TYPE_MONEY : Donation::TYPE_ITEM);
+        $donation->setStatus(Donation::STATUS_APPROVED);
 
         if (!$this->handleDonationImageUpload($imageFile, $donation)) {
             $donationErrors[$charityId]['donation_image'] = 'Impossible d\'enregistrer l\'image du don.';
