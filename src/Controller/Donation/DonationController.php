@@ -68,6 +68,42 @@ class DonationController extends AbstractController
         ]);
     }
 
+    #[Route('/admin/{id}/approve', name: 'app_donation_approve', methods: ['POST'])]
+    #[IsGranted('ROLE_ADMIN')]
+    public function approve(Donation $donation, Request $request, EntityManagerInterface $em): Response
+    {
+        if ($this->isCsrfTokenValid('donation-moderate-' . $donation->getId(), (string) $request->request->get('_token'))) {
+            $donation->setStatus(Donation::STATUS_APPROVED);
+            $em->flush();
+            $this->addFlash('success', 'Don approuvé.');
+        }
+        return $this->redirectToRoute('app_donation_index');
+    }
+
+    #[Route('/admin/{id}/reject', name: 'app_donation_reject', methods: ['POST'])]
+    #[IsGranted('ROLE_ADMIN')]
+    public function reject(Donation $donation, Request $request, EntityManagerInterface $em): Response
+    {
+        if ($this->isCsrfTokenValid('donation-moderate-' . $donation->getId(), (string) $request->request->get('_token'))) {
+            $donation->setStatus(Donation::STATUS_REJECTED);
+            $em->flush();
+            $this->addFlash('success', 'Don rejeté.');
+        }
+        return $this->redirectToRoute('app_donation_index');
+    }
+
+    #[Route('/admin/{id}/hide', name: 'app_donation_hide', methods: ['POST'])]
+    #[IsGranted('ROLE_ADMIN')]
+    public function hide(Donation $donation, Request $request, EntityManagerInterface $em): Response
+    {
+        if ($this->isCsrfTokenValid('donation-moderate-' . $donation->getId(), (string) $request->request->get('_token'))) {
+            $donation->setStatus(Donation::STATUS_HIDDEN);
+            $em->flush();
+            $this->addFlash('success', 'Don masqué.');
+        }
+        return $this->redirectToRoute('app_donation_index');
+    }
+
     #[Route('/payment/success', name: 'app_donation_payment_success', methods: ['GET'])]
     #[IsGranted('ROLE_USER')]
     public function paymentSuccess(
