@@ -208,6 +208,29 @@ class DonationRepository extends ServiceEntityRepository
     }
 
     /**
+     * @return array<string, int> e.g. ['MONEY' => 12, 'ITEM' => 4]
+     */
+    public function countByDonationTypeForCharity(Charity $charity, bool $includeHidden = false): array
+    {
+        $qb = $this->createQueryBuilder('d')
+            ->select('d.donationType AS type, COUNT(d.id) AS c')
+            ->andWhere('d.charity = :charity')
+            ->setParameter('charity', $charity)
+            ->groupBy('d.donationType');
+
+        if (!$includeHidden) {
+            $qb->andWhere("d.status != 'HIDDEN'");
+        }
+
+        $rows = $qb->getQuery()->getArrayResult();
+        $result = ['MONEY' => 0, 'ITEM' => 0];
+        foreach ($rows as $r) {
+            $result[$r['type']] = (int) $r['c'];
+        }
+        return $result;
+    }
+
+    /**
      * @return Donation[]
      */
     public function findByDonateurVisible(\App\Entity\User $user): array

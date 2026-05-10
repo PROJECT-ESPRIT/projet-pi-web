@@ -275,6 +275,8 @@ class CharityController extends AbstractController
             'moneyTypeId' => $this->getMoneyTypeId(),
             'ai_validation_result' => $this->consumeAiResultFlash($request),
             'isFavorite' => $isFavorite,
+            'donationTypeBreakdown' => $donationRepository->countByDonationTypeForCharity($charity, $includeHidden),
+            'favoritesCount' => $favoriteCharityRepository->countForCharity($charity),
         ]);
     }
 
