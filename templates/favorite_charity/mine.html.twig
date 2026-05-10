@@ -1,0 +1,44 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mes causes favorites{% endblock %}
+
+{% block body %}
+<div class="container py-4">
+    <h1 class="mb-4"><i class="fas fa-heart text-danger"></i> Mes causes favorites</h1>
+
+    {% if charities is empty %}
+        <div class="alert alert-info">
+            Vous n'avez pas encore ajouté de causes en favoris.
+            <a href="{{ path('app_charity_index') }}">Découvrir les causes</a>.
+        </div>
+    {% else %}
+        <div class="row g-3">
+            {% for charity in charities %}
+                <div class="col-md-6 col-lg-4">
+                    <div class="card h-100">
+                        {% if charity.imagePath %}
+                            <img src="{{ charity.imagePath }}" class="card-img-top" alt="{{ charity.name }}" style="height:160px;object-fit:cover">
+                        {% endif %}
+                        <div class="card-body">
+                            <h5 class="card-title">{{ charity.name }}</h5>
+                            <p class="card-text small text-muted">{{ charity.description|slice(0, 120) }}{% if charity.description|length > 120 %}…{% endif %}</p>
+                            <div class="small text-muted mb-2">
+                                Objectif : {{ charity.targetAmount }} TND ·
+                                Collecté : {{ charity.collectedAmount }} TND
+                            </div>
+                            <div class="d-flex gap-2">
+                                <a href="{{ path('app_charity_show', {id: charity.id}) }}" class="btn btn-sm btn-primary">Voir</a>
+                                <form method="post" action="{{ path('app_favorite_charity_toggle', {id: charity.id}) }}" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                        <i class="fas fa-heart-broken"></i> Retirer
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
