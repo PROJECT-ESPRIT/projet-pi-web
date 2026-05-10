@@ -2,6 +2,7 @@
 
 namespace App\Controller\User;
 
+use App\Entity\User;
 use App\Form\User\ParticipantProfileType;
 use App\Repository\EvenementRepository;
 use App\Repository\ReservationRepository;
@@ -26,6 +27,9 @@ class ProfileController extends AbstractController
     public function participantEdit(Request $request, EntityManagerInterface $entityManager): Response
     {
         $user = $this->getUser();
+        if (!$user instanceof User) {
+            throw $this->createAccessDeniedException('Utilisateur non valide.');
+        }
         $originalBirthDate = $user->getDateNaissance();
         $birthDateLocked = $originalBirthDate !== null;
 
@@ -58,6 +62,9 @@ class ProfileController extends AbstractController
     public function artist(EvenementRepository $evenementRepository, ReservationRepository $reservationRepository): Response
     {
         $artist = $this->getUser();
+        if (!$artist instanceof User) {
+            throw $this->createAccessDeniedException('Utilisateur non valide.');
+        }
         $overview = $evenementRepository->getArtistStatsOverview($artist);
         $topEvents = $evenementRepository->getTopEventsForArtist($artist, 5);
         $reservationsTotal = $reservationRepository->countForOwnerEvents($artist);
@@ -122,6 +129,9 @@ class ProfileController extends AbstractController
     public function artistEdit(Request $request, EntityManagerInterface $entityManager): Response
     {
         $user = $this->getUser();
+        if (!$user instanceof User) {
+            throw $this->createAccessDeniedException('Utilisateur non valide.');
+        }
         $originalBirthDate = $user->getDateNaissance();
         $birthDateLocked = $originalBirthDate !== null;
 

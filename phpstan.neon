@@ -1,6 +1,8 @@
 parameters:
     # Analysis level: 0 (loosest) → 9 (strictest). Level 5 is a good start for a student project.
     level: 5
+    # Do not fail when an ignoreErrors rule does not match anything (useful when analysing only subsets like src/Controller).
+    reportUnmatchedIgnoredErrors: false
 
     # Files and folders to analyse
     paths:

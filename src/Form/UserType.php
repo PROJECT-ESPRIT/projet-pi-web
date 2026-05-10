@@ -11,8 +11,8 @@ use Symfony\Component\Form\Extension\Core\Type\TelType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
-use Symfony\Component\Validator\Constraints\Length;
 use Symfony\Component\Validator\Constraints\NotBlank;
+use Symfony\Component\Validator\Constraints\Regex;
 
 class UserType extends AbstractType
 {
@@ -21,36 +21,41 @@ class UserType extends AbstractType
         $builder
             ->add('email', EmailType::class, [
                 'label' => 'Email',
-                'attr' => ['class' => 'form-control']
+                'attr' => ['class' => 'form-control'],
             ])
             ->add('plainPassword', PasswordType::class, [
                 'mapped' => false,
-                'required' => false,
-                'label' => 'Mot de passe (laisser vide pour ne pas changer)',
+                'required' => $options['require_password'],
+                'label' => $options['require_password']
+                    ? 'Mot de passe'
+                    : 'Mot de passe (laisser vide pour ne pas changer)',
                 'attr' => ['class' => 'form-control', 'autocomplete' => 'new-password'],
                 'constraints' => [
-                    new Length([
-                        'min' => 6,
-                        'minMessage' => 'Le mot de passe doit faire au moins {{ limit }} caractères',
-                        'max' => 4096,
+                    new NotBlank([
+                        'message' => 'Le mot de passe est obligatoire.',
+                        'groups' => $options['require_password'] ? ['Default'] : ['never_validate'],
+                    ]),
+                    new Regex([
+                        'pattern' => '/^$|^(?=.{8,}$)(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).+$/',
+                        'message' => 'Le mot de passe doit contenir au moins 8 caracteres, avec minuscule, majuscule, chiffre et caractere special.',
                     ]),
                 ],
             ])
             ->add('nom', TextType::class, [
                 'label' => 'Nom',
-                'attr' => ['class' => 'form-control']
+                'attr' => ['class' => 'form-control'],
             ])
             ->add('prenom', TextType::class, [
-                'label' => 'Prénom',
-                'attr' => ['class' => 'form-control']
+                'label' => 'Prenom',
+                'attr' => ['class' => 'form-control'],
             ])
             ->add('telephone', TelType::class, [
-                'label' => 'Téléphone',
+                'label' => 'Telephone',
                 'required' => false,
-                'attr' => ['class' => 'form-control']
+                'attr' => ['class' => 'form-control'],
             ])
             ->add('roles', ChoiceType::class, [
-                'label' => 'Rôles',
+                'label' => 'Roles',
                 'choices' => [
                     'Administrateur' => 'ROLE_ADMIN',
                     'Artiste' => 'ROLE_ARTISTE',
@@ -58,15 +63,17 @@ class UserType extends AbstractType
                 ],
                 'multiple' => true,
                 'expanded' => true,
-                'attr' => ['class' => 'form-check']
-            ])
-        ;
+                'attr' => ['class' => 'form-check'],
+            ]);
     }
 
     public function configureOptions(OptionsResolver $resolver): void
     {
         $resolver->setDefaults([
             'data_class' => User::class,
+            'require_password' => false,
         ]);
+
+        $resolver->setAllowedTypes('require_password', 'bool');
     }
 }

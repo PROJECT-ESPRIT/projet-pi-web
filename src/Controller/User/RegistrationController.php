@@ -12,6 +12,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 class RegistrationController extends AbstractController
 {
@@ -41,7 +42,8 @@ class RegistrationController extends AbstractController
 
                 try {
                     $emailService->sendEmailVerification($existing);
-                    $this->addFlash('success', 'Un nouveau lien de vérification a été envoyé à ' . $email);
+                    $this->addFlash('success', 'Un nouveau lien de verification a ete envoye a ' . $email);
+                    $this->addVerificationDebugLinkIfDev($existing);
                 } catch (\Exception $e) {
                     $this->addFlash('warning', 'Erreur d\'envoi : ' . $e->getMessage());
                 }
@@ -50,7 +52,7 @@ class RegistrationController extends AbstractController
             }
 
             if ($existing) {
-                $this->addFlash('danger', 'Un compte avec cet email existe déjà.');
+                $this->addFlash('danger', 'Un compte avec cet email existe deja.');
                 return $this->render('registration/register.html.twig', [
                     'registrationForm' => $form,
                 ]);
@@ -68,9 +70,9 @@ class RegistrationController extends AbstractController
                 )
             );
 
-            // Send verification email before persisting so it is sent in the same request with correct token
             try {
                 $emailService->sendEmailVerification($user);
+                $this->addVerificationDebugLinkIfDev($user);
             } catch (\Throwable $e) {
                 $this->addFlash('warning', 'Erreur d\'envoi : ' . $e->getMessage());
                 return $this->render('registration/register.html.twig', [
@@ -81,7 +83,7 @@ class RegistrationController extends AbstractController
             $entityManager->persist($user);
             $entityManager->flush();
 
-            $this->addFlash('success', 'Un email de vérification a été envoyé à ' . $email);
+            $this->addFlash('success', 'Un email de verification a ete envoye a ' . $email);
             return $this->redirectToRoute('app_registration_confirmation', ['email' => $email]);
         }
 
@@ -109,12 +111,12 @@ class RegistrationController extends AbstractController
         ]);
 
         if (!$user) {
-            $this->addFlash('danger', 'Lien de vérification invalide.');
+            $this->addFlash('danger', 'Lien de verification invalide.');
             return $this->redirectToRoute('login');
         }
 
         if ($user->isEmailVerificationTokenExpired($emailVerificationTtlHours)) {
-            $this->addFlash('warning', 'Ce lien de vérification a expiré. Veuillez demander un nouveau lien.');
+            $this->addFlash('warning', 'Ce lien de verification a expire. Veuillez demander un nouveau lien.');
             return $this->redirectToRoute('app_registration_confirmation', ['email' => $user->getEmail()]);
         }
 
@@ -151,7 +153,7 @@ class RegistrationController extends AbstractController
         $user = $userRepository->findOneBy(['email' => $email]);
 
         if (!$user || $user->getStatus() !== User::STATUS_EMAIL_PENDING) {
-            $this->addFlash('info', 'Aucun compte en attente de vérification pour cet email.');
+            $this->addFlash('info', 'Aucun compte en attente de verification pour cet email.');
             return $this->redirectToRoute($redirectTo);
         }
 
@@ -160,12 +162,26 @@ class RegistrationController extends AbstractController
 
         try {
             $emailService->sendEmailVerification($user);
-            $this->addFlash('success', 'Un nouveau lien de vérification a été envoyé à ' . $email);
+            $this->addFlash('success', 'Un nouveau lien de verification a ete envoye a ' . $email);
+            $this->addVerificationDebugLinkIfDev($user);
         } catch (\Exception $e) {
             $this->addFlash('warning', 'Erreur d\'envoi : ' . $e->getMessage());
         }
 
         $params = $redirectTo === 'app_registration_confirmation' ? ['email' => $email] : [];
         return $this->redirectToRoute($redirectTo, $params);
+    }
+
+    private function addVerificationDebugLinkIfDev(User $user): void
+    {
+        if ((string) $this->getParameter('kernel.environment') !== 'dev') {
+            return;
+        }
+
+        $url = $this->generateUrl('app_verify_email', [
+            'token' => $user->getEmailVerificationToken(),
+        ], UrlGeneratorInterface::ABSOLUTE_URL);
+
+        $this->addFlash('info', 'Lien de verification (dev): ' . $url);
     }
 }

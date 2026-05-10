@@ -20,8 +20,10 @@ class AccessDeniedHandler implements AccessDeniedHandlerInterface
             $path = $request->getPathInfo();
 
             if (str_starts_with($path, '/admin')) {
+                /** @phpstan-ignore-next-line FlashBag is provided by Symfony session implementation */
                 $request->getSession()->getFlashBag()->add('info', 'Cette page est reservee a l administrateur.');
             } else {
+                /** @phpstan-ignore-next-line FlashBag is provided by Symfony session implementation */
                 $request->getSession()->getFlashBag()->add('info', 'Acces non autorise pour cette action.');
             }
         }

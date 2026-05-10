@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Entity\User;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
@@ -24,7 +25,7 @@ class AiEvenementController extends AbstractController
     public function recommend(): JsonResponse
     {
         $user = $this->getUser();
-        if ($user === null) {
+        if (!$user instanceof User) {
             return $this->json(['success' => false, 'error' => 'Not authenticated', 'recommendations' => []]);
         }
 
@@ -145,6 +146,7 @@ class AiEvenementController extends AbstractController
 
     private function buildDbUrl(): string
     {
+        /** @phpstan-ignore-next-line superglobal access is intentionally guarded */
         $raw = $_ENV['DATABASE_URL'] ?? getenv('DATABASE_URL') ?? '';
 
         if ($raw === '') {

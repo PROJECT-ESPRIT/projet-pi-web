@@ -6,6 +6,7 @@ use App\Entity\User;
 use App\Form\User\UserType;
 use App\Repository\UserRepository;
 use App\Service\EmailService;
+use App\Service\FakeDomainRiskService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -19,22 +20,38 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 class UserController extends AbstractController
 {
     #[Route('/', name: 'app_user_index', methods: ['GET'])]
-    public function index(Request $request, UserRepository $userRepository): Response
+    public function index(Request $request, UserRepository $userRepository, FakeDomainRiskService $fakeDomainRiskService): Response
     {
         $query = $request->query->get('q');
+        $status = (string) $request->query->get('status', 'all');
         $sort = (string) $request->query->get('sort', 'nom');
         $direction = (string) $request->query->get('dir', 'asc');
         $page = max(1, (int) $request->query->get('page', 1));
         $perPage = 10;
 
-        $result = $userRepository->searchAndSortPaginated($query, $sort, $direction, $page, $perPage);
+        $result = $userRepository->searchAndSortPaginated($query, $status, $sort, $direction, $page, $perPage);
         $users = $result['items'];
         $totalPages = max(1, (int) ceil($result['total'] / $perPage));
         $page = min($page, $totalPages);
 
+        $userRisks = [];
+        foreach ($users as $user) {
+            $userStatus = $user->getStatus();
+            if (!\in_array($userStatus, ['EMAIL_PENDING', 'EMAIL_VERIFIED'], true)) {
+                continue;
+            }
+
+            $risk = $fakeDomainRiskService->getRisk($user->getEmail() ?? '');
+            if ($risk !== null) {
+                $userRisks[$user->getId()] = $risk;
+            }
+        }
+
         return $this->render('user/index.html.twig', [
             'users' => $users,
+            'user_risks' => $userRisks,
             'q' => $query,
+            'status' => $status,
             'sort' => $sort,
             'dir' => $direction,
             'page' => $page,
@@ -74,10 +91,16 @@ class UserController extends AbstractController
     }
 
     #[Route('/{id}', name: 'app_user_show', methods: ['GET'])]
-    public function show(User $user): Response
+    public function show(User $user, FakeDomainRiskService $fakeDomainRiskService): Response
     {
+        $fakeDomainRisk = null;
+        if (\in_array($user->getStatus(), ['EMAIL_PENDING', 'EMAIL_VERIFIED'], true)) {
+            $fakeDomainRisk = $fakeDomainRiskService->getRisk($user->getEmail() ?? '');
+        }
+
         return $this->render('user/show.html.twig', [
             'user' => $user,
+            'fake_domain_risk' => $fakeDomainRisk,
         ]);
     }
 

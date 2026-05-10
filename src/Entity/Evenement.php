@@ -107,7 +107,7 @@ class Evenement
     #[ORM\JoinColumn(nullable: false)]
     private ?User $organisateur = null;
 
-    #[ORM\OneToMany(mappedBy: 'evenement', targetEntity: Reservation::class, orphanRemoval: true)]
+    #[ORM\OneToMany(mappedBy: 'evenement', targetEntity: Reservation::class, orphanRemoval: true, cascade: ['persist', 'remove'])]
     private Collection $reservations;
 
     public function __construct()

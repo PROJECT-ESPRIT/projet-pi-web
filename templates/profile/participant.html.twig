@@ -76,6 +76,25 @@
                     Votre date de naissance est verrouillée après la première saisie.
                 {% endif %}
             </div>
+            <div class="mt-3 p-3 rounded-3" style="border:1px solid rgba(220,38,38,.25); background:rgba(220,38,38,.04);">
+                <h6 class="mb-2" style="color:#b91c1c; font-weight:700;">
+                    <i class="fas fa-triangle-exclamation me-1"></i> Zone sensible
+                </h6>
+                <p class="mb-2 small text-muted">
+                    Vous pouvez demander la suppression de votre compte participant. Un email de confirmation sera envoye avant suppression definitive.
+                </p>
+                <form method="post"
+                      action="{{ path('participant_account_delete_request') }}"
+                      data-confirm="Un email de confirmation sera envoye. Continuer ?"
+                      data-confirm-title="Supprimer votre compte ?"
+                      data-confirm-btn="Envoyer le mail">
+                    <input type="hidden" name="_token" value="{{ csrf_token('participant_delete_request') }}">
+                    <button type="submit" class="btn btn-outline-danger btn-sm">
+                        <span class="btn-label"><i class="fas fa-trash me-1"></i> Supprimer mon compte</span>
+                        <span class="btn-spinner"><i class="fas fa-spinner fa-spin"></i></span>
+                    </button>
+                </form>
+            </div>
         </div>
     </article>
 </section>

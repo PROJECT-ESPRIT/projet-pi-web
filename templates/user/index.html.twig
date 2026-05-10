@@ -27,6 +27,8 @@
                 <option value="nom" {{ sort == 'nom' ? 'selected' }}>Nom</option>
                 <option value="prenom" {{ sort == 'prenom' ? 'selected' }}>Prénom</option>
                 <option value="email" {{ sort == 'email' ? 'selected' }}>Email</option>
+                <option value="status" {{ sort == 'status' ? 'selected' }}>Statut</option>
+                <option value="createdAt" {{ sort == 'createdAt' ? 'selected' }}>Date d'inscription</option>
             </select>
         </div>
         <div class="col-6 col-md-2">
@@ -36,7 +38,18 @@
                 <option value="desc" {{ dir == 'desc' ? 'selected' }}>Décroissant</option>
             </select>
         </div>
-        <div class="col-12 col-md-4 d-flex gap-2">
+        <div class="col-12 col-md-3">
+            <label><i class="fas fa-user-check me-1"></i>Statut</label>
+            <select name="status" class="form-select">
+                <option value="all" {{ status is not defined or status == 'all' ? 'selected' }}>Tous les statuts</option>
+                <option value="APPROVED" {{ status == 'APPROVED' ? 'selected' }}>Approuvé</option>
+                <option value="EMAIL_PENDING" {{ status == 'EMAIL_PENDING' ? 'selected' }}>Email non vérifié</option>
+                <option value="EMAIL_VERIFIED" {{ status == 'EMAIL_VERIFIED' ? 'selected' }}>En attente admin</option>
+                <option value="REJECTED" {{ status == 'REJECTED' ? 'selected' }}>Refusé</option>
+                <option value="SUSPENDED" {{ status == 'SUSPENDED' ? 'selected' }}>Suspendu</option>
+            </select>
+        </div>
+        <div class="col-12 col-md-3 d-flex gap-2">
             <input type="hidden" name="page" value="1">
             <button type="submit" class="btn btn-primary flex-grow-1">
                 <span class="btn-label"><i class="fas fa-search me-1"></i> Filtrer</span>
@@ -58,6 +71,7 @@
                         <th>Email</th>
                         <th>Rôles</th>
                         <th>Statut</th>
+                        <th>Segment IA</th>
                         <th class="text-end">Actions</th>
                     </tr>
                 </thead>
@@ -76,7 +90,20 @@
                                 </div>
                             </div>
                         </td>
-                        <td style="font-size:.84rem;">{{ user.email }}</td>
+                        <td style="font-size:.84rem;">
+                            {{ user.email }}
+                            {% set risk = user_risks[user.id] is defined ? user_risks[user.id] : null %}
+                            {% if risk %}
+                                {% set risk_variant = risk.percent >= 70 ? 'danger' : (risk.percent >= 40 ? 'warning' : 'secondary') %}
+                                <span class="badge bg-{{ risk_variant }} ms-1"
+                                      title="Analyse IA du domaine email : {{ risk.percent }}&#37; de risque ({{ risk.label }}).&#10;Plus le pourcentage est élevé, plus le domaine ressemble à un fournisseur jetable ou suspect."
+                                      data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="top"
+                                      style="font-size:.7rem; cursor:help;">
+                                    <i class="fas fa-shield-alt me-1"></i>
+                                    IA email&nbsp;: {{ risk.percent }}&#37;
+                                </span>
+                            {% endif %}
+                        </td>
                         <td>
                             {% for role in user.roles %}
                                 {% if role != 'ROLE_USER' %}
@@ -101,8 +128,19 @@
                                 <span class="badge bg-danger"><i class="fas fa-times-circle me-1"></i>Refusé</span>
                             {% elseif user.status == 'SUSPENDED' %}
                                 <span class="badge bg-dark"><i class="fas fa-ban me-1"></i>Suspendu</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if user.segment == 'VIP' %}
+                                <span class="badge bg-warning text-dark"><i class="fas fa-crown me-1"></i>VIP</span>
+                            {% elseif user.segment == 'ACTIF' %}
+                                <span class="badge bg-success"><i class="fas fa-bolt me-1"></i>Actif</span>
+                            {% elseif user.segment == 'CHURN_RISK' %}
+                                <span class="badge bg-warning"><i class="fas fa-exclamation-triangle me-1"></i>Risque</span>
+                            {% elseif user.segment == 'DORMANT' %}
+                                <span class="badge bg-secondary"><i class="fas fa-bed me-1"></i>Dormant</span>
                             {% else %}
-                                <span class="badge bg-secondary">{{ user.status }}</span>
+                                <span class="text-muted fst-italic" style="font-size: 0.8rem;">Non calculé</span>
                             {% endif %}
                         </td>
                         <td class="text-end">
@@ -162,4 +200,16 @@
         </div>
     {% endif %}
 </div>
+
+{% block javascripts %}
+{{ parent() }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function(el) {
+    new bootstrap.Tooltip(el);
+  });
+});
+</script>
+{% endblock %}
+
 {% endblock %}

@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\User;
+use App\Entity\Evenement;
 use App\Entity\Reservation;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\Tools\Pagination\Paginator;
@@ -124,7 +125,6 @@ class ReservationRepository extends ServiceEntityRepository
 
         return array_map('intval', array_column($rows, 'eventId'));
     }
-
     public function searchAndSort(array $filters, int $page, int $perPage, ?User $participant, bool $isAdmin): Paginator
     {
         $qb = $this->createQueryBuilder('r')
@@ -268,6 +268,16 @@ class ReservationRepository extends ServiceEntityRepository
             ->leftJoin('r.evenement', 'e')
             ->andWhere('e.organisateur = :owner')
             ->setParameter('owner', $owner)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    public function countReservedPlacesForEvent(Evenement $evenement): int
+    {
+        return (int) $this->createQueryBuilder('r')
+            ->select('COUNT(r.id)')
+            ->where('r.evenement = :evenement')
+            ->setParameter('evenement', $evenement)
             ->getQuery()
             ->getSingleScalarResult();
     }

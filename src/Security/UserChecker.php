@@ -17,16 +17,16 @@ class UserChecker implements UserCheckerInterface
 
         match ($user->getStatus()) {
             User::STATUS_EMAIL_PENDING => throw new CustomUserMessageAccountStatusException(
-                'Veuillez vérifier votre adresse email avant de vous connecter.'
+                'Veuillez vÃ©rifier votre adresse email avant de vous connecter.'
             ),
             User::STATUS_EMAIL_VERIFIED => throw new CustomUserMessageAccountStatusException(
-                'Votre email est vérifié. Votre compte est en attente de validation par un administrateur.'
+                'Votre email est vÃ©rifiÃ©. Votre compte est en attente de validation par un administrateur.'
             ),
             User::STATUS_REJECTED => throw new CustomUserMessageAccountStatusException(
-                'Votre compte a été refusé. Contactez l\'administration pour plus d\'informations.'
+                'Votre compte a Ã©tÃ© refusÃ©. Contactez l\'administration pour plus d\'informations.'
             ),
             User::STATUS_SUSPENDED => throw new CustomUserMessageAccountStatusException(
-                'Votre compte a été suspendu. Contactez l\'administration pour plus d\'informations.'
+                'Votre compte a Ã©tÃ© suspendu. Contactez l\'administration pour plus d\'informations.'
             ),
             User::STATUS_APPROVED => null,
             default => null,

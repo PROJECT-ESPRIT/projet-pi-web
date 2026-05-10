@@ -142,7 +142,7 @@
                     {% for don in user.donations %}
                     <tr>
                         <td><span class="badge bg-warning text-dark" style="font-size:.65rem;">{{ don.type.libelle }}</span></td>
-                        <td>{{ don.description|length > 40 ? don.description|slice(0,40) ~ '…' : don.description }}</td>
+                        <td>{{ don.description|length > 40 ? don.description|slice(0,40) ~ 'â€¦' : don.description }}</td>
                         <td>{{ don.dateDon|date('d/m/Y') }}</td>
                     </tr>
                     {% endfor %}
@@ -162,7 +162,7 @@
                     <tr>
                         <td class="fw-bold">#{{ cmd.id }}</td>
                         <td>{{ cmd.total|number_format(2, '.', ' ') }} TND</td>
-                        <td>{{ cmd.createdAt ? cmd.createdAt|date('d/m/Y') : '—' }}</td>
+                        <td>{{ cmd.dateCommande ? cmd.dateCommande|date('d/m/Y') : '—' }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -192,6 +192,22 @@
                 <span class="up-lbl">Email</span>
                 <span class="up-val" style="font-size:.78rem;">{{ user.email }}</span>
             </div>
+            {% if fake_domain_risk is defined and fake_domain_risk is not null %}
+            <div class="up-info-row">
+                <span class="up-lbl">Risque domaine email</span>
+                <span class="up-val">
+                    <span title="Score estimé par un petit modèle ML (domaines jetables + motifs). Indication pour votre décision."
+                        data-bs-toggle="tooltip" data-bs-placement="top" style="cursor:help;">
+                        {{ fake_domain_risk.percent }}&#37; ({{ fake_domain_risk.label }})
+                        {% if fake_domain_risk.percent >= 70 %}
+                            <i class="fas fa-exclamation-circle text-danger ms-1" style="font-size:.8rem;"></i>
+                        {% elseif fake_domain_risk.percent >= 30 %}
+                            <i class="fas fa-exclamation-triangle text-warning ms-1" style="font-size:.8rem;"></i>
+                        {% endif %}
+                    </span>
+                </span>
+            </div>
+            {% endif %}
             <div class="up-info-row">
                 <span class="up-lbl">Téléphone</span>
                 <span class="up-val">{{ user.telephone ?? '—' }}</span>
@@ -209,6 +225,22 @@
                     {% elseif user.status == 'REJECTED' %}<span class="badge bg-danger" style="font-size:.7rem;">Refusé</span>
                     {% elseif user.status == 'SUSPENDED' %}<span class="badge bg-dark" style="font-size:.7rem;">Suspendu</span>
                     {% else %}<span class="badge bg-secondary" style="font-size:.7rem;">{{ user.status }}</span>{% endif %}
+                </span>
+            </div>
+            <div class="up-info-row">
+                <span class="up-lbl">Segment IA</span>
+                <span class="up-val">
+                    {% if user.segment == 'VIP' %}
+                        <span class="badge bg-warning text-dark" style="font-size:.7rem;"><i class="fas fa-crown me-1"></i>VIP</span>
+                    {% elseif user.segment == 'ACTIF' %}
+                        <span class="badge bg-success" style="font-size:.7rem;"><i class="fas fa-bolt me-1"></i>Actif</span>
+                    {% elseif user.segment == 'CHURN_RISK' %}
+                        <span class="badge bg-warning" style="font-size:.7rem;"><i class="fas fa-exclamation-triangle me-1"></i>Risque de Churn</span>
+                    {% elseif user.segment == 'DORMANT' %}
+                        <span class="badge bg-secondary" style="font-size:.7rem;"><i class="fas fa-bed me-1"></i>Dormant</span>
+                    {% else %}
+                        <span class="text-muted fst-italic" style="font-size:.7rem;">Non calculé</span>
+                    {% endif %}
                 </span>
             </div>
             <div class="up-info-row">
@@ -249,6 +281,12 @@
         {% if user.status != 'APPROVED' or true %}
         <div class="up-card">
             <h5><i class="fas fa-user-check"></i> Validation</h5>
+            {% if fake_domain_risk is defined and fake_domain_risk is not null and fake_domain_risk.percent >= 70 %}
+            <p class="text-warning mb-2" style="font-size:.8rem;">
+                <i class="fas fa-robot me-1" title="Modèle ML"></i>
+                Risque domaine élevé ({{ fake_domain_risk.percent }}&#37;) : domaine souvent jetable ou suspect. Utilisez ce score comme indication, pas comme refus automatique.
+            </p>
+            {% endif %}
             <div class="d-grid gap-2">
                 {% if user.status in ['EMAIL_VERIFIED', 'REJECTED', 'SUSPENDED'] %}
                     <form method="post" action="{{ path('app_user_approve', {id: user.id}) }}">

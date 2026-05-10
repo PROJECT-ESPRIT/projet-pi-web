@@ -28,7 +28,7 @@ class Reservation
     private ?User $participant = null;
 
     #[ORM\ManyToOne(inversedBy: 'reservations')]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
     private ?Evenement $evenement = null;
 
     #[ORM\Column(length: 20, nullable: true)]

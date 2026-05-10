@@ -1,0 +1,43 @@
+ Updating database schema...
+
+
+In ExceptionConverter.php line 78:
+                                    
+  An exception occurred while exec  
+  uting a query: SQLSTATE[42000]:   
+  Syntax error or access violation  
+  : 1064 You have an error in your  
+   SQL syntax; check the manual th  
+  at corresponds to your MariaDB s  
+  erver version for the right synt  
+  ax to use near 'INDEX idx_280a49  
+  b629ccbad0 TO IDX_AE7A93B629CCBA  
+  D0' at line 1                     
+                                    
+
+In Exception.php line 24:
+                                    
+  SQLSTATE[42000]: Syntax error or  
+   access violation: 1064 You have  
+   an error in your SQL syntax; ch  
+  eck the manual that corresponds   
+  to your MariaDB server version f  
+  or the right syntax to use near   
+  'INDEX idx_280a49b629ccbad0 TO I  
+  DX_AE7A93B629CCBAD0' at line 1    
+                                    
+
+In Connection.php line 27:
+                                    
+  SQLSTATE[42000]: Syntax error or  
+   access violation: 1064 You have  
+   an error in your SQL syntax; ch  
+  eck the manual that corresponds   
+  to your MariaDB server version f  
+  or the right syntax to use near   
+  'INDEX idx_280a49b629ccbad0 TO I  
+  DX_AE7A93B629CCBAD0' at line 1    
+                                    
+
+doctrine:schema:update [--em EM] [--complete] [--dump-sql] [-f|--force]
+

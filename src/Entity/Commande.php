@@ -10,6 +10,10 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity(repositoryClass: CommandeRepository::class)]
 class Commande
 {
+    public const STATUT_EN_ATTENTE = 'EN_ATTENTE';
+    public const STATUT_ACCEPTEE = 'ACCEPTEE';
+    public const STATUT_REFUSEE = 'REFUSEE';
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -28,14 +32,14 @@ class Commande
     #[ORM\JoinColumn(nullable: false)]
     private ?User $user = null;
 
-    #[ORM\OneToMany(mappedBy: 'commande', targetEntity: LigneCommande::class, cascade: ['persist', 'remove'])]
+    #[ORM\OneToMany(mappedBy: 'commande', targetEntity: LigneCommande::class, cascade: ['persist', 'remove'], orphanRemoval: true)]
     private Collection $ligneCommandes;
 
     public function __construct()
     {
         $this->dateCommande = new \DateTimeImmutable();
         $this->ligneCommandes = new ArrayCollection();
-        $this->statut = 'EN_ATTENTE';
+        $this->statut = self::STATUT_EN_ATTENTE;
     }
 
     public function getId(): ?int

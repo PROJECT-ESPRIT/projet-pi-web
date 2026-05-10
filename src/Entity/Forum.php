@@ -51,7 +51,7 @@ class Forum
     /**
      * @var Collection<int, ForumReponse>
      */
-    #[ORM\OneToMany(targetEntity: ForumReponse::class, mappedBy: 'forum', orphanRemoval: true)]
+    #[ORM\OneToMany(targetEntity: ForumReponse::class, mappedBy: 'forum', orphanRemoval: true, cascade: ['persist', 'remove'])]
     private Collection $reponses;
 
     public function __construct()

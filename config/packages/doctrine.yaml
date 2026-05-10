@@ -29,6 +29,14 @@ when@test:
             # "TEST_TOKEN" is typically set by ParaTest
             dbname_suffix: '_test%env(default::TEST_TOKEN)%'
 
+when@dev:
+    doctrine:
+        dbal:
+            # Enable DB profiling and backtraces in dev for tools like Doctrine Doctor
+            profiling: true
+            profiling_collect_backtrace: true
+            profiling_collect_schema_errors: false
+
 when@prod:
     doctrine:
         orm:
