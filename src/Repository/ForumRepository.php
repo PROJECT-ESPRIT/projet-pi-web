@@ -59,9 +59,9 @@ class ForumRepository extends ServiceEntityRepository
     {
         $conn = $this->getEntityManager()->getConnection();
         $rows = $conn->executeQuery("
-            SELECT DATE_FORMAT(date_creation, '%Y-%m') AS m, COUNT(*) AS c
-            FROM forum
-            WHERE date_creation >= DATE_SUB(CURRENT_DATE, INTERVAL :months MONTH)
+            SELECT DATE_FORMAT(created_at, '%Y-%m') AS m, COUNT(*) AS c
+            FROM forum_topic
+            WHERE created_at >= DATE_SUB(CURRENT_DATE, INTERVAL :months MONTH)
             GROUP BY m ORDER BY m
         ", ['months' => $months])->fetchAllAssociative();
 
