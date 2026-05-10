@@ -97,19 +97,23 @@
         details.charity-toggle > summary::-webkit-details-marker { display: none; }
     </style>
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="mb-0">Charities</h1>
+    <div class="bo-page-header">
+        <h1>
+            <i class="fas fa-hands-helping"></i> Causes
+            <span class="badge">{{ charityStats|length }}</span>
+        </h1>
         {% if app.user %}
-            <div class="d-flex gap-2">
-                <a href="{{ path('app_charity_mine') }}" class="btn btn-outline-secondary">Mes causes</a>
-                <a href="{{ path('app_charity_new') }}" class="btn btn-outline-primary">Créer une cause</a>
-                <a href="{{ path('app_donation_my') }}" class="btn btn-outline-primary">Mes dons</a>
+            <div class="bo-actions">
+                <a href="{{ path('app_charity_mine') }}" class="btn btn-outline-secondary"><i class="fas fa-folder me-1"></i>Mes causes</a>
+                <a href="{{ path('app_favorite_charity_mine') }}" class="btn btn-outline-secondary"><i class="fas fa-heart me-1"></i>Mes favoris</a>
+                <a href="{{ path('app_donation_my') }}" class="btn btn-outline-secondary"><i class="fas fa-receipt me-1"></i>Mes dons</a>
+                <a href="{{ path('app_charity_new') }}" class="btn btn-primary"><i class="fas fa-plus me-1"></i>Nouvelle cause</a>
             </div>
         {% endif %}
     </div>
 
-    <p class="text-muted mb-4">
-        Consultez les charities et leur progression. Pour faire un don, vous devez être connecté.
+    <p class="text-muted mb-3">
+        Consultez les causes et leur progression. Pour faire un don, vous devez être connecté.
     </p>
 
     {% for message in app.flashes('payment_success') %}
@@ -125,9 +129,10 @@
         <div class="alert alert-danger">{{ message }}</div>
     {% endfor %}
 
-    <form method="get" class="row g-3 mb-4">
-        <div class="col-md-6">
-            <label for="charity-search" class="form-label">Recherche</label>
+    <form method="get" class="bo-filter-bar">
+        <div class="row g-2 align-items-end">
+        <div class="col-md-5">
+            <label><i class="fas fa-search me-1"></i>Recherche</label>
             <input
                 type="text"
                 id="charity-search"
@@ -138,7 +143,7 @@
             >
         </div>
         <div class="col-md-3">
-            <label for="charity-sort" class="form-label">Trier par</label>
+            <label><i class="fas fa-sort me-1"></i>Trier par</label>
             <select id="charity-sort" name="sort" class="form-select">
                 <option value="name" {{ sort == 'name' ? 'selected' : '' }}>Nom</option>
                 <option value="newest" {{ sort == 'newest' ? 'selected' : '' }}>Nouveauté</option>
@@ -155,9 +160,10 @@
                 <option value="DESC" {{ direction == 'DESC' ? 'selected' : '' }}>Décroissant</option>
             </select>
         </div>
-        <div class="col-12">
-            <button type="submit" class="btn btn-primary">Appliquer</button>
-            <a href="{{ path('app_charity_index') }}" class="btn btn-outline-secondary">Réinitialiser</a>
+        <div class="col-md-2 d-flex gap-2">
+            <button type="submit" class="btn btn-primary flex-grow-1"><i class="fas fa-filter me-1"></i>Filtrer</button>
+            <a href="{{ path('app_charity_index') }}" class="btn btn-outline-secondary"><i class="fas fa-undo me-1"></i></a>
+        </div>
         </div>
     </form>
 
