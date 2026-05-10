@@ -3,12 +3,17 @@
 {% block title %}Charity - {{ charity.name }}{% endblock %}
 
 {% block body %}
-    <div class="d-flex justify-content-between align-items-start mb-3">
-        <div>
-            <h1 class="mb-1">{{ charity.name }}</h1>
-            <p class="text-muted mb-0">{{ charity.description|default('Sans description') }}</p>
+    <div class="bo-page-header">
+        <h1>
+            <i class="fas fa-hands-helping"></i> {{ charity.name }}
+            <span class="badge {{ charity.status == 'APPROVED' ? 'bg-success' : (charity.status == 'REJECTED' ? 'bg-danger' : (charity.status == 'HIDDEN' ? 'bg-secondary' : 'bg-warning text-dark')) }}">{{ charity.status }}</span>
+        </h1>
+        <div class="bo-actions">
+            <a href="{{ path('app_admin_charity_index') }}" class="btn btn-outline-secondary"><i class="fas fa-arrow-left me-1"></i>Retour</a>
+            <a href="{{ path('app_charity_show', {id: charity.id}) }}" class="btn btn-outline-secondary"><i class="fas fa-eye me-1"></i>Vue publique</a>
         </div>
     </div>
+    <p class="text-muted mb-3">{{ charity.description|default('Sans description') }}</p>
 
     <div class="card mb-4">
         <div class="card-body">
@@ -62,5 +67,4 @@
         </table>
     </div>
 
-    <a href="{{ path('app_admin_charity_index') }}" class="btn btn-link mt-2">Retour à la liste</a>
 {% endblock %}
