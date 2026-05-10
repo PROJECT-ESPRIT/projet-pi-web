@@ -192,16 +192,24 @@
                                     <div class="progress-bar {{ barClass }}" role="progressbar" style="width: {{ min(percent, 100) }}%"></div>
                                 </div>
                                 <small class="text-muted d-block">{{ row.donationsAmount }} € collectés · {{ row.donationsCount }} dons</small>
-                                <div class="mt-2 d-flex gap-2">
-                                    <a href="{{ path('app_charity_show', {'id': charity.id}) }}" class="btn btn-outline-secondary btn-sm">Voir</a>
+                                <div class="mt-2 d-flex gap-2 flex-wrap">
+                                    <a href="{{ path('app_charity_show', {'id': charity.id}) }}" class="btn btn-outline-secondary btn-sm">
+                                        <i class="fas fa-eye me-1"></i>Voir
+                                    </a>
                                     {% if app.user and charity.owner and charity.owner.id == app.user.id %}
-                                        <span class="btn btn-outline-secondary btn-sm">Vous êtes propriétaire</span>
+                                        <span class="btn btn-outline-secondary btn-sm disabled"><i class="fas fa-user me-1"></i>Vous êtes propriétaire</span>
                                     {% elseif app.user %}
                                         <button class="btn btn-primary btn-sm btn-toggle-donate" data-target="donate-{{ charity.id }}">
-                                            Donner à cette charité
+                                            <i class="fas fa-hand-holding-heart me-1"></i>Donner
                                         </button>
+                                        {% set isFav = favoriteIds is defined and charity.id in favoriteIds %}
+                                        <form method="post" action="{{ path('app_favorite_charity_toggle', {id: charity.id}) }}" class="d-inline">
+                                            <button type="submit" class="btn btn-sm {{ isFav ? 'btn-danger' : 'btn-outline-danger' }}" title="{{ isFav ? 'Retirer des favoris' : 'Ajouter aux favoris' }}">
+                                                <i class="{{ isFav ? 'fas' : 'far' }} fa-heart"></i>
+                                            </button>
+                                        </form>
                                     {% else %}
-                                        <a href="{{ path('login') }}" class="btn btn-primary btn-sm">Se connecter pour donner</a>
+                                        <a href="{{ path('login') }}" class="btn btn-primary btn-sm"><i class="fas fa-sign-in-alt me-1"></i>Se connecter pour donner</a>
                                     {% endif %}
                                 </div>
                             </div>

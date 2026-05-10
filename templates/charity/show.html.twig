@@ -91,11 +91,20 @@
         </div>
         <div class="card-footer bg-white d-flex flex-wrap gap-2">
             {% if app.user and charity.owner and charity.owner.id == app.user.id %}
-                <span class="btn btn-outline-secondary btn-sm" style="min-height:36px;">Vous êtes propriétaire</span>
+                <span class="btn btn-outline-secondary btn-sm disabled" style="min-height:36px;"><i class="fas fa-user me-1"></i>Vous êtes propriétaire</span>
             {% elseif app.user %}
-                <button class="btn btn-outline-secondary btn-sm btn-toggle-donate" data-target="donate-panel" style="min-height:36px;">Donner à cette charité</button>
+                <button class="btn btn-primary btn-sm btn-toggle-donate" data-target="donate-panel" style="min-height:36px;">
+                    <i class="fas fa-hand-holding-heart me-1"></i>Donner
+                </button>
+                {% set isFav = isFavorite|default(false) %}
+                <form method="post" action="{{ path('app_favorite_charity_toggle', {id: charity.id}) }}" class="d-inline">
+                    <button type="submit" class="btn btn-sm {{ isFav ? 'btn-danger' : 'btn-outline-danger' }}" style="min-height:36px;" title="{{ isFav ? 'Retirer des favoris' : 'Ajouter aux favoris' }}">
+                        <i class="{{ isFav ? 'fas' : 'far' }} fa-heart"></i>
+                        {{ isFav ? 'Retirer favori' : 'Favori' }}
+                    </button>
+                </form>
             {% else %}
-                <a href="{{ path('login') }}" class="btn btn-outline-secondary btn-sm" style="min-height:36px;">Se connecter pour donner</a>
+                <a href="{{ path('login') }}" class="btn btn-outline-secondary btn-sm" style="min-height:36px;"><i class="fas fa-sign-in-alt me-1"></i>Se connecter pour donner</a>
             {% endif %}
 
             {% if app.user and charity.owner and charity.owner.id == app.user.id %}

@@ -33,7 +33,8 @@ class CharityController extends AbstractController
         EntityManagerInterface $entityManager,
         DonationImageValidator $donationImageValidator,
         StripeService $stripeService,
-        UrlGeneratorInterface $urlGenerator
+        UrlGeneratorInterface $urlGenerator,
+        \App\Repository\FavoriteCharityRepository $favoriteCharityRepository
     ): Response
     {
         [$donationErrors, $donationOld, $redirect] = $this->processDonationSubmission(
@@ -77,6 +78,20 @@ class CharityController extends AbstractController
         )));
         $recentDonations = $donationRepository->findRecentByCharityIds($charityIds, 6);
 
+        $favoriteIds = [];
+        $user = $this->getUser();
+        if ($user instanceof User && !empty($charityIds)) {
+            $rows = $favoriteCharityRepository->createQueryBuilder('f')
+                ->select('IDENTITY(f.charity) AS cid')
+                ->where('f.user = :user')
+                ->andWhere('f.charity IN (:ids)')
+                ->setParameter('user', $user)
+                ->setParameter('ids', $charityIds)
+                ->getQuery()
+                ->getArrayResult();
+            $favoriteIds = array_map(static fn ($r) => (int) $r['cid'], $rows);
+        }
+
         return $this->render('charity/index.html.twig', [
             'charityStats' => $charityStats,
             'typeDons' => $this->getAllowedTypeDons($typeDonRepository),
@@ -88,6 +103,7 @@ class CharityController extends AbstractController
             'sort' => $sort,
             'direction' => $direction,
             'ai_validation_result' => $this->consumeAiResultFlash($request),
+            'favoriteIds' => $favoriteIds,
         ]);
     }
 
@@ -212,7 +228,8 @@ class CharityController extends AbstractController
         EntityManagerInterface $entityManager,
         DonationImageValidator $donationImageValidator,
         StripeService $stripeService,
-        UrlGeneratorInterface $urlGenerator
+        UrlGeneratorInterface $urlGenerator,
+        \App\Repository\FavoriteCharityRepository $favoriteCharityRepository
     ): Response
     {
         if ($charity->isHidden() && !$this->isGranted('ROLE_ADMIN')) {
@@ -239,6 +256,12 @@ class CharityController extends AbstractController
         $donationsAmount = $donationRepository->sumAmountForCharity($charity, $includeHidden);
         $goal = $charity->getGoalAmount();
 
+        $isFavorite = false;
+        $user = $this->getUser();
+        if ($user instanceof User) {
+            $isFavorite = $favoriteCharityRepository->isFavorite($user, $charity);
+        }
+
         return $this->render('charity/show.html.twig', [
             'charity' => $charity,
             'recentDonations' => $donationRepository->findByCharity($charity, 10, $includeHidden),
@@ -251,6 +274,7 @@ class CharityController extends AbstractController
             'donationOld' => $donationOld,
             'moneyTypeId' => $this->getMoneyTypeId(),
             'ai_validation_result' => $this->consumeAiResultFlash($request),
+            'isFavorite' => $isFavorite,
         ]);
     }
 
