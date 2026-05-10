@@ -1,34 +1,51 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Mes Dons{% endblock %}
+{% block title %}Mes dons{% endblock %}
 
 {% block body %}
-    <h1>Mes Dons</h1>
-
-    <div class="mb-4 text-end">
-        <a href="{{ path('app_charity_index') }}" class="btn btn-primary">Faire un nouveau don</a>
+    <div class="bo-page-header">
+        <h1>
+            <i class="fas fa-receipt"></i> Mes dons
+            <span class="badge">{{ donations|length }}</span>
+        </h1>
+        <div class="bo-actions">
+            <a href="{{ path('app_charity_index') }}" class="btn btn-primary"><i class="fas fa-hand-holding-heart me-1"></i>Faire un don</a>
+        </div>
     </div>
 
     {% if donations is empty %}
         <div class="alert alert-info">
-            Vous n'avez pas encore fait de don.
+            Vous n'avez pas encore fait de don. <a href="{{ path('app_charity_index') }}">Découvrir les causes</a>.
         </div>
     {% else %}
-        <div class="row">
+        <div class="row g-3">
             {% for donation in donations %}
-                <div class="col-md-6 mb-4">
-                    <div class="card h-100 border-primary">
-                        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                            <span>{{ donation.type.libelle }}</span>
-                            <span class="badge bg-light text-dark">{{ donation.charity.name }}</span>
+                {% set st = donation.status %}
+                {% set badgeClass = st == 'APPROVED' ? 'bg-success'
+                    : (st == 'REJECTED' ? 'bg-danger'
+                    : (st == 'HIDDEN' ? 'bg-secondary' : 'bg-warning text-dark')) %}
+                <div class="col-md-6 col-lg-4">
+                    <div class="card h-100">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <span>
+                                <span class="badge bg-info">{{ donation.donationType }}</span>
+                                {% if donation.type %}<small class="ms-1">{{ donation.type.libelle }}</small>{% endif %}
+                            </span>
+                            <span class="badge {{ badgeClass }}">{{ st }}</span>
                         </div>
                         <div class="card-body">
-                            <h5 class="card-title">Le {{ donation.dateDon|date('d/m/Y') }}</h5>
+                            <h6 class="card-title">{{ donation.charity ? donation.charity.name : 'Cause supprimée' }}</h6>
+                            <div class="small text-muted mb-2">{{ donation.dateDon|date('d/m/Y H:i') }}</div>
                             <p class="mb-2"><strong>Montant:</strong> {{ donation.amount }} €</p>
                             {% if donation.isAnonymous %}
-                                <p class="mb-2"><span class="badge text-bg-secondary">Don anonyme</span></p>
+                                <span class="badge text-bg-secondary mb-2">Don anonyme</span>
                             {% endif %}
-                            <p class="card-text">{{ donation.description }}</p>
+                            {% if donation.description %}
+                                <p class="card-text small text-muted">{{ donation.description }}</p>
+                            {% endif %}
+                            {% if donation.imagePath %}
+                                <img src="{{ donation.imagePath }}" class="img-fluid rounded" style="max-height:120px" alt="don">
+                            {% endif %}
                         </div>
                     </div>
                 </div>

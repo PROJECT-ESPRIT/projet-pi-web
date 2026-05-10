@@ -3,8 +3,15 @@
 {% block title %}Mes causes favorites{% endblock %}
 
 {% block body %}
-<div class="container py-4">
-    <h1 class="mb-4"><i class="fas fa-heart text-danger"></i> Mes causes favorites</h1>
+    <div class="bo-page-header">
+        <h1>
+            <i class="fas fa-heart"></i> Mes causes favorites
+            <span class="badge">{{ charities|length }}</span>
+        </h1>
+        <div class="bo-actions">
+            <a href="{{ path('app_charity_index') }}" class="btn btn-outline-secondary"><i class="fas fa-list me-1"></i>Toutes les causes</a>
+        </div>
+    </div>
 
     {% if charities is empty %}
         <div class="alert alert-info">
@@ -40,5 +47,4 @@
             {% endfor %}
         </div>
     {% endif %}
-</div>
 {% endblock %}
