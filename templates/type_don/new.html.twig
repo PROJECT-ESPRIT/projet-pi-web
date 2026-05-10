@@ -3,11 +3,14 @@
 {% block title %}Nouveau Type de Don{% endblock %}
 
 {% block body %}
-    <h1>Créer un nouveau Type de Don</h1>
+    <div class="bo-page-header">
+        <h1><i class="fas fa-plus-circle"></i> Nouveau type de don</h1>
+        <div class="bo-actions">
+            <a href="{{ path('app_type_don_index') }}" class="btn btn-outline-secondary"><i class="fas fa-arrow-left me-1"></i>Retour</a>
+        </div>
+    </div>
 
-    {{ include('type_don/_form.html.twig') }}
-
-    <div class="mt-3">
-        <a href="{{ path('app_type_don_index') }}">Retour à la liste</a>
+    <div class="bo-table-card p-3">
+        {{ include('type_don/_form.html.twig') }}
     </div>
 {% endblock %}
