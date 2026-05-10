@@ -3,6 +3,7 @@
 namespace App\Controller\Forum;
 
 use App\Entity\Forum;
+use App\Entity\User;
 use App\Form\Forum\ForumType;
 use App\Repository\ForumRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -39,6 +40,10 @@ final class ForumController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            $user = $this->getUser();
+            if ($user instanceof User) {
+                $forum->setAuteur(trim(($user->getPrenom() ?? '') . ' ' . ($user->getNom() ?? '')) ?: $user->getEmail());
+            }
             $entityManager->persist($forum);
             $entityManager->flush();
 

@@ -1,66 +1,86 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Forum index{% endblock %}
+{% block title %}Forum{% endblock %}
 
 {% block body %}
-    <h1>Forum index</h1>
+<div class="bo-page-header">
+    <h1>
+        <i class="fas fa-comments"></i> Forum
+        <span class="badge">{{ forums|length }}</span>
+    </h1>
+    <div class="bo-actions">
+        {% if app.user %}
+            <a href="{{ path('app_forum_new') }}" class="btn btn-primary"><i class="fas fa-plus me-1"></i>Nouveau sujet</a>
+        {% endif %}
+    </div>
+</div>
 
-    <form method="get" class="row g-2 mb-3">
+<form method="get" class="bo-filter-bar">
+    <div class="row g-2 align-items-end">
         <div class="col-md-6">
-            <input type="text" name="search" class="form-control" placeholder="Rechercher..." value="{{ search }}">
+            <label><i class="fas fa-search me-1"></i>Recherche</label>
+            <input type="text" name="search" class="form-control" placeholder="Titre, auteur, message…" value="{{ search }}">
         </div>
         <div class="col-md-3">
+            <label><i class="fas fa-sort me-1"></i>Trier par</label>
             <select name="sort" class="form-select">
-                <option value="dateCreation" {% if sortBy == 'dateCreation' %}selected{% endif %}>Date creation</option>
-                <option value="sujet" {% if sortBy == 'sujet' %}selected{% endif %}>Sujet</option>
+                <option value="dateCreation" {% if sortBy == 'dateCreation' %}selected{% endif %}>Date</option>
+                <option value="titre" {% if sortBy in ['titre','sujet'] %}selected{% endif %}>Titre</option>
             </select>
         </div>
         <div class="col-md-2">
+            <label><i class="fas fa-arrows-alt-v me-1"></i>Ordre</label>
             <select name="order" class="form-select">
-                <option value="DESC" {% if order == 'DESC' %}selected{% endif %}>DESC</option>
-                <option value="ASC" {% if order == 'ASC' %}selected{% endif %}>ASC</option>
+                <option value="DESC" {% if order == 'DESC' %}selected{% endif %}>Récent</option>
+                <option value="ASC" {% if order == 'ASC' %}selected{% endif %}>Ancien</option>
             </select>
         </div>
-        <div class="col-md-1">
-            <button type="submit" class="btn btn-primary w-100">OK</button>
+        <div class="col-md-1 d-flex">
+            <button type="submit" class="btn btn-primary w-100"><i class="fas fa-filter"></i></button>
         </div>
-    </form>
+    </div>
+</form>
 
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Id</th>
-                <th>Nom</th>
-                <th>Prenom</th>
-                <th>Email</th>
-                <th>Sujet</th>
-                <th>Message</th>
-                <th>DateCreation</th>
-                <th>actions</th>
-            </tr>
-        </thead>
-        <tbody>
-        {% for forum in forums %}
-            <tr>
-                <td>{{ forum.id }}</td>
-                <td>{{ forum.nom }}</td>
-                <td>{{ forum.prenom }}</td>
-                <td>{{ forum.email }}</td>
-                <td>{{ forum.sujet }}</td>
-                <td>{{ forum.message }}</td>
-                <td>{{ forum.dateCreation ? forum.dateCreation|date('Y-m-d H:i:s') : '' }}</td>
-                <td>
-                    <a href="{{ path('app_forum_show', {'id': forum.id}) }}">show</a>
-                    <a href="{{ path('app_forum_edit', {'id': forum.id}) }}">edit</a>
-                </td>
-            </tr>
-        {% else %}
-            <tr>
-                <td colspan="8">no records found</td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-
-    <a href="{{ path('app_forum_new') }}">Create new</a>
+<div class="bo-table-card">
+    {% if forums is not empty %}
+        <div class="table-responsive">
+            <table class="table bo-table align-middle">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Sujet</th>
+                        <th>Auteur</th>
+                        <th>Aperçu</th>
+                        <th>Créé le</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for forum in forums %}
+                    <tr>
+                        <td>#{{ forum.id }}</td>
+                        <td><strong>{{ forum.titre }}</strong></td>
+                        <td>{{ forum.auteur ?: '—' }}</td>
+                        <td><small class="text-muted">{{ forum.message|slice(0, 80) }}{% if forum.message|length > 80 %}…{% endif %}</small></td>
+                        <td><small>{{ forum.dateCreation|date('d/m/Y H:i') }}</small></td>
+                        <td class="text-end">
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ path('app_forum_show', {'id': forum.id}) }}" class="btn btn-outline-primary" title="Voir"><i class="fas fa-eye"></i></a>
+                                {% if app.user %}
+                                    <a href="{{ path('app_forum_edit', {'id': forum.id}) }}" class="btn btn-outline-secondary" title="Editer"><i class="fas fa-edit"></i></a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="p-4 text-center text-muted">
+            Aucun sujet pour l'instant.
+            {% if app.user %}<a href="{{ path('app_forum_new') }}">Créer le premier</a>.{% endif %}
+        </div>
+    {% endif %}
+</div>
 {% endblock %}
