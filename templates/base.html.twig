@@ -200,6 +200,12 @@
             }
             .bo-filter-bar .btn-outline-secondary:hover { background:rgba(30,15,117,.04); color:var(--ac-deep); }
 
+            /* dynamic feel — all buttons lift + shadow on hover; press feedback on active */
+            .btn { transition: transform .12s ease, box-shadow .12s ease, filter .12s ease; }
+            .btn:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(30,15,117,.10); }
+            .btn:active { transform: translateY(0); filter: brightness(.96); }
+            .btn:focus-visible { outline: 2px solid rgba(13,110,253,.45); outline-offset: 2px; }
+
             .bo-table-card {
                 background:#fff; border-radius:16px; overflow:hidden;
                 box-shadow:0 2px 14px rgba(30,15,117,.05); border:1px solid rgba(30,15,117,.06);
