@@ -8,6 +8,7 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: TypeDonRepository::class)]
+#[ORM\Table(name: 'donation_type')]
 class TypeDon
 {
     #[ORM\Id]
@@ -15,8 +16,11 @@ class TypeDon
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(name: 'name', length: 255, unique: true)]
     private ?string $libelle = null;
+
+    #[ORM\Column(name: 'picture_path', length: 512, nullable: true)]
+    private ?string $picturePath = null;
 
     #[ORM\OneToMany(mappedBy: 'type', targetEntity: Donation::class)]
     private Collection $donations;
@@ -40,6 +44,17 @@ class TypeDon
     {
         $this->libelle = $libelle;
 
+        return $this;
+    }
+
+    public function getPicturePath(): ?string
+    {
+        return $this->picturePath;
+    }
+
+    public function setPicturePath(?string $picturePath): static
+    {
+        $this->picturePath = $picturePath;
         return $this;
     }
 
