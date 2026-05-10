@@ -44,7 +44,7 @@
         .donate-box .form-control, .donate-box .form-select { font-size: .85rem; }
     </style>
 
-    <a href="{{ path('app_charity_index') }}" class="btn btn-link ps-0">&larr; Retour aux charities</a>
+    <a href="{{ path('app_charity_index') }}" class="btn btn-outline-secondary btn-sm"><i class="fas fa-arrow-left me-1"></i>Retour aux causes</a>
 
     {% for message in app.flashes('payment_success') %}
         <div class="alert alert-success">{{ message }}</div>

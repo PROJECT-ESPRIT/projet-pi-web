@@ -1,0 +1,181 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Statistiques des causes{% endblock %}
+
+{% block body %}
+<style>
+    .stat-kpi {
+        border-radius: 14px; padding: 1rem 1.1rem; color: #fff;
+        min-height: 110px; display: flex; flex-direction: column; justify-content: space-between;
+        position: relative; overflow: hidden;
+        transition: transform .2s, box-shadow .2s;
+    }
+    .stat-kpi:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(0,0,0,.15); }
+    .stat-kpi .lbl { font-size: .76rem; font-weight: 600; opacity: .85; letter-spacing: .03em; text-transform: uppercase; }
+    .stat-kpi .val { font-size: 1.8rem; font-weight: 700; line-height: 1.1; }
+    .stat-kpi .sub { font-size: .78rem; opacity: .8; }
+    .stat-kpi i.ico { font-size: 1.4rem; opacity: .85; }
+    .stat-card {
+        background: #fff; border-radius: 14px; padding: 1.1rem;
+        box-shadow: 0 2px 10px rgba(30,15,117,.06);
+        border: 1px solid rgba(30,15,117,.06);
+    }
+    .stat-card h5 {
+        font-size: .95rem; font-weight: 700; margin-bottom: .9rem; color: var(--ac-deep);
+        display: flex; align-items: center; gap: .5rem;
+    }
+    .top-charity-row {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: .55rem .7rem; border-radius: 8px;
+        background: rgba(30,15,117,.03); margin-bottom: .35rem;
+    }
+    .top-charity-row .name { font-weight: 600; font-size: .9rem; }
+    .top-charity-row .amt  { font-size: .85rem; color: var(--ac-deep); font-weight: 700; }
+</style>
+
+<div class="bo-page-header">
+    <h1>
+        <i class="fas fa-chart-pie"></i> Statistiques — Causes & dons
+    </h1>
+    <div class="bo-actions">
+        <a href="{{ path('app_charity_index') }}" class="btn btn-outline-secondary"><i class="fas fa-arrow-left me-1"></i>Causes</a>
+        {% if is_granted('ROLE_ADMIN') %}
+            <a href="{{ path('app_admin_charity_index') }}" class="btn btn-outline-secondary"><i class="fas fa-cog me-1"></i>Admin</a>
+        {% endif %}
+    </div>
+</div>
+
+{# ── KPIs ── #}
+<div class="row g-3 mb-3">
+    <div class="col-6 col-md-3">
+        <div class="stat-kpi" style="background: linear-gradient(135deg,#1C1DAB,#3785D8);">
+            <div class="d-flex justify-content-between align-items-start">
+                <div class="lbl">Causes</div>
+                <i class="fas fa-hands-helping ico"></i>
+            </div>
+            <div class="val">{{ totalCharities }}</div>
+            <div class="sub">total visible</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-kpi" style="background: linear-gradient(135deg,#059669,#34d399);">
+            <div class="d-flex justify-content-between align-items-start">
+                <div class="lbl">Dons</div>
+                <i class="fas fa-hand-holding-heart ico"></i>
+            </div>
+            <div class="val">{{ totalDonations }}</div>
+            <div class="sub">enregistrés</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-kpi" style="background: linear-gradient(135deg,#d97706,#fbbf24);">
+            <div class="d-flex justify-content-between align-items-start">
+                <div class="lbl">Collecté</div>
+                <i class="fas fa-coins ico"></i>
+            </div>
+            <div class="val">{{ totalAmount|number_format(0, '.', ' ') }} €</div>
+            <div class="sub">tous dons</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-kpi" style="background: linear-gradient(135deg,#db2777,#EBB2C3);">
+            <div class="d-flex justify-content-between align-items-start">
+                <div class="lbl">Favoris</div>
+                <i class="fas fa-heart ico"></i>
+            </div>
+            <div class="val">{{ totalFavorites }}</div>
+            <div class="sub">au total</div>
+        </div>
+    </div>
+</div>
+
+{# ── Charts row ── #}
+<div class="row g-3 mb-3">
+    <div class="col-12 col-md-6">
+        <div class="stat-card">
+            <h5><i class="fas fa-chart-line"></i> Dons mensuels (6 derniers mois)</h5>
+            <canvas id="monthlyChart" height="180"></canvas>
+        </div>
+    </div>
+    <div class="col-12 col-md-6">
+        <div class="stat-card">
+            <h5><i class="fas fa-chart-pie"></i> Répartition Argent vs Objets</h5>
+            <canvas id="typeChart" height="180"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-12 col-md-6">
+        <div class="stat-card">
+            <h5><i class="fas fa-trophy"></i> Top 5 causes (par montant)</h5>
+            {% if topCharities is empty %}
+                <p class="text-muted small mb-0">Aucun don pour l'instant.</p>
+            {% else %}
+                {% for tc in topCharities %}
+                    <div class="top-charity-row">
+                        <div class="name">
+                            <a href="{{ path('app_charity_show', {id: tc.charity.id}) }}">{{ tc.charity.name }}</a>
+                            <small class="text-muted ms-1">· {{ tc.count }} don{{ tc.count > 1 ? 's' : '' }}</small>
+                        </div>
+                        <div class="amt">{{ tc.amount|number_format(0, '.', ' ') }} €</div>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        </div>
+    </div>
+    <div class="col-12 col-md-6">
+        <div class="stat-card">
+            <h5><i class="fas fa-tasks"></i> Causes par statut</h5>
+            <canvas id="statusChart" height="180"></canvas>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    (function () {
+        const palette = ['#1C1DAB','#3785D8','#059669','#d97706','#db2777','#7c3aed','#14b8a6','#dc2626'];
+
+        // monthly
+        const monthly = {{ monthlyDonations|json_encode|raw }};
+        new Chart(document.getElementById('monthlyChart'), {
+            type: 'line',
+            data: {
+                labels: monthly.map(m => m.month),
+                datasets: [{
+                    label: 'Dons',
+                    data: monthly.map(m => m.count),
+                    fill: true,
+                    borderColor: '#1C1DAB',
+                    backgroundColor: 'rgba(28,29,171,0.10)',
+                    tension: .3,
+                }],
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+        });
+
+        // Money vs Item
+        const moneyItem = {{ moneyVsItem|json_encode|raw }};
+        new Chart(document.getElementById('typeChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Argent', 'Objets'],
+                datasets: [{ data: [moneyItem.MONEY || 0, moneyItem.ITEM || 0], backgroundColor: ['#d97706','#1C1DAB'] }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+
+        // status
+        const status = {{ statusBuckets|json_encode|raw }};
+        new Chart(document.getElementById('statusChart'), {
+            type: 'bar',
+            data: {
+                labels: Object.keys(status),
+                datasets: [{ data: Object.values(status), backgroundColor: ['#d97706','#059669','#6b7280','#dc2626'] }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+        });
+    })();
+</script>
+{% endblock %}

@@ -276,14 +276,14 @@
         <div class="kpi-sub">+{{ donationsThisMonth }} ce mois</div>
     </div>
 
-    <div class="kpi-card" style="background:linear-gradient(135deg, #14b8a6, #5eead4);">
+    <a href="{{ path('app_charity_stats') }}" class="kpi-card text-decoration-none" style="background:linear-gradient(135deg, #14b8a6, #5eead4); color:#fff;" title="Voir les statistiques détaillées des causes & dons">
         <div class="kpi-top">
             <div class="kpi-label">Charities</div>
             <div class="kpi-icon-wrap"><i class="fas fa-hands-helping"></i></div>
         </div>
         <div class="kpi-value">{{ totalCharities }}</div>
-        <div class="kpi-sub">causes actives</div>
-    </div>
+        <div class="kpi-sub">causes · <i class="fas fa-external-link-alt small"></i> détails</div>
+    </a>
 
     <div class="kpi-card" style="background:linear-gradient(135deg, #d97706, #fbbf24);">
         <div class="kpi-top">

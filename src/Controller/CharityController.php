@@ -107,6 +107,67 @@ class CharityController extends AbstractController
         ]);
     }
 
+    #[Route('/stats', name: 'app_charity_stats', methods: ['GET'])]
+    public function stats(
+        CharityRepository $charityRepository,
+        DonationRepository $donationRepository,
+        \App\Repository\FavoriteCharityRepository $favoriteCharityRepository,
+    ): Response {
+        $includeHidden = $this->isGranted('ROLE_ADMIN');
+
+        $charityRows = $charityRepository->findAllWithDonationCounts($includeHidden);
+        $totalCharities = count($charityRows);
+
+        $statusBuckets = ['PENDING' => 0, 'APPROVED' => 0, 'HIDDEN' => 0, 'REJECTED' => 0];
+        foreach ($charityRows as $row) {
+            $st = $row['charity']->getStatus();
+            if (isset($statusBuckets[$st])) {
+                $statusBuckets[$st]++;
+            }
+        }
+
+        $totalDonations = $donationRepository->count([]);
+        $monthlyDonations = $donationRepository->getMonthlyDonations(6, $includeHidden);
+        $donationsByType = $donationRepository->countByType($includeHidden);
+
+        $totalAmount = 0;
+        $topCharities = [];
+        foreach ($charityRows as $row) {
+            $totalAmount += (float) $row['donationsAmount'];
+            $topCharities[] = [
+                'charity' => $row['charity'],
+                'amount' => (float) $row['donationsAmount'],
+                'count' => (int) $row['donationsCount'],
+            ];
+        }
+        usort($topCharities, static fn ($a, $b) => $b['amount'] <=> $a['amount']);
+        $topCharities = array_slice($topCharities, 0, 5);
+
+        $totalFavorites = (int) $favoriteCharityRepository->createQueryBuilder('f')
+            ->select('COUNT(f.user)')
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        $moneyVsItem = ['MONEY' => 0, 'ITEM' => 0];
+        $conn = $donationRepository->getEntityManager()->getConnection();
+        $rows = $conn->executeQuery("SELECT donation_type AS t, COUNT(*) AS c FROM donation GROUP BY donation_type")->fetchAllAssociative();
+        foreach ($rows as $r) {
+            $moneyVsItem[$r['t']] = (int) $r['c'];
+        }
+
+        return $this->render('charity/stats.html.twig', [
+            'totalCharities' => $totalCharities,
+            'totalDonations' => $totalDonations,
+            'totalAmount' => $totalAmount,
+            'totalFavorites' => $totalFavorites,
+            'statusBuckets' => $statusBuckets,
+            'monthlyDonations' => $monthlyDonations,
+            'donationsByType' => $donationsByType,
+            'moneyVsItem' => $moneyVsItem,
+            'topCharities' => $topCharities,
+        ]);
+    }
+
     #[Route('/mine', name: 'app_charity_mine', methods: ['GET'])]
     #[IsGranted('ROLE_USER')]
     public function mine(Request $request, CharityRepository $charityRepository): Response
