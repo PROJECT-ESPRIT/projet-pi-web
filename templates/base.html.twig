@@ -13,15 +13,29 @@
 
         <style>
             :root {
+                /* Brand palette — public/marketing pages */
                 --ac-deep: #1E0F75;
                 --ac-mid: #1C1DAB;
                 --ac-blue: #3785D8;
                 --ac-lavender: #BF8CE1;
                 --ac-sky: #ADC6E5;
                 --ac-pink: #EBB2C3;
+                /* Neutral palette — shared with the JavaFX twin app (charte graphique parity) */
+                --slate-50:  #f8fafc;
+                --slate-100: #f1f5f9;
+                --slate-200: #e2e8f0;
+                --slate-400: #94a3b8;
+                --slate-500: #64748b;
+                --slate-600: #475569;
+                --slate-700: #334155;
+                /* Shared design tokens — match JavaFX style.css */
+                --ac-radius: 10px;
+                --ac-input-height: 44px;
+                --ac-font-body: 'Manrope', 'Inter', 'Segoe UI', system-ui, sans-serif;
+                --ac-font-heading: 'Sora', 'Inter', 'Segoe UI', system-ui, sans-serif;
             }
 
-            body { min-height: 100vh; display: flex; flex-direction: column; font-family: 'Manrope', sans-serif; }
+            body { min-height: 100vh; display: flex; flex-direction: column; font-family: var(--ac-font-body); color: var(--slate-700); }
 
             /* ===== BACKOFFICE (Admin) ===== */
             .bo-wrapper { display: flex; width: 100%; flex: 1; }
