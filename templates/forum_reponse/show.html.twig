@@ -1,30 +1,33 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}ForumReponse{% endblock %}
+{% block title %}Réponse #{{ forum_reponse.id }}{% endblock %}
 
 {% block body %}
-    <h1>ForumReponse</h1>
+<div class="bo-page-header">
+    <h1><i class="fas fa-reply"></i> Réponse #{{ forum_reponse.id }}</h1>
+    <div class="bo-actions">
+        {% if forum_reponse.forum %}
+            <a href="{{ path('app_forum_show', {id: forum_reponse.forum.id}) }}" class="btn btn-outline-secondary"><i class="fas fa-comment-dots me-1"></i>Sujet parent</a>
+        {% endif %}
+        <a href="{{ path('app_forum_reponse_index') }}" class="btn btn-outline-secondary"><i class="fas fa-arrow-left me-1"></i>Retour</a>
+        {% if app.user %}
+            <a href="{{ path('app_forum_reponse_edit', {'id': forum_reponse.id}) }}" class="btn btn-outline-secondary"><i class="fas fa-edit me-1"></i>Editer</a>
+        {% endif %}
+    </div>
+</div>
 
-    <table class="table">
-        <tbody>
-            <tr>
-                <th>Id</th>
-                <td>{{ forum_reponse.id }}</td>
-            </tr>
-            <tr>
-                <th>Contenu</th>
-                <td>{{ forum_reponse.contenu }}</td>
-            </tr>
-            <tr>
-                <th>DateReponse</th>
-                <td>{{ forum_reponse.dateReponse ? forum_reponse.dateReponse|date('Y-m-d H:i:s') : '' }}</td>
-            </tr>
-        </tbody>
-    </table>
+<div class="bo-table-card p-4 mb-3">
+    {% if forum_reponse.forum %}
+        <div class="small text-muted mb-2">Sujet : <strong>{{ forum_reponse.forum.titre }}</strong></div>
+    {% endif %}
+    <div class="d-flex justify-content-between text-muted small mb-3">
+        <span><i class="fas fa-user"></i> {% if forum_reponse.auteur %}{{ forum_reponse.auteur.prenom }} {{ forum_reponse.auteur.nom }}{% else %}Anonyme{% endif %}</span>
+        <span><i class="far fa-clock"></i> {{ forum_reponse.dateReponse|date('d/m/Y H:i') }}</span>
+    </div>
+    <div style="white-space: pre-wrap">{{ forum_reponse.contenu }}</div>
+</div>
 
-    <a href="{{ path('app_forum_reponse_index') }}">back to list</a>
-
-    <a href="{{ path('app_forum_reponse_edit', {'id': forum_reponse.id}) }}">edit</a>
-
+{% if app.user %}
     {{ include('forum_reponse/_delete_form.html.twig') }}
+{% endif %}
 {% endblock %}

@@ -1,65 +1,126 @@
-﻿{% extends 'base.html.twig' %}
+{% extends 'base.html.twig' %}
 
-{% block title %}Gestion des Dons{% endblock %}
+{% block title %}Modération des dons{% endblock %}
 
 {% block body %}
-    <h1>Tous les Dons</h1>
+<div class="bo-page-header">
+    <h1>
+        <i class="fas fa-hand-holding-heart"></i> Modération des dons
+        <span class="badge">{{ donations|length }}</span>
+    </h1>
+    <div class="bo-actions">
+        <a href="{{ path('app_charity_index') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-eye me-1"></i> Vue publique
+        </a>
+    </div>
+</div>
 
-    <form method="get" class="row g-3 mb-3">
-        <div class="col-md-6">
-            <label for="donation-search" class="form-label">Recherche</label>
-            <input
-                type="text"
-                id="donation-search"
-                name="q"
-                class="form-control"
-                placeholder="Nom, email, type, description..."
-                value="{{ search }}"
-            >
+<form method="get" action="{{ path('app_donation_index') }}" class="bo-filter-bar">
+    <div class="row g-2 align-items-end">
+        <div class="col-12 col-md-4">
+            <label><i class="fas fa-search me-1"></i>Recherche</label>
+            <input type="text" name="q" class="form-control" value="{{ search }}" placeholder="Donateur, charity, type, description…">
         </div>
-        <div class="col-md-3">
-            <label for="donation-sort" class="form-label">Trier par</label>
-            <select id="donation-sort" name="sort" class="form-select">
-                <option value="dateDon" {{ sort == 'dateDon' ? 'selected' : '' }}>Date</option>
-                <option value="donateur" {{ sort == 'donateur' ? 'selected' : '' }}>Donateur</option>
-                <option value="type" {{ sort == 'type' ? 'selected' : '' }}>Type</option>
+        <div class="col-6 col-md-3">
+            <label><i class="fas fa-sort me-1"></i>Tri</label>
+            <select name="sort" class="form-select">
+                <option value="dateDon"  {{ sort == 'dateDon' ? 'selected' }}>Date</option>
+                <option value="donateur" {{ sort == 'donateur' ? 'selected' }}>Donateur</option>
+                <option value="type"     {{ sort == 'type' ? 'selected' }}>Type</option>
+                <option value="charity"  {{ sort == 'charity' ? 'selected' }}>Charity</option>
             </select>
         </div>
-        <div class="col-md-3">
-            <label for="donation-direction" class="form-label">Ordre</label>
-            <select id="donation-direction" name="direction" class="form-select">
-                <option value="DESC" {{ direction == 'DESC' ? 'selected' : '' }}>DÃ©croissant</option>
-                <option value="ASC" {{ direction == 'ASC' ? 'selected' : '' }}>Croissant</option>
+        <div class="col-6 col-md-2">
+            <label><i class="fas fa-arrows-alt-v me-1"></i>Ordre</label>
+            <select name="direction" class="form-select">
+                <option value="DESC" {{ direction == 'DESC' ? 'selected' }}>Décroissant</option>
+                <option value="ASC"  {{ direction == 'ASC' ? 'selected' }}>Croissant</option>
             </select>
         </div>
-        <div class="col-12">
-            <button type="submit" class="btn btn-primary">Appliquer</button>
-            <a href="{{ path('app_donation_index') }}" class="btn btn-outline-secondary">RÃ©initialiser</a>
+        <div class="col-12 col-md-3 d-flex gap-2">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-filter me-1"></i> Filtrer
+            </button>
+            <a class="btn btn-outline-secondary" href="{{ path('app_donation_index') }}"><i class="fas fa-undo me-1"></i></a>
         </div>
-    </form>
+    </div>
+</form>
 
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Date</th>
-                <th>Donateur</th>
-                <th>Type</th>
-                <th>Description</th>
-            </tr>
-        </thead>
-        <tbody>
-        {% for donation in donations %}
-            <tr>
-                <td>{{ donation.dateDon|date('d/m/Y H:i') }}</td>
-                <td>{{ donation.donateur.prenom }} {{ donation.donateur.nom }}</td>
-                <td><span class="badge bg-info">{{ donation.type.libelle }}</span></td>
-                <td>{{ donation.description }}</td>
-            </tr>
-        {% else %}
-            <tr>
-                <td colspan="4">Aucun don enregistré.</td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+<div class="bo-table-card">
+    {% if donations is not empty %}
+        <div class="table-responsive">
+            <table class="table bo-table align-middle">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Date</th>
+                        <th>Donateur</th>
+                        <th>Charity</th>
+                        <th>Type</th>
+                        <th>Montant</th>
+                        <th>Statut</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for donation in donations %}
+                    {% set st = donation.status %}
+                    {% set badgeClass = st == 'APPROVED' ? 'bg-success'
+                        : (st == 'REJECTED' ? 'bg-danger'
+                        : (st == 'HIDDEN' ? 'bg-secondary' : 'bg-warning text-dark')) %}
+                    <tr>
+                        <td>#{{ donation.id }}</td>
+                        <td><small>{{ donation.dateDon|date('d/m/Y H:i') }}</small></td>
+                        <td>
+                            {% if donation.isAnonymous and not is_granted('ROLE_ADMIN') %}
+                                <em>Anonyme</em>
+                            {% elseif donation.donateur %}
+                                {{ donation.donateur.prenom }} {{ donation.donateur.nom }}
+                                <div class="small text-muted">{{ donation.donateur.email }}</div>
+                            {% else %}
+                                {{ donation.donorName ?: '—' }}
+                                {% if donation.donorEmail %}<div class="small text-muted">{{ donation.donorEmail }}</div>{% endif %}
+                            {% endif %}
+                            {% if donation.isAnonymous %}<span class="badge bg-light text-dark ms-1">Anonyme</span>{% endif %}
+                        </td>
+                        <td>{{ donation.charity ? donation.charity.name : '—' }}</td>
+                        <td>
+                            <span class="badge bg-info">{{ donation.donationType }}</span>
+                            {% if donation.type %}
+                                <small class="text-muted d-block">{{ donation.type.libelle }}</small>
+                            {% endif %}
+                        </td>
+                        <td>{{ donation.amount }} €</td>
+                        <td><span class="badge {{ badgeClass }}">{{ st }}</span></td>
+                        <td class="text-end">
+                            <div class="btn-group btn-group-sm" role="group">
+                                {% if st != 'APPROVED' %}
+                                    <form method="post" action="{{ path('app_donation_approve', {id: donation.id}) }}" class="d-inline">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('donation-moderate-' ~ donation.id) }}">
+                                        <button class="btn btn-success" title="Approuver"><i class="fas fa-check"></i></button>
+                                    </form>
+                                {% endif %}
+                                {% if st != 'REJECTED' %}
+                                    <form method="post" action="{{ path('app_donation_reject', {id: donation.id}) }}" class="d-inline">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('donation-moderate-' ~ donation.id) }}">
+                                        <button class="btn btn-danger" title="Rejeter"><i class="fas fa-times"></i></button>
+                                    </form>
+                                {% endif %}
+                                {% if st != 'HIDDEN' %}
+                                    <form method="post" action="{{ path('app_donation_hide', {id: donation.id}) }}" class="d-inline">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('donation-moderate-' ~ donation.id) }}">
+                                        <button class="btn btn-outline-secondary" title="Masquer"><i class="fas fa-eye-slash"></i></button>
+                                    </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="p-4 text-center text-muted">Aucun don enregistré.</div>
+    {% endif %}
+</div>
 {% endblock %}

@@ -1,11 +1,16 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}New ForumReponse{% endblock %}
+{% block title %}Nouvelle réponse{% endblock %}
 
 {% block body %}
-    <h1>Create new ForumReponse</h1>
+<div class="bo-page-header">
+    <h1><i class="fas fa-plus-circle"></i> Nouvelle réponse</h1>
+    <div class="bo-actions">
+        <a href="{{ path('app_forum_reponse_index') }}" class="btn btn-outline-secondary"><i class="fas fa-arrow-left me-1"></i>Retour</a>
+    </div>
+</div>
 
-    {{ include('forum_reponse/_form.html.twig') }}
-
-    <a href="{{ path('app_forum_reponse_index') }}">back to list</a>
+<div class="bo-table-card p-3">
+    {{ include('forum_reponse/_form.html.twig', {'button_label': 'Publier'}) }}
+</div>
 {% endblock %}

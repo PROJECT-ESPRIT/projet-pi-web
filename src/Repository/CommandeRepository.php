@@ -44,9 +44,9 @@ class CommandeRepository extends ServiceEntityRepository
     {
         $conn = $this->getEntityManager()->getConnection();
         $rows = $conn->executeQuery("
-            SELECT DATE_FORMAT(date_commande, '%Y-%m') AS m, COUNT(*) AS c
+            SELECT DATE_FORMAT(created_at, '%Y-%m') AS m, COUNT(*) AS c
             FROM commande
-            WHERE date_commande >= DATE_SUB(CURRENT_DATE, INTERVAL :months MONTH)
+            WHERE created_at >= DATE_SUB(CURRENT_DATE, INTERVAL :months MONTH)
             GROUP BY m ORDER BY m
         ", ['months' => $months])->fetchAllAssociative();
 
@@ -70,9 +70,9 @@ class CommandeRepository extends ServiceEntityRepository
     {
         $conn = $this->getEntityManager()->getConnection();
         $rows = $conn->executeQuery("
-            SELECT DATE_FORMAT(date_commande, '%Y-%m') AS m, COALESCE(SUM(total), 0) AS t
+            SELECT DATE_FORMAT(created_at, '%Y-%m') AS m, COALESCE(SUM(montant_total), 0) AS t
             FROM commande
-            WHERE date_commande >= DATE_SUB(CURRENT_DATE, INTERVAL :months MONTH)
+            WHERE created_at >= DATE_SUB(CURRENT_DATE, INTERVAL :months MONTH)
             GROUP BY m ORDER BY m
         ", ['months' => $months])->fetchAllAssociative();
 

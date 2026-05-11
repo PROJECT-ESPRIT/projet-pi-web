@@ -10,6 +10,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: ForumRepository::class)]
+#[ORM\Table(name: 'forum_topic')]
 class Forum
 {
     #[ORM\Id]
@@ -17,35 +18,22 @@ class Forum
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(length: 100)]
+    #[ORM\Column(length: 255)]
     #[Assert\NotBlank]
-    #[Assert\Length(max: 100)]
-    private ?string $nom = null;
+    #[Assert\Length(max: 255)]
+    private ?string $titre = null;
 
-    #[ORM\Column(length: 100)]
-    #[Assert\NotBlank]
-    #[Assert\Length(max: 100)]
-    private ?string $prenom = null;
+    #[ORM\Column(length: 128, nullable: true)]
+    #[Assert\Length(max: 128)]
+    private ?string $auteur = null;
 
-    #[ORM\Column(length: 180)]
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
     #[Assert\NotBlank]
-    #[Assert\Email]
-    #[Assert\Length(max: 180)]
-    private ?string $email = null;
-
-    #[ORM\Column(length: 100)]
-    #[Assert\NotBlank]
-    #[Assert\Length(max: 100)]
-    private ?string $sujet = null;
-
-    #[ORM\Column(type: Types::TEXT)]
-    #[Assert\NotBlank]
-    #[Assert\Length(min: 10)]
+    #[Assert\Length(min: 5)]
     private ?string $message = null;
 
-    #[ORM\Column]
+    #[ORM\Column(name: 'created_at')]
     #[Assert\NotNull]
-    #[Assert\Type(type: \DateTimeImmutable::class)]
     private ?\DateTimeImmutable $dateCreation = null;
 
     /**
@@ -57,6 +45,7 @@ class Forum
     public function __construct()
     {
         $this->reponses = new ArrayCollection();
+        $this->dateCreation = new \DateTimeImmutable();
     }
 
     public function getId(): ?int
@@ -64,51 +53,25 @@ class Forum
         return $this->id;
     }
 
-    public function getNom(): ?string
+    public function getTitre(): ?string
     {
-        return $this->nom;
+        return $this->titre;
     }
 
-    public function setNom(string $nom): static
+    public function setTitre(?string $titre): static
     {
-        $this->nom = $nom;
-
+        $this->titre = $titre;
         return $this;
     }
 
-    public function getPrenom(): ?string
+    public function getAuteur(): ?string
     {
-        return $this->prenom;
+        return $this->auteur;
     }
 
-    public function setPrenom(string $prenom): static
+    public function setAuteur(?string $auteur): static
     {
-        $this->prenom = $prenom;
-
-        return $this;
-    }
-
-    public function getEmail(): ?string
-    {
-        return $this->email;
-    }
-
-    public function setEmail(string $email): static
-    {
-        $this->email = $email;
-
-        return $this;
-    }
-
-    public function getSujet(): ?string
-    {
-        return $this->sujet;
-    }
-
-    public function setSujet(string $sujet): static
-    {
-        $this->sujet = $sujet;
-
+        $this->auteur = $auteur;
         return $this;
     }
 
@@ -117,10 +80,9 @@ class Forum
         return $this->message;
     }
 
-    public function setMessage(string $message): static
+    public function setMessage(?string $message): static
     {
         $this->message = $message;
-
         return $this;
     }
 
@@ -132,7 +94,20 @@ class Forum
     public function setDateCreation(\DateTimeImmutable $dateCreation): static
     {
         $this->dateCreation = $dateCreation;
+        return $this;
+    }
 
+    /**
+     * Backward-compat alias for templates that use 'sujet'.
+     */
+    public function getSujet(): ?string
+    {
+        return $this->titre;
+    }
+
+    public function setSujet(?string $sujet): static
+    {
+        $this->titre = $sujet;
         return $this;
     }
 
@@ -150,19 +125,16 @@ class Forum
             $this->reponses->add($reponse);
             $reponse->setForum($this);
         }
-
         return $this;
     }
 
     public function removeReponse(ForumReponse $reponse): static
     {
         if ($this->reponses->removeElement($reponse)) {
-            // set the owning side to null (unless already changed)
             if ($reponse->getForum() === $this) {
                 $reponse->setForum(null);
             }
         }
-
         return $this;
     }
 }

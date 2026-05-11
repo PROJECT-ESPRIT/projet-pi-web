@@ -1,91 +1,89 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}GÃ©rer les RÃ©ponses{% endblock %}
+{% block title %}Réponses du forum{% endblock %}
 
 {% block body %}
-<div class="container-fluid">
-    <div class="row mb-4">
-        <div class="col-12">
-            <h1 class="mb-3"><i class="fas fa-reply me-2"></i> GÃ©rer les RÃ©ponses</h1>
-            <p class="text-muted">RÃ©pondez aux questions des utilisateurs.</p>
-        </div>
+<div class="bo-page-header">
+    <h1>
+        <i class="fas fa-reply"></i> Réponses
+        <span class="badge">{{ forum_reponses|length }}</span>
+    </h1>
+    <div class="bo-actions">
+        <a href="{{ path('app_forum_index') }}" class="btn btn-outline-secondary"><i class="fas fa-comments me-1"></i>Sujets</a>
+        {% if app.user %}
+            <a href="{{ path('app_forum_reponse_new') }}" class="btn btn-primary"><i class="fas fa-plus me-1"></i>Nouvelle réponse</a>
+        {% endif %}
     </div>
+</div>
 
-    <!-- Barre de recherche et tri -->
-    <div class="card mb-4 shadow-sm">
-        <div class="card-body">
-            <form method="get" class="row g-3">
-                <div class="col-md-6">
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="fas fa-search"></i></span>
-                        <input type="text" name="search" class="form-control" placeholder="Rechercher par contenu, sujet..." value="{{ search }}">
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <select name="sort" class="form-select">
-                        <option value="dateReponse" {% if sortBy == 'dateReponse' %}selected{% endif %}>Trier par Date</option>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <select name="order" class="form-select">
-                        <option value="DESC" {% if order == 'DESC' %}selected{% endif %}>DÃ©croissant</option>
-                        <option value="ASC" {% if order == 'ASC' %}selected{% endif %}>Croissant</option>
-                    </select>
-                </div>
-                <div class="col-md-1">
-                    <button type="submit" class="btn btn-primary w-100"><i class="fas fa-filter"></i></button>
-                </div>
-            </form>
+<form method="get" class="bo-filter-bar">
+    <div class="row g-2 align-items-end">
+        <div class="col-md-6">
+            <label><i class="fas fa-search me-1"></i>Recherche</label>
+            <input type="text" name="search" class="form-control" placeholder="Contenu, sujet…" value="{{ search }}">
+        </div>
+        <div class="col-md-3">
+            <label><i class="fas fa-sort me-1"></i>Trier par</label>
+            <select name="sort" class="form-select">
+                <option value="dateReponse" {% if sortBy == 'dateReponse' %}selected{% endif %}>Date</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label><i class="fas fa-arrows-alt-v me-1"></i>Ordre</label>
+            <select name="order" class="form-select">
+                <option value="DESC" {% if order == 'DESC' %}selected{% endif %}>Récent</option>
+                <option value="ASC" {% if order == 'ASC' %}selected{% endif %}>Ancien</option>
+            </select>
+        </div>
+        <div class="col-md-1 d-flex">
+            <button type="submit" class="btn btn-primary"><i class="fas fa-filter me-1"></i>Filtrer</button>
         </div>
     </div>
+</form>
 
-    <!-- Bouton Nouvelle RÃ©ponse -->
-    <div class="mb-3">
-        <a href="{{ path('app_forum_reponse_new') }}" class="btn btn-success">
-            <i class="fas fa-plus me-2"></i> Ajouter une RÃ©ponse
-        </a>
-    </div>
-
-    <!-- Liste des rÃ©ponses -->
-    <div class="row">
-        {% for forum_reponse in forum_reponses %}
-        <div class="col-md-12 mb-3">
-            <div class="card shadow-sm">
-                <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                    <div>
-                        <h5 class="mb-0">
-                            <i class="fas fa-comment-dots text-success me-2"></i>
-                            RÃ©ponse Ã  : {{ forum_reponse.forum.sujet }}
-                        </h5>
-                        <small class="text-muted">
-                            Par {{ forum_reponse.auteur.prenom }} {{ forum_reponse.auteur.nom }} | {{ forum_reponse.dateReponse|date('d/m/Y Ã  H:i') }}
-                        </small>
-                    </div>
-                    
-                </div>
-                <div class="card-body">
-                    <p class="card-text">{{ forum_reponse.contenu|length > 200 ? forum_reponse.contenu|slice(0, 200) ~ '...' : forum_reponse.contenu }}</p>
-                    <div class="d-flex justify-content-between align-items-center">
-                        <small class="text-muted"></small>
-                        <div>
-                            <a href="{{ path('app_forum_reponse_show', {'id': forum_reponse.id}) }}" class="btn btn-sm btn-outline-primary">
-                                <i class="fas fa-eye me-1"></i> Voir
-                            </a>
-                            <a href="{{ path('app_forum_reponse_edit', {'id': forum_reponse.id}) }}" class="btn btn-sm btn-outline-warning">
-                                <i class="fas fa-edit me-1"></i> Modifier
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
+<div class="bo-table-card">
+    {% if forum_reponses is not empty %}
+        <div class="table-responsive">
+            <table class="table bo-table align-middle">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Sujet</th>
+                        <th>Auteur</th>
+                        <th>Aperçu</th>
+                        <th>Date</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for r in forum_reponses %}
+                    <tr>
+                        <td>#{{ r.id }}</td>
+                        <td>
+                            {% if r.forum %}
+                                <a href="{{ path('app_forum_show', {id: r.forum.id}) }}">{{ r.forum.titre }}</a>
+                            {% else %}—{% endif %}
+                        </td>
+                        <td>
+                            {% if r.auteur %}{{ r.auteur.prenom }} {{ r.auteur.nom }}{% else %}Anonyme{% endif %}
+                        </td>
+                        <td><small class="text-muted">{{ r.contenu|slice(0, 80) }}{% if r.contenu|length > 80 %}…{% endif %}</small></td>
+                        <td><small>{{ r.dateReponse|date('d/m/Y H:i') }}</small></td>
+                        <td class="text-end">
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ path('app_forum_reponse_show', {'id': r.id}) }}" class="btn btn-outline-primary" title="Voir"><i class="fas fa-eye"></i></a>
+                                {% if app.user %}
+                                    <a href="{{ path('app_forum_reponse_edit', {'id': r.id}) }}" class="btn btn-outline-secondary" title="Editer"><i class="fas fa-edit"></i></a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
         </div>
-        {% else %}
-        <div class="col-12">
-            <div class="alert alert-info text-center">
-                <i class="fas fa-info-circle me-2"></i> Aucune rÃ©ponse trouvÃ©e.
-            </div>
-        </div>
-        {% endfor %}
-    </div>
+    {% else %}
+        <div class="p-4 text-center text-muted">Aucune réponse pour l'instant.</div>
+    {% endif %}
 </div>
 {% endblock %}

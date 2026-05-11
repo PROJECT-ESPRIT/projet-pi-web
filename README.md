@@ -1,123 +1,155 @@
-# Plateforme Artistique & Inclusivité
+# ArtConnect — Symfony Web Application
 
-## Prérequis
+> Third-year integrated project (PIDEV 3A) — Esprit School of Engineering.
+> Web counterpart of [ArtConnect JavaFX](https://github.com/Marouen-nouaigui/PI_java_vf).
 
-- PHP 8.2+
-- Composer
-- MySQL
-- Python 3.10+
+ArtConnect is a charity ecosystem that connects donors, charitable causes, and cultural events through **two synchronized applications** sharing a single MariaDB database. This repository contains the **Symfony 6.4 web app** — the public-facing platform for donors, volunteers, and event attendees.
 
-## Installation
+The JavaFX desktop twin handles back-office work (charity moderation, event staff, on-site donation collection). Both apps read/write the same `artconnect` database, so every change is visible across both clients instantly.
 
-1. **Dépendances**
-  ```bash
-   composer install
-  ```
-2. **Base de données**
-  Configurer `DATABASE_URL` dans `.env`, puis :
-3. **Script Python (admin)**
-  Le tableau de bord admin utilise `scripts/predict_registrations.py`. Vérifier que `python` (Windows) ou `python3` (Linux/macOS) est disponible.
-4. **Données de démo**
-  ```bash
-   php bin/console app:seed
-  ```
-5. **Lancer l'application**
-  ```bash
-   php -S localhost:8000 -t public
-  ```
-   Ou avec Symfony CLI : `symfony server:start`
-   Ouvrir [http://localhost:8000](http://localhost:8000)
+## Topics
 
-## Tests
+`symfony` · `php` · `doctrine` · `mariadb` · `mysql` · `twig` · `bootstrap` · `chart-js` · `stripe-checkout` · `gemini-api` · `web-app` · `charity-platform` · `pidev` · `esprit`
 
-Les tests unitaires suivent le workshop Symfony : ils valident les **règles métier** via des services dans `src/Service/` et des classes de test dans `tests/Service/` (PHPUnit TestCase, sans base de données ni kernel).
+## Keywords
 
-**Structure (workshop) :**
+charity donation platform · event reservation · QR code ticketing · payment gateway · AI image validation · cross-app synchronization · Doctrine ↔ JPA alignment · admin dashboard · forum · e-commerce
 
+## Modules
 
-| Entité      | Service              | Règles métier                                                   |
-| ----------- | -------------------- | --------------------------------------------------------------- |
-| Evenement   | `EvenementManager`   | Date de fin > date de début ; nombre de places > 0              |
-| Reservation | `ReservationManager` | Statut parmi PENDING / CONFIRMED / CANCELLED ; montant payé ≥ 0 |
-| User        | `UserManager`        | Nom obligatoire ; email valide                                  |
+| Module | Description | Routes |
+|---|---|---|
+| **User & Auth** | Signup, login, email confirmation, password reset, role-based access (ROLE_ADMIN / ROLE_USER) | `/login`, `/register`, `/profile` |
+| **Charities** | Browse, favorite, donate, propose new causes; admin approve/reject/hide | `/charities`, `/admin/charities` |
+| **Donations** | Money (Stripe) or item donations; AI image verification; per-donation status | `/donation`, `/donation/admin`, `/donation/my-donations` |
+| **Events** | List/detail, seat layout, ticket reservation, QR-code delivery via email | `/evenement`, `/reservation` |
+| **Forum** | Topics + replies, monthly post stats | `/forum`, `/forum/reponse` |
+| **E-commerce** | Product catalog, cart, commande (order) with line items | `/produit`, `/commande` |
+| **Statistics** | Real-time KPIs and charts (charities, donations, events) | `/charities/stats`, `/admin/statistiques` |
 
+## Architecture
 
-**Générer un nouveau test unitaire :**
-
-```bash
-php bin/console make:test
-# Choisir : TestCase
-# Nom de la classe : MonServiceTest
-# Déplacer le fichier généré dans tests/Service/
+```
+┌─────────────────────────┐         ┌─────────────────────────┐
+│   Symfony web app       │         │   JavaFX desktop app    │
+│   (this repository)     │         │   (PI_java_vf repo)     │
+│                         │         │                         │
+│   Doctrine ORM (PHP)    │         │   JPA / JDBC (Java)     │
+└────────────┬────────────┘         └────────────┬────────────┘
+             │                                   │
+             └───────────────┬───────────────────┘
+                             ▼
+                    ┌─────────────────┐
+                    │ MariaDB 10.11   │
+                    │ "artconnect" DB │
+                    │ canonical schema│
+                    └─────────────────┘
 ```
 
-**Exécuter les tests :**
+No HTTP API between the apps — the **database itself is the integration layer**. Both ORMs converge on a single canonical schema; Symfony entities mirror the JavaFX models 1:1.
+
+## Requirements
+
+- PHP 8.1+ (tested on 8.4)
+- Composer 2
+- MariaDB 10.11+ or MySQL 8.x
+- Symfony CLI (optional but recommended)
+- A free **Google Gemini API key** for donation-image validation — get one in 2 minutes at <https://aistudio.google.com/apikey>
+
+## Setup (5 minutes)
 
 ```bash
-# Tous les tests unitaires (services)
-php bin/phpunit tests/Service/
+# 1. install PHP dependencies
+composer install
 
-# Ou l’ensemble des tests
-php bin/phpunit
+# 2. create the shared database
+mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS artconnect \
+   CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+
+# 3. create your local secrets file (gitignored, never committed)
+cat > .env.local <<'EOF'
+DATABASE_URL="mysql://root:YOUR_DB_PASSWORD@127.0.0.1:3306/artconnect?serverVersion=mariadb-10.11.16&charset=utf8mb4"
+GEMINI_API_KEY=YOUR_GEMINI_KEY_FROM_aistudio.google.com
+# optional, only if you want payments / emails:
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+MAILER_DSN=smtp://user:pass@host:port
+MAILER_FROM=your-email@example.com
+EOF
+
+# 4. apply schema migrations (idempotent)
+php bin/console doctrine:migrations:migrate -n
+
+# 5. start the dev server
+symfony server:start -d
+# OR: php -S 127.0.0.1:8000 -t public
+
+# 6. open the app
+xdg-open http://127.0.0.1:8000
 ```
 
-**Analyse statique (PHPStan — workshop) :**
+**Default admin** (seeded by the JavaFX side or `app:seed`): `admin@art.com` / `123456`.
 
-```bash
-# Installer (dépendance de dev)
-composer require --dev phpstan/phpstan
+## Required free API keys
 
-# Vérifier l’installation
-vendor/bin/phpstan --version
+| Service | What it does | Where to get | Cost |
+|---|---|---|---|
+| **Google Gemini** | Validates donation images (e.g. confirms a "clothes" donation actually shows clothes) | <https://aistudio.google.com/apikey> | Free tier, no card |
+| Stripe (optional) | Payments for money donations + reservations | <https://dashboard.stripe.com/test/apikeys> | Free in test mode |
+| SMTP (optional) | Email confirmations + ticket delivery | Gmail app password / Brevo / Mailtrap | Free tiers |
 
-# Analyser le code (avec config phpstan.neon)
-vendor/bin/phpstan analyse
+If you skip Gemini, donations still go through (validation falls through with `skipped: true`).
 
-# Analyser uniquement src (sans config)
-vendor/bin/phpstan analyse src
+## Quick smoke test
 
-# Analyse ciblée
-vendor/bin/phpstan analyse src/Controller
-vendor/bin/phpstan analyse src/Service
+1. Open <http://127.0.0.1:8000>
+2. Log in as `admin@art.com` / `123456`
+3. Browse `/charities`, click the heart to favorite one, click **Donner** to donate
+4. Open phpMyAdmin or `mysql artconnect` → see your write reflected immediately in the `donation` / `favorite_charity` table
+5. Launch the JavaFX app → the same row appears in its UI
+
+## Project structure
+
+```
+src/
+├── Controller/        # HTTP routes (PHP attributes)
+├── Entity/            # Doctrine ORM mappings — 1:1 with the JavaFX schema
+├── Repository/        # DB queries
+├── Service/           # Domain services (Stripe, Gemini, Email, etc.)
+└── Form/              # Symfony form types
+templates/             # Twig views
+migrations/            # Doctrine migrations (Symfony-only schema deltas; idempotent)
+public/index.php       # Front controller
+config/                # Bundles, routing, security, services
 ```
 
-**Schéma Doctrine :**
+## Tech stack
 
-**Doctrine Doctor (workshop) :**
+| Layer | Technology |
+|---|---|
+| Framework | Symfony 6.4 LTS |
+| Language | PHP 8.1+ |
+| ORM | Doctrine 3 |
+| Templating | Twig 3 |
+| UI | Bootstrap 5 + custom AC palette |
+| Charts | Chart.js |
+| Payments | Stripe PHP SDK |
+| AI | Google Gemini 2.5 Flash |
+| Mailer | Symfony Mailer |
+| Database | MariaDB 10.11 / MySQL 8 |
 
-```bash
-# Installation (si erreur, utiliser la commande de fallback ci‑dessous)
-composer require --dev ahmed-bhs/doctrine-doctor
+## Cross-app integration
 
-# En cas d’erreur d’installation :
-composer require ahmed-bhs/doctrine-doctor:^1.0 webmozart/assert:^1.11 --with-all-dependencies
-composer require --dev ahmed-bhs/doctrine-doctor
-```
+Verified end-to-end:
+1. Direct SQL insert into `charity` → Symfony's `GET /charities` shows the row immediately
+2. Symfony `POST /favorite/charity/{id}/toggle` → row appears in `favorite_charity` table
+3. Symfony `POST /forum/new` → row appears in `forum_topic` (author auto-filled from session)
+4. JavaFX-seeded admin authenticates via Symfony's password verifier (shared BCrypt cost-10 hash)
 
-En dev : ouvrir une page → Web Profiler → panneau **Doctrine Doctor** (intégrité, sécurité, requêtes lentes). Après chaque correction : `symfony server:stop` puis `php bin/console cache:clear`, relancer le serveur.
+## Team
 
----
+PIDEV 3A — Esprit School of Engineering — Academic year 2025/2026.
 
-## ngrok - Exposer l'application localement
+## License
 
-Pour tester les webhooks Stripe ou accéder à l'application depuis l'extérieur :
-
-Cela génère une URL publique (ex: `https://xxxx-xx-xxx-xxx-xx.ngrok.io`) à utiliser pour configurer les webhooks Stripe.
-
-## Stripe Webhook
-
-Endpoint : `POST /stripe-webhook`
-
-**Configuration** :
-
-1. Exposer l'app avec ngrok : `ngrok http 8000`
-2. Copier l'URL ngrok générée
-3. Dans Stripe Dashboard > Developers > Webhooks, ajouter l'endpoint : `https://votre-url.ngrok.io/stripe-webhook`
-4. Sélectionner l'événement : `checkout.session.completed`
-5. Copier le Signing Secret dans `.env` : `STRIPE_WEBHOOK_SECRET=whsec_...`
-
-**Flux** :
-
-- Paiement → Webhook reçu → Réservation confirmée → Emails envoyés + Ticket généré
-
-**Logs** : `var/log/dev.log`
+MIT.

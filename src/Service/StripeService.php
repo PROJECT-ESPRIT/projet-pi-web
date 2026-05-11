@@ -12,6 +12,12 @@ class StripeService
     private const CURRENCY = 'eur';
     /** EUR smallest unit: 1 EUR = 100 cents. */
     private const AMOUNT_MULTIPLIER = 100;
+    /** Donation default currency (used if STRIPE_DONATION_CURRENCY is not set). */
+    private const DONATION_DEFAULT_CURRENCY = 'eur';
+    /** Default smallest unit: 1 = 100 cents. */
+    private const DEFAULT_AMOUNT_MULTIPLIER = 100;
+    /** TND smallest unit: 1 DT = 1000 millimes. */
+    private const TND_AMOUNT_MULTIPLIER = 1000;
 
     public function __construct(
         private string $stripeSecretKey,
@@ -94,6 +100,68 @@ class StripeService
         ]);
 
         return $session->url;
+    }
+
+    /**
+     * Creates a Stripe Checkout Session for a donation.
+     * Returns an array with the session id and url.
+     *
+     * @return array{id: string, url: string}
+     */
+    public function createCheckoutSessionForDonation(
+        \App\Entity\Charity $charity,
+        User $user,
+        int $amount,
+        string $successUrl,
+        string $cancelUrl,
+    ): array {
+        $this->assertSecretKey();
+        $stripe = new StripeClient($this->stripeSecretKey);
+        if ($amount <= 0) {
+            throw new \InvalidArgumentException('Donation amount must be positive for Stripe Checkout.');
+        }
+
+        $currency = strtolower((string) getenv('STRIPE_DONATION_CURRENCY'));
+        if ($currency === '') {
+            $currency = self::DONATION_DEFAULT_CURRENCY;
+        }
+        $multiplier = $currency === 'tnd' ? self::TND_AMOUNT_MULTIPLIER : self::DEFAULT_AMOUNT_MULTIPLIER;
+        $unitAmount = (int) round($amount * $multiplier);
+        if ($unitAmount < 1) {
+            $unitAmount = 1;
+        }
+
+        $session = $stripe->checkout->sessions->create([
+            'payment_method_types' => ['card'],
+            'line_items' => [
+                [
+                    'price_data' => [
+                        'currency' => $currency,
+                        'product_data' => [
+                            'name' => 'Don pour ' . $charity->getName(),
+                            'metadata' => [
+                                'charity_id' => (string) $charity->getId(),
+                            ],
+                        ],
+                        'unit_amount' => $unitAmount,
+                    ],
+                    'quantity' => 1,
+                ],
+            ],
+            'mode' => 'payment',
+            'success_url' => $this->appendCheckoutSessionIdPlaceholder($successUrl),
+            'cancel_url' => $cancelUrl,
+            'metadata' => [
+                'charity_id' => (string) $charity->getId(),
+                'user_id' => (string) $user->getId(),
+                'amount' => (string) $amount,
+            ],
+        ]);
+
+        return [
+            'id' => $session->id,
+            'url' => $session->url,
+        ];
     }
 
     private function appendCheckoutSessionIdPlaceholder(string $successUrl): string

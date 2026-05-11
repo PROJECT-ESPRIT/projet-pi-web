@@ -1,0 +1,70 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Charity - {{ charity.name }}{% endblock %}
+
+{% block body %}
+    <div class="bo-page-header">
+        <h1>
+            <i class="fas fa-hands-helping"></i> {{ charity.name }}
+            <span class="badge {{ charity.status == 'APPROVED' ? 'bg-success' : (charity.status == 'REJECTED' ? 'bg-danger' : (charity.status == 'HIDDEN' ? 'bg-secondary' : 'bg-warning text-dark')) }}">{{ charity.status }}</span>
+        </h1>
+        <div class="bo-actions">
+            <a href="{{ path('app_admin_charity_index') }}" class="btn btn-outline-secondary"><i class="fas fa-arrow-left me-1"></i>Retour</a>
+            <a href="{{ path('app_charity_show', {id: charity.id}) }}" class="btn btn-outline-secondary"><i class="fas fa-eye me-1"></i>Vue publique</a>
+        </div>
+    </div>
+    <p class="text-muted mb-3">{{ charity.description|default('Sans description') }}</p>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <strong>Objectif:</strong> {{ hasGoal ? charity.goalAmount ~ ' €' : 'Non défini' }}
+                </div>
+                <div class="col-md-3"><strong>Collecté:</strong> {{ donationsAmount }} €</div>
+                <div class="col-md-3"><strong>Dons:</strong> {{ donationsCount }}</div>
+                <div class="col-md-6">
+                    {% set barClass = progressPercent >= 100 ? 'bg-success' : (hasGoal ? 'bg-danger' : 'bg-secondary') %}
+                    <strong>Progression:</strong>
+                    <div class="progress mt-1" style="height: 14px;">
+                        <div class="progress-bar {{ barClass }}" style="width: {{ min(progressPercent, 100) }}%"></div>
+                    </div>
+                    <div class="small text-muted mt-1">{{ hasGoal ? progressPercent ~ '%' : '—' }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h2 class="h5">Dons de cette charity</h2>
+    <div class="table-responsive">
+        <table class="table table-sm table-striped align-middle">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Montant (€)</th>
+                    <th>Donateur</th>
+                    <th>Anonyme</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for donation in donations %}
+                    <tr>
+                        <td>{{ donation.dateDon|date('d/m/Y H:i') }}</td>
+                        <td>{{ donation.type ? donation.type.libelle : donation.donationType }}</td>
+                        <td>{{ donation.amount }}</td>
+                        <td>{% if donation.donateur %}{{ donation.donateur.prenom }} {{ donation.donateur.nom }} ({{ donation.donateur.email }}){% else %}{{ donation.donorName ?: '—' }}{% if donation.donorEmail %} ({{ donation.donorEmail }}){% endif %}{% endif %}</td>
+                        <td>{{ donation.isAnonymous ? 'Oui' : 'Non' }}</td>
+                        <td>{{ donation.description }}</td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="6">Aucun don pour cette charity.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+{% endblock %}

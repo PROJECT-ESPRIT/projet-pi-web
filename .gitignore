@@ -27,3 +27,8 @@
 /.idea/**
 composer.lock
 
+# AI training artifacts / datasets
+/datasets/**/*.cache
+/python/__pycache__/
+/python/*.pyc
+/yolov8n-cls.pt
